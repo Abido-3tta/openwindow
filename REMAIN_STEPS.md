@@ -42,6 +42,14 @@ All 5 core production objectives and deep fixes have been completed, audited, an
 
 ## 📡 2. Complete Guide: Options for Receiving User Feedback & Issue Reports
 
+### 🚀 Live Community Launch Campaigns (Active Status)
+- **r/windows Post:** [https://www.reddit.com/r/windows/comments/1xkcpsf/openwindow_100_free_opensource_alternative_to/](https://www.reddit.com/r/windows/comments/1xkcpsf/openwindow_100_free_opensource_alternative_to/) (Status: **LIVE 🟢**)
+- **r/opensource Post:** [https://www.reddit.com/r/opensource/comments/1xkd7ne/openwindow_opensource_net_8_wpf_win32_desktop/](https://www.reddit.com/r/opensource/comments/1xkd7ne/openwindow_opensource_net_8_wpf_win32_desktop/) (Status: **LIVE 🟢**)
+- **AlternativeTo Submission:** Submitted to review queue (ID: `97b56f0e-154b-431c-8886-bc220e3f308a`) with WindowTop and 20+ window managers linked as alternatives. (Status: **IN QUEUE 🟢**)
+- **Hacker News:** Official whitelist request dispatched from `codebyatta@gmail.com` to `hn@ycombinator.com`. (Status: **PENDING REVIEW 🟡**)
+
+---
+
 To capture user reports, feature requests, bug diagnostics, and telemetry beyond basic Webhooks (Discord, Telegram, generic HTTP), the following channels can be embedded directly into OpenWindow:
 
 ### Group A: Serverless & Zero-Maintenance Ingestion

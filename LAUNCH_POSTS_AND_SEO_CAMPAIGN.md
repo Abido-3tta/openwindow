@@ -71,7 +71,8 @@ I would love your brutally honest feedback, bug reports, and architectural criti
 ## 🤖 3. Reddit Launch Packages
 
 ### Post A: `r/windows` & `r/software`
-- **Title:** `I built OpenWindow: A 100% free, modern, open-source alternative to WindowTop for Windows 10 & 11`
+- **Live Published Link (`r/windows`):** [https://www.reddit.com/r/windows/comments/1xkcpsf/openwindow_100_free_opensource_alternative_to/](https://www.reddit.com/r/windows/comments/1xkcpsf/openwindow_100_free_opensource_alternative_to/) (Status: **LIVE 🟢**)
+- **Title:** `OpenWindow – 100% free, open-source alternative to WindowTop for Windows 10 & 11 (Always-on-Top, Picture-in-Picture, Cropped Region, Ghost Mode)`
 - **Body:**
 ```markdown
 Hey everyone!
@@ -104,6 +105,7 @@ Let me know what you think and what features you’d like to see next!
 ```
 
 ### Post B: `r/opensource` & `r/csharp`
+- **Live Published Link (`r/opensource`):** [https://www.reddit.com/r/opensource/comments/1xkd7ne/openwindow_opensource_net_8_wpf_win32_desktop/](https://www.reddit.com/r/opensource/comments/1xkd7ne/openwindow_opensource_net_8_wpf_win32_desktop/) (Status: **LIVE 🟢**)
 - **Title:** `OpenWindow: Open-source .NET 8 WPF & Win32 desktop multitasking engine (DWM PiP, Ghost Mode, SWP_NOACTIVATE)`
 - **Body:**
 ```markdown
@@ -173,6 +175,11 @@ https://github.com/Abido-3tta/openwindow/releases/latest
 ## 📋 5. Product Hunt & AlternativeTo Submission Blueprint
 
 ### AlternativeTo Listing Details
+- **Submission Status:** **Submitted & In Review Queue 🟢**
+- **Submission ID:** `97b56f0e-154b-431c-8886-bc220e3f308a`
+- **Dashboard URL:** `https://alternativeto.net/my-submissions/`
+- **Public URL (Post-Approval):** [https://alternativeto.net/software/openwindow/](https://alternativeto.net/software/openwindow/)
+- **Suggested Alternative To:** `WindowTop` (Primary #1 Alternative), `Microsoft PowerToys`, `DeskPins`, `TurboTop`, `StayOnTop` (20+ alternatives linked)
 - **App Name:** OpenWindow
 - **Tagline:** Modern, 100% Free & Open-Source WindowTop Alternative for Windows 10 & 11
 - **Replaces:** WindowTop, DeskPins, Always on Top, TurboTop, AquaSnap
