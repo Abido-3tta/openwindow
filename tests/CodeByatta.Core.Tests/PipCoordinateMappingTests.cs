@@ -90,5 +90,45 @@ namespace CodeByatta.Core.Tests
             Assert.Equal(1440, lowX);
             Assert.Equal(900, highY);
         }
+
+        [Fact]
+        public void MultiMonitor_NegativeCoordinates_PreserveMapping()
+        {
+            // Secondary monitor situated to the left of the primary monitor (e.g. Left = -1920, Top = 0)
+            RECT secondaryScreenCrop = new RECT(-1800, 100, -1200, 700); // 600w x 600h
+
+            double relX = 0.5;
+            double relY = 0.5;
+
+            int screenX = secondaryScreenCrop.Left + (int)Math.Round(relX * secondaryScreenCrop.Width);
+            int screenY = secondaryScreenCrop.Top + (int)Math.Round(relY * secondaryScreenCrop.Height);
+
+            Assert.Equal(-1500, screenX);
+            Assert.Equal(400, screenY);
+        }
+
+        [Fact]
+        public void MaximizedWindow_NegativeFrameOffset_DwmCropClampsProperly()
+        {
+            // Maximized window on Windows 10/11 has invisible borders extending to (-8, -8)
+            RECT maximizedWindowRect = new RECT(-8, -8, 1928, 1088);
+
+            // User crops region on the visible screen at (100, 100, 900, 700)
+            RECT cropScreenRect = new RECT(100, 100, 900, 700);
+
+            int dLeft = Math.Max(0, cropScreenRect.Left - maximizedWindowRect.Left);
+            int dTop = Math.Max(0, cropScreenRect.Top - maximizedWindowRect.Top);
+            int dRight = Math.Min(maximizedWindowRect.Width, dLeft + cropScreenRect.Width);
+            int dBottom = Math.Min(maximizedWindowRect.Height, dTop + cropScreenRect.Height);
+
+            RECT dwmSource = new RECT(dLeft, dTop, dRight, dBottom);
+
+            Assert.Equal(108, dwmSource.Left);
+            Assert.Equal(108, dwmSource.Top);
+            Assert.Equal(908, dwmSource.Right);
+            Assert.Equal(708, dwmSource.Bottom);
+            Assert.Equal(800, dwmSource.Width);
+            Assert.Equal(600, dwmSource.Height);
+        }
     }
 }
