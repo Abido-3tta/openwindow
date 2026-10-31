@@ -290,6 +290,10 @@ namespace CodeByatta.UI
                     _currentPipWindow.RestoreAndClose();
                     _currentPipWindow = null;
                     CurrentPipTargetHwnd = IntPtr.Zero;
+                    if (_config.ShowNotificationOnHotkey)
+                    {
+                        HotkeyNotificationHudWindow.ShowHud("Picture-in-Picture", "OFF", "pip", false);
+                    }
                     return;
                 }
             }
@@ -352,7 +356,7 @@ namespace CodeByatta.UI
                     TogglePip(managed);
                     if (_config.ShowNotificationOnHotkey)
                     {
-                        HotkeyNotificationHudWindow.ShowHud("Picture-in-Picture", _currentPipWindow != null ? "ACTIVE" : "CLOSED", "pip", _currentPipWindow != null);
+                        HotkeyNotificationHudWindow.ShowHud("Picture-in-Picture", _currentPipWindow != null ? "ON" : "OFF", "pip", _currentPipWindow != null);
                     }
                     break;
                 case HotkeyAction.ToggleDarkMode:
@@ -386,8 +390,22 @@ namespace CodeByatta.UI
                     return;
                 }
 
-                IntPtr target = hwnd ?? User32.GetForegroundWindow();
-                if (target == IntPtr.Zero || IsOwnProcessOrWindow(target) || ShellSanitizer.IsShellOrTaskbarWindow(target)) return;
+                IntPtr target = hwnd ?? IntPtr.Zero;
+                if (target == IntPtr.Zero)
+                {
+                    if (_currentPipWindow != null)
+                    {
+                        target = new WindowInteropHelper(_currentPipWindow).Handle;
+                    }
+                    else
+                    {
+                        target = User32.GetForegroundWindow();
+                    }
+                }
+
+                if (target == IntPtr.Zero) return;
+                bool isPipWindow = _currentPipWindow != null && target == new WindowInteropHelper(_currentPipWindow).Handle;
+                if (!isPipWindow && (IsOwnProcessOrWindow(target) || ShellSanitizer.IsShellOrTaskbarWindow(target))) return;
 
                 _cinemaFocusOverlay = new CinemaFocusOverlayWindow(_config.CinemaFocusDimLevel);
                 _cinemaFocusOverlay.AttachBehindWindow(target);
@@ -577,7 +595,18 @@ namespace CodeByatta.UI
 
                 if (_cinemaFocusOverlay != null && _cinemaFocusOverlay.IsVisible)
                 {
-                    _cinemaFocusOverlay.AttachBehindWindow(window.Hwnd);
+                    if (_currentPipWindow != null)
+                    {
+                        IntPtr pipHwnd = new WindowInteropHelper(_currentPipWindow).Handle;
+                        if (pipHwnd != IntPtr.Zero)
+                        {
+                            _cinemaFocusOverlay.AttachBehindWindow(pipHwnd);
+                        }
+                    }
+                    else
+                    {
+                        _cinemaFocusOverlay.AttachBehindWindow(window.Hwnd);
+                    }
                 }
 
                 if (_config.ShowTitleBarToolbar && _toolbarView != null)
@@ -699,10 +728,25 @@ namespace CodeByatta.UI
                                 UpdateBorderForWindow(target.Hwnd, true);
                             }
                             _toolbarView?.AttachTo(target, keepVisible: true);
+
+                            if (_cinemaFocusOverlay != null && _cinemaFocusOverlay.IsVisible)
+                            {
+                                _cinemaFocusOverlay.AttachBehindWindow(target.Hwnd);
+                            }
                         }
                     });
                 };
                 _currentPipWindow.Show();
+
+                // If Cinema Focus is active, position overlay strictly behind the PiP window so PiP is never covered!
+                if (_cinemaFocusOverlay != null && _cinemaFocusOverlay.IsVisible)
+                {
+                    IntPtr pipHwnd = new WindowInteropHelper(_currentPipWindow).Handle;
+                    if (pipHwnd != IntPtr.Zero)
+                    {
+                        _cinemaFocusOverlay.AttachBehindWindow(pipHwnd);
+                    }
+                }
             });
         }
 

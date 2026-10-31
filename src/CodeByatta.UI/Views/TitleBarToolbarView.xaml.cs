@@ -890,7 +890,16 @@ namespace CodeByatta.UI.Views
             if (_targetWindow == null) return;
             _autoHideTimer.Stop();
 
-            // Cycle through opacities: 100% -> 80% -> 60% -> 40% -> 20% -> 0% -> 100%
+            // First click opens the interactive popup without changing opacity
+            if (!PopupOpacitySlider.IsOpen)
+            {
+                PopupOpacitySlider.IsOpen = true;
+                _autoHideTimer.Stop();
+                return;
+            }
+
+            // Subsequent clicks while open cycle down by 20%:
+            // 100% -> 80% -> 60% -> 40% -> 20% -> 0% -> 100%
             byte current = _opacityService.GetConfiguredOpacity(_targetWindow.Hwnd);
             if (current == 255) current = _targetWindow.Opacity;
             byte next;
@@ -906,9 +915,6 @@ namespace CodeByatta.UI.Views
 
             UpdateVisualState();
             SaveCurrentWindowPreferenceState();
-
-            // Display interactive horizontal slider popup right underneath
-            PopupOpacitySlider.IsOpen = true;
             _autoHideTimer.Stop();
         }
 
@@ -1207,15 +1213,80 @@ namespace CodeByatta.UI.Views
         private void FullToolbarPill_MouseLeave(object sender, WpfMouseEventArgs e)
         {
             _isMouseOverToolbar = false;
-            if (PopupOpacitySlider != null && PopupOpacitySlider.IsOpen)
+            if (PopupOpacitySlider != null && PopupOpacitySlider.IsOpen && PopupOpacityBorder != null)
             {
-                return;
+                // Check if cursor actually moved into the popup body
+                if (User32.GetCursorPos(out var pt))
+                {
+                    try
+                    {
+                        var popPt = PopupOpacityBorder.PointToScreen(new WpfPoint(0, 0));
+                        var dpi = VisualTreeHelper.GetDpi(this);
+                        double popW = PopupOpacityBorder.ActualWidth * dpi.DpiScaleX;
+                        double popH = PopupOpacityBorder.ActualHeight * dpi.DpiScaleY;
+                        if (pt.X >= popPt.X && pt.X <= popPt.X + popW && pt.Y >= popPt.Y && pt.Y <= popPt.Y + popH)
+                        {
+                            _autoHideTimer.Stop();
+                            return; // Cursor moved into the popup body; keep open!
+                        }
+                    }
+                    catch { }
+                }
+
+                // Cursor left Toolbar and did NOT enter popup: collapse popup
+                PopupOpacitySlider.IsOpen = false;
             }
+
             if (AutoHideEnabled && (_targetWindow == null || !_targetWindow.IsClickThrough))
             {
                 _autoHideTimer.Stop();
                 _autoHideTimer.Interval = TimeSpan.FromMilliseconds(350);
                 _autoHideTimer.Start();
+            }
+        }
+
+        private void PopupOpacityBorder_MouseEnter(object sender, WpfMouseEventArgs e)
+        {
+            _autoHideTimer.Stop();
+        }
+
+        private void PopupOpacityBorder_MouseLeave(object sender, WpfMouseEventArgs e)
+        {
+            if (!User32.GetCursorPos(out var pt))
+            {
+                PopupOpacitySlider.IsOpen = false;
+                return;
+            }
+
+            // Check if cursor is returning to the Toolbar pill
+            bool isOverToolbar = false;
+            try
+            {
+                var p = FullToolbarPill.PointToScreen(new WpfPoint(0, 0));
+                var dpi = VisualTreeHelper.GetDpi(this);
+                double pillW = FullToolbarPill.ActualWidth * dpi.DpiScaleX;
+                double pillH = FullToolbarPill.ActualHeight * dpi.DpiScaleY;
+                isOverToolbar = (pt.X >= p.X && pt.X <= p.X + pillW && pt.Y >= p.Y && pt.Y <= p.Y + pillH);
+            }
+            catch { }
+
+            if (isOverToolbar)
+            {
+                // Returned to Toolbar: collapse ONLY the opacity popup, keep Toolbar open!
+                PopupOpacitySlider.IsOpen = false;
+                _isMouseOverToolbar = true;
+                _autoHideTimer.Stop();
+            }
+            else
+            {
+                // Left both the popup and the Toolbar: collapse both!
+                PopupOpacitySlider.IsOpen = false;
+                _isMouseOverToolbar = false;
+                if (AutoHideEnabled && (_targetWindow == null || !_targetWindow.IsClickThrough))
+                {
+                    Collapse();
+                    SaveCurrentWindowPreferenceState();
+                }
             }
         }
     }

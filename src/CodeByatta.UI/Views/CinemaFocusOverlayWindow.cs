@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Interop;
 using System.Windows.Media;
 using CodeByatta.Core.Interop;
@@ -31,14 +32,37 @@ namespace CodeByatta.UI.Views
             UpdateFullscreenBounds();
         }
 
+        protected override AutomationPeer? OnCreateAutomationPeer()
+        {
+            // Strictly disable UI Automation peer so Windows Dictation / Speech-to-Text (Win + H)
+            // never encounters this fullscreen overlay and routes text injection directly to the focused app!
+            return null;
+        }
+
         private void CinemaFocusOverlayWindow_SourceInitialized(object? sender, EventArgs e)
         {
+            var source = (HwndSource?)PresentationSource.FromVisual(this);
+            source?.AddHook(WndProc);
+
             IntPtr hwnd = new WindowInteropHelper(this).Handle;
             if (hwnd == IntPtr.Zero) return;
 
             long exStyle = (long)User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
             long newStyle = exStyle | User32.WS_EX_TRANSPARENT | User32.WS_EX_NOACTIVATE | User32.WS_EX_TOOLWINDOW;
             User32.SetWindowLongPtr(hwnd, User32.GWL_EXSTYLE, (IntPtr)newStyle);
+            User32.SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
+                User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOZORDER | User32.SWP_FRAMECHANGED);
+        }
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == User32.WM_NCHITTEST)
+            {
+                // Guarantee 100% mouse pass-through directly to underlying windows in the OS Z-order
+                handled = true;
+                return (IntPtr)User32.HTTRANSPARENT;
+            }
+            return IntPtr.Zero;
         }
 
         public void SetDimLevel(double dimLevel)

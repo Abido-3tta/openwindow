@@ -203,6 +203,16 @@ namespace CodeByatta.UI.Views
                     double winRight = winLeft + (ActualWidth * dpi.DpiScaleX);
                     double winBottom = winTop + (ActualHeight * dpi.DpiScaleY);
 
+                    // Allow direct interaction with header action buttons (BtnInteract, BtnRestore, BtnClose)
+                    // The header is 34px high and the buttons occupy the rightmost 190px of the header
+                    double headerHeightPx = 34.0 * dpi.DpiScaleY;
+                    double headerButtonsLeftPx = winRight - (190.0 * dpi.DpiScaleX);
+                    if (screenY >= winTop && screenY <= winTop + headerHeightPx && screenX >= headerButtonsLeftPx)
+                    {
+                        // Pass hit directly to WPF visual tree for button clicks without resize interference!
+                        return IntPtr.Zero;
+                    }
+
                     const int borderThickness = 9;
 
                     bool isLeft = screenX >= winLeft && screenX <= winLeft + borderThickness;

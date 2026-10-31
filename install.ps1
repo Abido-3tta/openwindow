@@ -7,8 +7,9 @@ $ErrorActionPreference = "Stop"
 
 $AppName = "OpenWindow"
 $InstallDir = Join-Path $env:LOCALAPPDATA "Programs\OpenWindow"
-$SourceDir = if (Test-Path (Join-Path $PSScriptRoot "dist\OpenWindow-v1.1.0-win-x64\CodeByatta.UI.exe")) {
-    Join-Path $PSScriptRoot "dist\OpenWindow-v1.1.0-win-x64"
+$LatestDist = Get-ChildItem -Directory (Join-Path $PSScriptRoot "dist\OpenWindow-*-win-x64") -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$SourceDir = if ($LatestDist -and (Test-Path (Join-Path $LatestDist.FullName "CodeByatta.UI.exe"))) {
+    $LatestDist.FullName
 } elseif (Test-Path (Join-Path $PSScriptRoot "publish\CodeByatta.UI.exe")) {
     Join-Path $PSScriptRoot "publish"
 } elseif (Test-Path (Join-Path $PSScriptRoot "src\CodeByatta.UI\bin\Release\net8.0-windows\win-x64\CodeByatta.UI.exe")) {
