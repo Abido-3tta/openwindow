@@ -29,6 +29,7 @@ graph TD
         PipMgr["PipManagerService (DWM Composition)"]
         Hotkeys["HotkeyService (Global Sink)"]
         Config["AppConfig & WindowPreferences"]
+        CrashReporter["CrashReporterService (Dumps & Webhooks)"]
     end
 
     subgraph OS ["Windows OS & Graphics Subsystems"]
@@ -101,6 +102,12 @@ graph TD
 - **Strict Isolation Barrier:** Intercepts window events and service requests across `TopmostService`, `OpacityService`, `WindowTrackingService`, and hotkeys. Blocks shell classes (`Shell_TrayWnd`, `Shell_SecondaryTrayWnd`, `NotifyIconOverflowWindow`, `TopLevelWindowForOverflowXamlIsland`, `TaskListThumbnailWnd`, `Progman`, `WorkerW`) from being altered.
 - **Topmost Priority Enforcer:** Places `Shell_TrayWnd` and `Shell_SecondaryTrayWnd` atop pinned user windows in the Topmost band, ensuring the Windows Taskbar auto-reveals on bottom-edge cursor hovering.
 - **Proactive Attribute Sanitization:** Automatically detects and purges stale `WS_EX_LAYERED` / `WS_EX_TRANSPARENT` flags from shell components, restoring full 100% opacity immediately.
+
+### 8. Crash Diagnostics & Telemetry Pipeline (`CrashReporterService` & `CrashReportDialog`)
+- **Unhandled Exception Traps:** Hooks `AppDomain.CurrentDomain.UnhandledException`, `DispatcherUnhandledException`, and `TaskScheduler.UnobservedTaskException` to prevent silent crashes and loss of forensic data.
+- **Structured JSON Dump Generation:** Writes sanitized exception dumps to `%APPDATA%\CodeByatta\OpenWindow\crash_reports\crash_<timestamp>.json` detailing OS architecture, memory footprint, loaded assemblies, exception hierarchy, and inner stack traces.
+- **Developer Telemetry Dispatch:** Supports asynchronous background webhook delivery (Discord, Telegram, and generic HTTP REST) configured via user settings.
+- **Next-Boot Diagnostic Dialog:** Evaluates previous session state on startup; if crash dumps are detected, prompts the user via `CrashReportDialog` with options to copy report JSON, inspect dump directory, or dismiss.
 
 ---
 

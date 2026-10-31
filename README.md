@@ -127,7 +127,7 @@ cd openwindow
 # Restore & Build Release
 dotnet build OpenWindow.sln -c Release
 
-# Run Unit & Integration Tests (29 tests)
+# Run Unit & Integration Tests (37 tests)
 dotnet test OpenWindow.sln -c Release --no-build
 
 # Package Native ZIP Releases (x64 & x86)
