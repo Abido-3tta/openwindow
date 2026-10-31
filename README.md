@@ -155,6 +155,10 @@ dotnet test OpenWindow.sln -c Release --no-build
 
 ## 🏗️ Architecture & Technology Stack
 
+- **[ARCHITECTURE.md](ARCHITECTURE.md):** Deep architectural decomposition and component contracts.
+- **[FINDINGS.md](FINDINGS.md):** Full Win32, DWM, Ghost Mode, and Platform findings.
+- **[CHANGELOG.md](CHANGELOG.md):** Complete version history and release notes.
+
 ```
 OpenWindow.sln
  ├── src/
@@ -171,7 +175,8 @@ OpenWindow.sln
  ├── install.ps1                       # Automated 1-click installer and background launcher
  ├── uninstall.ps1                     # 1-click uninstaller and registry cleanup
  ├── package-release.ps1               # Multi-architecture native release packager
- └── docs/                             # In-depth architectural and developer documentation
+ ├── FINDINGS.md                       # Comprehensive engineering, DWM, and launch findings
+ └── docs/                             # In-depth architectural, web, and developer documentation
 ```
 
 ---

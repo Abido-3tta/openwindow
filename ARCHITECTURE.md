@@ -116,3 +116,10 @@ graph TD
 - **Win32 Message Sink:** Hotkeys run on a dedicated hidden message-only window (`HwndSource`) to prevent hook dropouts.
 - **Watchdog Timer:** A 3-second watchdog timer automatically re-enforces topmost z-orders against rogue applications that attempt to steal topmost hierarchy.
 - **Resource Hygiene:** Win32 DWM thumbnails, Magnification matrices, and WinEvent hooks are cleanly unregistered on window closure or process termination.
+
+---
+
+## 📚 Related Documentation & Research
+- **[FINDINGS.md](FINDINGS.md):** Deep empirical findings covering DWM composition, `SWP_NOACTIVATE`, Ghost Mode, Reddit rate limits, AlternativeTo submission workflows, and Hacker News ingestion.
+- **[README.md](README.md):** User guide, installation instructions, keyboard shortcuts, and feature overview.
+- **[LAUNCH_POSTS_AND_SEO_CAMPAIGN.md](LAUNCH_POSTS_AND_SEO_CAMPAIGN.md):** Community marketing strategy, live submission tracking, and WindowTop SEO attack plan.
