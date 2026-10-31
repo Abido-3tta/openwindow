@@ -33,6 +33,14 @@
                   MouseDown="Header_MouseDown"
                   MouseWheel="Header_MouseWheel"
                   Cursor="SizeAll">
+                <Grid.ContextMenu>
+                    <ContextMenu Background="#16181F" BorderBrush="#33FFFFFF" Foreground="#FFFFFF">
+                        <MenuItem Header="🗖 Restore &amp; Return to Window" Click="BtnRestore_Click" Foreground="#FFFFFF" />
+                        <MenuItem Header="🎮 Toggle Interactive Control" Click="BtnInteract_Click" Foreground="#FFFFFF" />
+                        <Separator Background="#25FFFFFF" />
+                        <MenuItem Header="✕ Close Picture-in-Picture" Click="BtnClose_Click" Foreground="#FF453A" />
+                    </ContextMenu>
+                </Grid.ContextMenu>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -124,11 +132,12 @@
             <Border Grid.Row="1"
                     x:Name="ThumbnailHost"
                     Background="#000000"
+                    Focusable="True"
                     SizeChanged="ThumbnailHost_SizeChanged"
                     MouseDown="ThumbnailHost_MouseDown"
                     MouseUp="ThumbnailHost_MouseUp"
                     MouseMove="ThumbnailHost_MouseMove"
-                    MouseWheel="ThumbnailHost_MouseWheel"
+                    PreviewMouseWheel="ThumbnailHost_PreviewMouseWheel"
                     Cursor="Arrow" />
         </Grid>
     </Border>

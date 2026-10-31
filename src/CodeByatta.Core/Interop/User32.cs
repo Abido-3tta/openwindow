@@ -111,6 +111,14 @@ namespace CodeByatta.Core.Interop
         public const int WM_MBUTTONDOWN = 0x0207;
         public const int WM_MBUTTONUP = 0x0208;
         public const int WM_MOUSEWHEEL = 0x020A;
+        public const int WM_LBUTTONDBLCLK = 0x0203;
+        public const int WM_RBUTTONDBLCLK = 0x0206;
+        public const int WM_MBUTTONDBLCLK = 0x0209;
+        public const int WM_MOUSEHWHEEL = 0x020E;
+        public const int WM_CONTEXTMENU = 0x007B;
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr RealChildWindowFromPoint(IntPtr hwndParent, POINT ptParentClientCoords);
 
         public const int MK_LBUTTON = 0x0001;
         public const int MK_RBUTTON = 0x0002;
@@ -228,6 +236,16 @@ namespace CodeByatta.Core.Interop
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern int InternalGetWindowText(IntPtr hWnd, [Out] StringBuilder lpString, int nMaxCount);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern IntPtr SendMessageTimeout(
+            IntPtr hWnd,
+            uint msg,
+            IntPtr wParam,
+            IntPtr lParam,
+            uint fuFlags,
+            uint uTimeout,
+            out IntPtr lpdwResult);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern IntPtr SendMessageTimeout(

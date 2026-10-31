@@ -328,6 +328,12 @@ namespace CodeByatta.UI.Views
 
         private void Header_MouseDown(object sender, WpfMouseButtonEventArgs e)
         {
+            if (e.ClickCount == 2)
+            {
+                RestoreAndClose();
+                return;
+            }
+
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 DragMove();
@@ -565,23 +571,24 @@ namespace CodeByatta.UI.Views
             screenX = targetRect.Left + targetLocalX;
             screenY = targetRect.Top + targetLocalY;
 
-            // Route to specific inner child window or control if applicable (defensively guarded against screenshot hangs)
+            // Route to specific inner child window or control
             var screenPoint = new User32.POINT(screenX, screenY);
-            IntPtr candidateHwnd = IntPtr.Zero;
+            targetHwnd = _targetWindow.Hwnd;
+
             try
             {
-                candidateHwnd = User32.WindowFromPoint(screenPoint);
+                var targetClientPt = screenPoint;
+                User32.ScreenToClient(_targetWindow.Hwnd, ref targetClientPt);
+                IntPtr child = User32.RealChildWindowFromPoint(_targetWindow.Hwnd, targetClientPt);
+                if (child != IntPtr.Zero && child != _targetWindow.Hwnd)
+                {
+                    var childClientPt = screenPoint;
+                    User32.ScreenToClient(child, ref childClientPt);
+                    IntPtr subChild = User32.RealChildWindowFromPoint(child, childClientPt);
+                    targetHwnd = (subChild != IntPtr.Zero && subChild != child) ? subChild : child;
+                }
             }
             catch { }
-
-            if (candidateHwnd != IntPtr.Zero && (candidateHwnd == _targetWindow.Hwnd || User32.GetAncestor(candidateHwnd, User32.GA_ROOT) == _targetWindow.Hwnd))
-            {
-                targetHwnd = candidateHwnd;
-            }
-            else
-            {
-                targetHwnd = _targetWindow.Hwnd;
-            }
 
             var clientPoint = screenPoint;
             User32.ScreenToClient(targetHwnd, ref clientPoint);
@@ -615,10 +622,55 @@ namespace CodeByatta.UI.Views
             }
         }
 
+        private void ForwardMouseWheel(IntPtr targetHwnd, short delta, int screenX, int screenY)
+        {
+            if (targetHwnd == IntPtr.Zero || !User32.IsWindow(targetHwnd)) return;
+
+            uint currentThread = User32.GetCurrentThreadId();
+            uint targetThread = User32.GetWindowThreadProcessId(targetHwnd, out _);
+            bool attached = false;
+
+            if (currentThread != targetThread && targetThread != 0)
+            {
+                attached = User32.AttachThreadInput(currentThread, targetThread, true);
+            }
+
+            try
+            {
+                int keyFlags = 0;
+                if ((Keyboard.Modifiers & ModifierKeys.Control) != 0) keyFlags |= User32.MK_CONTROL;
+                if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0) keyFlags |= User32.MK_SHIFT;
+
+                IntPtr wParam = (IntPtr)((delta << 16) | (keyFlags & 0xFFFF));
+                IntPtr lParam = (IntPtr)(((screenY & 0xFFFF) << 16) | (screenX & 0xFFFF));
+
+                // Send synchronously with timeout to allow immediate message handling while thread input is attached
+                User32.SendMessageTimeout(targetHwnd, (uint)User32.WM_MOUSEWHEEL, wParam, lParam, User32.SMTO_ABORTIFHUNG, 50, out _);
+
+                // Also forward to root window if child window didn't consume it
+                if (targetHwnd != _targetWindow.Hwnd && User32.IsWindow(_targetWindow.Hwnd))
+                {
+                    User32.SendMessageTimeout(_targetWindow.Hwnd, (uint)User32.WM_MOUSEWHEEL, wParam, lParam, User32.SMTO_ABORTIFHUNG, 50, out _);
+                }
+            }
+            finally
+            {
+                if (attached)
+                {
+                    User32.AttachThreadInput(currentThread, targetThread, false);
+                }
+            }
+        }
+
         private void ThumbnailHost_MouseDown(object sender, WpfMouseButtonEventArgs e)
         {
             if (!_isInteractMode)
             {
+                if (e.ClickCount == 2)
+                {
+                    RestoreAndClose();
+                    return;
+                }
                 if (e.LeftButton == MouseButtonState.Pressed) DragMove();
                 return;
             }
@@ -629,8 +681,25 @@ namespace CodeByatta.UI.Views
                 WpfPoint pt = e.GetPosition(ThumbnailHost);
                 if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
                 {
-                    uint msg = e.ChangedButton == MouseButton.Right ? (uint)User32.WM_RBUTTONDOWN : (uint)User32.WM_LBUTTONDOWN;
-                    IntPtr wParam = e.ChangedButton == MouseButton.Right ? (IntPtr)User32.MK_RBUTTON : (IntPtr)User32.MK_LBUTTON;
+                    uint msg;
+                    IntPtr wParam;
+
+                    if (e.ChangedButton == MouseButton.Right)
+                    {
+                        msg = e.ClickCount == 2 ? (uint)User32.WM_RBUTTONDBLCLK : (uint)User32.WM_RBUTTONDOWN;
+                        wParam = (IntPtr)User32.MK_RBUTTON;
+                    }
+                    else if (e.ChangedButton == MouseButton.Middle)
+                    {
+                        msg = e.ClickCount == 2 ? (uint)User32.WM_MBUTTONDBLCLK : (uint)User32.WM_MBUTTONDOWN;
+                        wParam = (IntPtr)User32.MK_MBUTTON;
+                    }
+                    else
+                    {
+                        msg = e.ClickCount == 2 ? (uint)User32.WM_LBUTTONDBLCLK : (uint)User32.WM_LBUTTONDOWN;
+                        wParam = (IntPtr)User32.MK_LBUTTON;
+                    }
+
                     ForwardMouseMessage(hwnd, msg, wParam, lParam);
                 }
             }
@@ -649,10 +718,23 @@ namespace CodeByatta.UI.Views
                 }
 
                 WpfPoint pt = e.GetPosition(ThumbnailHost);
-                if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
+                if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out int screenX, out int screenY))
                 {
-                    uint msg = e.ChangedButton == MouseButton.Right ? (uint)User32.WM_RBUTTONUP : (uint)User32.WM_LBUTTONUP;
-                    ForwardMouseMessage(hwnd, msg, IntPtr.Zero, lParam);
+                    if (e.ChangedButton == MouseButton.Right)
+                    {
+                        ForwardMouseMessage(hwnd, (uint)User32.WM_RBUTTONUP, IntPtr.Zero, lParam);
+                        // In Win32, trigger WM_CONTEXTMENU with screen coordinates
+                        IntPtr screenLParam = (IntPtr)(((screenY & 0xFFFF) << 16) | (screenX & 0xFFFF));
+                        ForwardMouseMessage(hwnd, (uint)User32.WM_CONTEXTMENU, hwnd, screenLParam);
+                    }
+                    else if (e.ChangedButton == MouseButton.Middle)
+                    {
+                        ForwardMouseMessage(hwnd, (uint)User32.WM_MBUTTONUP, IntPtr.Zero, lParam);
+                    }
+                    else
+                    {
+                        ForwardMouseMessage(hwnd, (uint)User32.WM_LBUTTONUP, IntPtr.Zero, lParam);
+                    }
                 }
             }
             catch { }
@@ -678,7 +760,7 @@ namespace CodeByatta.UI.Views
             catch { }
         }
 
-        private void ThumbnailHost_MouseWheel(object sender, WpfMouseWheelEventArgs e)
+        private void ThumbnailHost_PreviewMouseWheel(object sender, WpfMouseWheelEventArgs e)
         {
             if (!_isInteractMode) return;
 
@@ -688,9 +770,7 @@ namespace CodeByatta.UI.Views
                 if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out _, out int screenX, out int screenY))
                 {
                     short delta = (short)e.Delta;
-                    IntPtr wParam = (IntPtr)((delta << 16) & unchecked((int)0xFFFF0000));
-                    IntPtr screenLParam = (IntPtr)(((screenY & 0xFFFF) << 16) | (screenX & 0xFFFF));
-                    ForwardMouseMessage(hwnd, (uint)User32.WM_MOUSEWHEEL, wParam, screenLParam);
+                    ForwardMouseWheel(hwnd, delta, screenX, screenY);
                 }
             }
             catch { }
