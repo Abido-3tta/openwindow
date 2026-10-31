@@ -1,0 +1,20 @@
+<Window x:Class="CodeByatta.UI.Views.TopmostBorderOverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Topmost Border Overlay"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        IsHitTestVisible="False"
+        ResizeMode="NoResize">
+
+    <Border x:Name="OverlayBorder"
+            BorderBrush="Red"
+            BorderThickness="3"
+            Background="Transparent"
+            CornerRadius="4"
+            IsHitTestVisible="False" />
+</Window>

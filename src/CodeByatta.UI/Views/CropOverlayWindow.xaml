@@ -1,0 +1,47 @@
+<Window x:Class="CodeByatta.UI.Views.CropOverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Crop Window Region"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="#55000000"
+        Topmost="True"
+        ShowInTaskbar="False"
+        Cursor="Cross"
+        KeyDown="Window_KeyDown"
+        MouseDown="Window_MouseDown"
+        MouseMove="Window_MouseMove"
+        MouseUp="Window_MouseUp">
+
+    <Canvas x:Name="OverlayCanvas">
+        <Border x:Name="SelectionBox"
+                BorderBrush="#0078D7"
+                BorderThickness="2"
+                Background="#220078D7"
+                Visibility="Collapsed" />
+
+        <Border x:Name="DimensionBadge"
+                Background="#CC000000"
+                CornerRadius="4"
+                Padding="6,2"
+                Visibility="Collapsed">
+            <TextBlock x:Name="TxtDimensions"
+                       Foreground="#FFFFFF"
+                       FontSize="11"
+                       FontWeight="SemiBold" />
+        </Border>
+
+        <!-- Instruction banner at top -->
+        <Border Canvas.Top="20"
+                HorizontalAlignment="Center"
+                Background="#D91A1A1A"
+                BorderBrush="#44FFFFFF"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="16,6">
+            <TextBlock Text="Click and drag to crop a region for PiP mode. Press Esc to cancel."
+                       Foreground="#FFFFFF"
+                       FontSize="12" />
+        </Border>
+    </Canvas>
+</Window>

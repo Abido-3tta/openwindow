@@ -1,0 +1,48 @@
+## Build and Output
+bin/
+obj/
+publish/
+publish-*/
+dist/
+out/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+## Visual Studio & Rider
+.vs/
+.idea/
+*.rsuser
+_ReSharper*/
+
+## Crash and Dump files
+*.dmp
+*.mdmp
+*.crash
+
+## Windows & Environment
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+
+## Local Test Results and Logs
+TestResults/
+*.log
+*.tmp
+
+## Agent, AI Protocols & Skill Workspaces
+.agent/
+.agent.md
+*.agent.md
+.skills/
+skills/
+.cursor/
+.brain/
+docs/superpowers/
+*.plan.md

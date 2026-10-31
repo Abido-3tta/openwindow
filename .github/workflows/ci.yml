@@ -1,0 +1,55 @@
+name: CI & Release Build
+
+on:
+  push:
+    branches: [ master, main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  build-and-test:
+    name: Build, Test & Package Native Desktop Apps
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8.0 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore Dependencies
+      run: dotnet restore OpenWindow.sln
+
+    - name: Build Solution (Release)
+      run: dotnet build OpenWindow.sln -c Release --no-restore
+
+    - name: Run Unit & Integration Tests
+      run: dotnet test OpenWindow.sln -c Release --no-build --verbosity normal
+
+    - name: Package Standalone Native Releases (x64 and x86)
+      shell: powershell
+      run: |
+        .\package-release.ps1 -Version "1.1.0"
+
+    - name: Upload x64 Standalone Native Zip
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenWindow-v1.1.0-win-x64
+        path: dist/OpenWindow-v1.1.0-win-x64.zip
+
+    - name: Upload x86 Standalone Native Zip
+      uses: actions/upload-artifact@v4
+      with:
+        name: OpenWindow-v1.1.0-win-x86
+        path: dist/OpenWindow-v1.1.0-win-x86.zip
+
+    - name: Upload Checksums
+      uses: actions/upload-artifact@v4
+      with:
+        name: checksums
+        path: dist/checksums.txt

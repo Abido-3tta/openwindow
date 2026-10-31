@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{647F1305-4C87-4736-8E07-93ECDCE0111F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeByatta.Core", "src\CodeByatta.Core\CodeByatta.Core.csproj", "{591A7493-2F35-4D35-88AD-8C4C4ED0EB5A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeByatta.UI", "src\CodeByatta.UI\CodeByatta.UI.csproj", "{574D09C4-2FC0-4E33-8E19-802809546EE4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{53AE6E75-B6DB-4A52-9786-65C8BBDD8B52}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeByatta.Core.Tests", "tests\CodeByatta.Core.Tests\CodeByatta.Core.Tests.csproj", "{DDA992C2-A88E-4C46-BADE-E535591E79C7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodeByatta.Integration.Tests", "tests\CodeByatta.Integration.Tests\CodeByatta.Integration.Tests.csproj", "{EBFCF659-3E34-481B-B0EA-9F21D45A6507}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{591A7493-2F35-4D35-88AD-8C4C4ED0EB5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{591A7493-2F35-4D35-88AD-8C4C4ED0EB5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{591A7493-2F35-4D35-88AD-8C4C4ED0EB5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{591A7493-2F35-4D35-88AD-8C4C4ED0EB5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{574D09C4-2FC0-4E33-8E19-802809546EE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{574D09C4-2FC0-4E33-8E19-802809546EE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{574D09C4-2FC0-4E33-8E19-802809546EE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{574D09C4-2FC0-4E33-8E19-802809546EE4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDA992C2-A88E-4C46-BADE-E535591E79C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDA992C2-A88E-4C46-BADE-E535591E79C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDA992C2-A88E-4C46-BADE-E535591E79C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDA992C2-A88E-4C46-BADE-E535591E79C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBFCF659-3E34-481B-B0EA-9F21D45A6507}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBFCF659-3E34-481B-B0EA-9F21D45A6507}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBFCF659-3E34-481B-B0EA-9F21D45A6507}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBFCF659-3E34-481B-B0EA-9F21D45A6507}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{591A7493-2F35-4D35-88AD-8C4C4ED0EB5A} = {647F1305-4C87-4736-8E07-93ECDCE0111F}
+		{574D09C4-2FC0-4E33-8E19-802809546EE4} = {647F1305-4C87-4736-8E07-93ECDCE0111F}
+		{DDA992C2-A88E-4C46-BADE-E535591E79C7} = {53AE6E75-B6DB-4A52-9786-65C8BBDD8B52}
+		{EBFCF659-3E34-481B-B0EA-9F21D45A6507} = {53AE6E75-B6DB-4A52-9786-65C8BBDD8B52}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,797 @@
+<Window x:Class="CodeByatta.UI.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.modernwpf.com/2019"
+        ui:ThemeManager.IsThemeAware="True"
+        Title="OpenWindow - Settings"
+        Width="980"
+        Height="670"
+        MinWidth="840"
+        MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True"
+        Background="#181818"
+        Foreground="#EEEEEE">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="230" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar Navigation (Matching WindowTop Drawer) -->
+        <Border Grid.Column="0" Background="#141414" BorderBrush="#20FFFFFF" BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- App Brand Header -->
+                <StackPanel Grid.Row="0" Margin="16,18,16,20">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="☰" FontSize="16" Foreground="#888888" Margin="0,0,12,0" VerticalAlignment="Center" Cursor="Hand" />
+                        <TextBlock Text="OpenWindow" FontSize="18" FontWeight="Bold" Foreground="#4CC2FF" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="v1.1.0 (Production Release)" FontSize="11" Foreground="#777777" Margin="28,2,0,0" />
+                </StackPanel>
+
+                <!-- Navigation List -->
+                <ListBox Grid.Row="1"
+                         x:Name="NavList"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         SelectionChanged="NavList_SelectionChanged"
+                         SelectedIndex="0">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="14,10" />
+                            <Setter Property="Margin" Value="6,2" />
+                            <Setter Property="Cursor" Value="Hand" />
+                            <Setter Property="Foreground" Value="#CCCCCC" />
+                            <Setter Property="FontSize" Value="13" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="Bd"
+                                                CornerRadius="6"
+                                                Background="Transparent"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#292929" />
+                                                <Setter Property="Foreground" Value="#FFFFFF" />
+                                                <Setter Property="FontWeight" Value="SemiBold" />
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="Bd" Property="Background" Value="#1F1F1F" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+
+                    <ListBoxItem Tag="Advanced">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⭐" Margin="0,0,10,0" FontSize="14" Foreground="#FF3B30" />
+                            <TextBlock Text="Advanced Features" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ListBoxItem>
+
+                    <ListBoxItem Tag="Toolbar">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🖥️" Margin="0,0,10,0" FontSize="14" />
+                            <TextBlock Text="ToolBar Settings" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ListBoxItem>
+
+                    <ListBoxItem Tag="Hotkeys">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⌨" Margin="0,0,10,0" FontSize="14" />
+                            <TextBlock Text="HotKeys Settings" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ListBoxItem>
+
+                    <ListBoxItem Tag="Exclusions">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔻" Margin="0,0,10,0" FontSize="14" />
+                            <TextBlock Text="Exclusions Settings" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ListBoxItem>
+
+                    <ListBoxItem Tag="WindowProfiles">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🪟" Margin="0,0,10,0" FontSize="14" Foreground="#30D158" />
+                            <TextBlock Text="Saved Windows" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ListBoxItem>
+
+                    <ListBoxItem Tag="About">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="@" Margin="0,0,10,0" FontSize="14" FontWeight="Bold" Foreground="#4CC2FF" />
+                            <TextBlock Text="About OpenWindow" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ListBoxItem>
+                </ListBox>
+
+                <!-- Bottom Save & Reset Buttons -->
+                <StackPanel Grid.Row="2" Margin="14,16">
+                    <Button x:Name="BtnSaveSettings"
+                            Content="Save &amp; Apply"
+                            Click="BtnSaveSettings_Click"
+                            Background="#E81123"
+                            Foreground="White"
+                            FontWeight="SemiBold"
+                            Padding="0,9"
+                            HorizontalAlignment="Stretch"
+                            Cursor="Hand" />
+                    <Button Content="Restore Defaults"
+                            Click="BtnRestoreDefaults_Click"
+                            Background="#18FFFFFF"
+                            Foreground="#AAAAAA"
+                            BorderBrush="#33FFFFFF"
+                            BorderThickness="1"
+                            FontSize="11"
+                            Margin="0,8,0,0"
+                            Padding="0,6"
+                            Cursor="Hand" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content Area -->
+        <Grid Grid.Column="1" Margin="32,20,32,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Modern Titlebar & Toolbar Live Visual Preview Card -->
+            <Border Grid.Row="0"
+                    Background="#16181F"
+                    BorderBrush="#25FFFFFF"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="14,10"
+                    Margin="0,0,0,16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Preview Controls & Mode Switcher -->
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🛸 Titlebar Toolbar Live Representation" FontWeight="SemiBold" FontSize="12.5" Foreground="#EEEEEE" />
+                            <Border Background="#2030D158" CornerRadius="4" Padding="6,2" Margin="10,0,0,0">
+                                <TextBlock Text="In-Window Docked" FontSize="10.5" Foreground="#30D158" FontWeight="SemiBold" />
+                            </Border>
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Text="Preview State:" FontSize="11" Foreground="#888888" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <RadioButton x:Name="RadioPreviewExpanded" Content="Expanded Pill" IsChecked="True" FontSize="11" Foreground="#CCCCCC" Margin="0,0,10,0" Checked="RadioPreviewState_Changed" />
+                            <RadioButton x:Name="RadioPreviewCollapsed" Content="Collapsed Anchor" FontSize="11" Foreground="#CCCCCC" Checked="RadioPreviewState_Changed" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Simulated Window Titlebar with Docked Toolbar -->
+                    <Border Grid.Row="1"
+                            Background="#20222A"
+                            BorderBrush="#33FFFFFF"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Height="44"
+                            ClipToBounds="True">
+                        <Grid>
+                            <!-- Simulated Window Icon & Title (Left) -->
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="12,0,0,0">
+                                <Path Data="M0,2 A2,2 0 0,1 2,0 L12,0 A2,2 0 0,1 14,2 L14,10 A2,2 0 0,1 12,12 L2,12 A2,2 0 0,1 0,10 Z"
+                                      Stroke="#66FFFFFF" StrokeThickness="1" Fill="Transparent" Width="13" Height="11" Margin="0,0,8,0" />
+                                <TextBlock Text="Targeted Application Window" FontSize="11.5" Foreground="#888888" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <!-- Docked Toolbar Preview (Center) -->
+                            <!-- A: Expanded Toolbar Pill Representation -->
+                            <Border x:Name="PreviewExpandedPill"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Background="#F5181A20"
+                                    BorderBrush="#55FFFFFF"
+                                    BorderThickness="1"
+                                    CornerRadius="16"
+                                    Padding="6,3"
+                                    Visibility="Visible">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.5" Color="#000000" />
+                                </Border.Effect>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <!-- Drag Handle -->
+                                    <Border Padding="4,4" Cursor="SizeWE" ToolTip="Horizontal Slider Grip (Constrained within titlebar)">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Data="M1,2 A1,1 0 1,1 1,4 A1,1 0 1,1 1,2 M1,7 A1,1 0 1,1 1,9 A1,1 0 1,1 1,7 M1,12 A1,1 0 1,1 1,14 A1,1 0 1,1 1,12"
+                                                  Fill="#888888" Width="3" Height="13" />
+                                            <Path Data="M1,2 A1,1 0 1,1 1,4 A1,1 0 1,1 1,2 M1,7 A1,1 0 1,1 1,9 A1,1 0 1,1 1,7 M1,12 A1,1 0 1,1 1,14 A1,1 0 1,1 1,12"
+                                                  Fill="#888888" Width="3" Height="13" Margin="1.5,0,0,0" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Pin -->
+                                    <Border Background="#55FF3B30" CornerRadius="5" Padding="6,3" Margin="2,0" ToolTip="Always-on-Top (Alt+Z)">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Path Data="M9,2 L7,4 L7,8 L4,11 L4,12 L8,12 L8,16 L9,17 L10,16 L10,12 L14,12 L14,11 L11,8 L11,4 L9,2 Z"
+                                                  Fill="White" Width="11" Height="12" Stretch="Uniform" />
+                                            <Ellipse Width="5" Height="5" Fill="#FF3B30" Margin="4,0,0,0" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Opacity -->
+                                    <Border Background="#26FFFFFF" CornerRadius="5" Padding="6,3" Margin="2,0" ToolTip="Transparency (Alt+A)">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Path Data="M0,4 A2,2 0 0,1 2,2 L10,2 A2,2 0 0,1 12,4 L12,12 A2,2 0 0,1 10,14 L2,14 A2,2 0 0,1 0,12 Z M4,0 A2,2 0 0,1 6,0 L14,0 A2,2 0 0,1 16,2 L16,10 A2,2 0 0,1 14,12"
+                                                  Stroke="White" StrokeThickness="1.1" Fill="Transparent" Width="12" Height="11" Stretch="Uniform" />
+                                            <TextBlock Text="80%" FontSize="10" FontWeight="Bold" Foreground="#4CC2FF" Margin="4,0,0,0" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Hover Opacity Reveal (DisableWhenMouseAbove) -->
+                                    <Border Background="#5530D158" CornerRadius="5" Padding="6,3" Margin="2,0" ToolTip="Hover Opacity Reveal (Auto-solid on hover)">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Path Data="M0,7 C2,2 10,2 12,7 C10,12 2,12 0,7 Z M6,4.5 A2.5,2.5 0 1,1 6,9.5 A2.5,2.5 0 1,1 6,4.5 Z"
+                                                  Stroke="White" StrokeThickness="1.1" Fill="Transparent" Width="12" Height="11" Stretch="Uniform" />
+                                            <Ellipse Width="5" Height="5" Fill="#30D158" Margin="4,0,0,0" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Click-Through -->
+                                    <Border Background="#26FFFFFF" CornerRadius="5" Padding="6,3" Margin="2,0" ToolTip="Click-Through Mode (Alt+C)">
+                                        <Path Data="M2,2 L8,14 L11,9 L16,9 Z"
+                                              Fill="White" Width="11" Height="11" Stretch="Uniform" />
+                                    </Border>
+
+                                    <!-- PiP -->
+                                    <Border Background="#26FFFFFF" CornerRadius="5" Padding="6,3" Margin="2,0" ToolTip="Picture-in-Picture (Alt+Q)">
+                                        <Path Data="M0,2 A2,2 0 0,1 2,0 L14,0 A2,2 0 0,1 16,2 L16,12 A2,2 0 0,1 14,14 L2,14 A2,2 0 0,1 0,12 Z M7,6 A1,1 0 0,1 8,5 L14,5 A1,1 0 0,1 15,6 L15,12 A1,1 0 0,1 14,13 L8,13 A1,1 0 0,1 7,12 Z"
+                                              Fill="White" Width="11" Height="11" Stretch="Uniform" />
+                                    </Border>
+
+                                    <!-- Crop -->
+                                    <Border Background="#26FFFFFF" CornerRadius="5" Padding="6,3" Margin="2,0" ToolTip="Crop to PiP">
+                                        <Path Data="M3,0 L3,11 L14,11 M0,3 L11,3 L11,14"
+                                              Stroke="White" StrokeThickness="1.2" Fill="Transparent" Width="11" Height="11" Stretch="Uniform" />
+                                    </Border>
+
+                                    <!-- Dark Mode -->
+                                    <Border Background="#26FFFFFF" CornerRadius="5" Padding="6,3" Margin="2,0" ToolTip="Inverted Dark Mode (Alt+D)">
+                                        <Path Data="M7,1 A6,6 0 1,0 13,8 A5,5 0 0,1 7,1 Z"
+                                              Fill="White" Width="11" Height="11" Stretch="Uniform" />
+                                    </Border>
+
+                                    <!-- Settings Gear -->
+                                    <Border Background="#26FFFFFF" CornerRadius="5" Padding="6,3" Margin="2,0" ToolTip="Settings">
+                                        <Path Data="M7,0 L9,0 L9.3,2 C9.8,2.2 10.3,2.5 10.7,2.8 L12.5,2 L14,3.5 L13.2,5.3 C13.5,5.7 13.8,6.2 14,6.7 L16,7 L16,9 L14,9.3 C13.8,9.8 13.5,10.3 13.2,10.7 L14,12.5 L12.5,14 L10.7,13.2 C10.3,13.5 9.8,13.8 9.3,14 L9,16 L7,16 L6.7,14 C6.2,13.8 5.7,13.5 5.3,13.2 L3.5,14 L2,12.5 L2.8,10.7 C2.5,10.3 2.2,9.8 2,9.3 L0,9 L0,7 L2,6.7 C2.2,6.2 2.5,5.7 2.8,5.3 L2,3.5 L3.5,2 L5.3,2.8 C5.7,2.5 6.2,2.2 6.7,2 Z M8,5 A3,3 0 1,0 8,11 A3,3 0 1,0 8,5 Z"
+                                              Fill="#4CC2FF" Width="11" Height="11" Stretch="Uniform" />
+                                    </Border>
+
+                                    <!-- Collapse Chevron -->
+                                    <Border Background="#26FFFFFF" CornerRadius="5" Padding="6,3" Margin="2,0" ToolTip="Collapse into Titlebar Anchor">
+                                        <Path Data="M1,6 L5,2 L9,6"
+                                              Stroke="#CCCCCC" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="9" Height="7" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- B: Collapsed Header Anchor Handle Representation -->
+                            <Border x:Name="PreviewCollapsedAnchor"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Background="#EE1A1C24"
+                                    BorderBrush="#6630D158"
+                                    BorderThickness="1.5"
+                                    CornerRadius="13"
+                                    Padding="8,4,12,4"
+                                    Visibility="Collapsed">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.5" Color="#000000" />
+                                </Border.Effect>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <!-- Move Grip -->
+                                    <Border Padding="0,0,6,0">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Path Data="M1,2 A1,1 0 1,1 1,4 A1,1 0 1,1 1,2 M1,7 A1,1 0 1,1 1,9 A1,1 0 1,1 1,7 M1,12 A1,1 0 1,1 1,14 A1,1 0 1,1 1,12"
+                                                  Fill="#777777" Width="3" Height="12" />
+                                            <Path Data="M1,2 A1,1 0 1,1 1,4 A1,1 0 1,1 1,2 M1,7 A1,1 0 1,1 1,9 A1,1 0 1,1 1,7 M1,12 A1,1 0 1,1 1,14 A1,1 0 1,1 1,12"
+                                                  Fill="#777777" Width="3" Height="12" Margin="1.5,0,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                    <!-- Mini Logo -->
+                                    <Path Data="M0,2 A2,2 0 0,1 2,0 L12,0 A2,2 0 0,1 14,2 L14,10 A2,2 0 0,1 12,12 L2,12 A2,2 0 0,1 0,10 Z M2,3 L12,3 M7,6 L12,6 L12,10 L7,10 Z"
+                                          Stroke="#4CC2FF" StrokeThickness="1.2" Fill="Transparent" Width="13" Height="11" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="OpenWindow" FontSize="11" FontWeight="SemiBold" Foreground="#EEEEEE" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                    <Path Data="M0,1 L4,6 L8,1"
+                                          Stroke="#30D158" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Window Caption Controls (Right) -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Stretch">
+                                <Border Width="40" Background="Transparent" ToolTip="Minimize">
+                                    <Path Data="M0,5 L10,5" Stroke="#888888" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Border Width="40" Background="Transparent" ToolTip="Maximize">
+                                    <Rectangle Width="9" Height="9" Stroke="#888888" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Border Width="40" Background="Transparent" ToolTip="Close">
+                                    <Path Data="M0,0 L9,9 M9,0 L0,9" Stroke="#888888" StrokeThickness="1" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Dynamic Panels Container -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,32,0">
+                <Grid>
+                    <!-- 1. Advanced Features Panel (Screenshot 2) -->
+                    <StackPanel x:Name="PanelAdvanced" Visibility="Visible">
+                        <TextBlock Text="Advanced Features Settings" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />
+
+                        <!-- Startup Setting -->
+                        <DockPanel Margin="0,6">
+                            <StackPanel>
+                                <TextBlock Text="Start OpenWindow automatically with Windows" VerticalAlignment="Center" FontSize="13" />
+                                <TextBlock Text="Runs silently in the system tray when you sign in." Foreground="#888888" FontSize="11" />
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="ToggleStartWithWindows" HorizontalAlignment="Right" OnContent="On" OffContent="Off" IsOn="True" />
+                        </DockPanel>
+
+                        <Separator Margin="0,12" Background="#26FFFFFF" />
+
+                        <TextBlock Text="Set Top feature" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="Avoid the situation when the window is behind another window. A topmost window will never be behind another non-topmost window."
+                                   TextWrapping="Wrap" Foreground="#A0A0A0" FontSize="12" Margin="0,0,0,14" />
+
+                        <DockPanel Margin="0,6">
+                            <TextBlock Text="Highlight topmost windows with border" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch x:Name="ToggleHighlightBorder" HorizontalAlignment="Right" OnContent="On" OffContent="Off" IsOn="True" />
+                        </DockPanel>
+
+                        <DockPanel Margin="0,6">
+                            <TextBlock Text="Temporarily disable Always on Top when the window is maximized" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch x:Name="ToggleDisableMaximized" HorizontalAlignment="Right" OnContent="On" OffContent="Off" IsOn="False" />
+                        </DockPanel>
+
+                        <!-- Interactive Border Color Picker & Swatches -->
+                        <StackPanel Margin="0,8">
+                            <DockPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Border color" VerticalAlignment="Center" FontSize="13" />
+                                    <TextBlock Text="Click the swatch or palette buttons to choose a custom accent color." Foreground="#888888" FontSize="11" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Border x:Name="BorderColorPreview"
+                                            Width="38" Height="26"
+                                            Background="Red"
+                                            CornerRadius="4"
+                                            Margin="0,0,8,0"
+                                            BorderBrush="#88FFFFFF"
+                                            BorderThickness="1.5"
+                                            Cursor="Hand"
+                                            ToolTip="Click to open full color dialog"
+                                            MouseDown="BorderColorPreview_MouseDown" />
+                                    <Button Content="Change Color..." Click="BtnPickBorderColor_Click" Padding="10,4" Background="#2A2A2A" Foreground="White" Margin="0,0,6,0" Cursor="Hand" />
+                                    <Button Content="Reset" Click="BtnResetBorderColor_Click" Padding="10,4" Background="#222222" Foreground="#AAAAAA" Cursor="Hand" />
+                                </StackPanel>
+                            </DockPanel>
+
+                            <!-- Color Presets Row -->
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" HorizontalAlignment="Right">
+                                <TextBlock Text="Quick presets:" Foreground="#888888" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <Button Width="20" Height="20" Background="#FF0000" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="Red" Tag="#FF0000" Click="BtnPresetBorderColor_Click" />
+                                <Button Width="20" Height="20" Background="#30D158" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="Bright Green" Tag="#30D158" Click="BtnPresetBorderColor_Click" />
+                                <Button Width="20" Height="20" Background="#00A2FF" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="Cyan" Tag="#00A2FF" Click="BtnPresetBorderColor_Click" />
+                                <Button Width="20" Height="20" Background="#FF9500" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="Orange" Tag="#FF9500" Click="BtnPresetBorderColor_Click" />
+                                <Button Width="20" Height="20" Background="#AF52DE" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="Purple" Tag="#AF52DE" Click="BtnPresetBorderColor_Click" />
+                                <Button Width="20" Height="20" Background="#FFD60A" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="Gold" Tag="#FFD60A" Click="BtnPresetBorderColor_Click" />
+                                <Button Width="20" Height="20" Background="#FFFFFF" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="White" Tag="#FFFFFF" Click="BtnPresetBorderColor_Click" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <DockPanel Margin="0,8">
+                            <TextBlock Text="Default border width" VerticalAlignment="Center" FontSize="13" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Width="260">
+                                <Slider x:Name="SliderBorderWidth" Minimum="1" Maximum="10" Value="3.07" Width="140" Margin="0,0,10,0" ValueChanged="SliderBorderWidth_ValueChanged" />
+                                <TextBlock x:Name="TxtBorderWidth" Text="3.07 px" Width="45" VerticalAlignment="Center" />
+                                <Button Content="Reset" Click="BtnResetBorderWidth_Click" Padding="10,3" Background="#333333" Foreground="White" />
+                            </StackPanel>
+                        </DockPanel>
+
+                        <DockPanel Margin="0,6">
+                            <TextBlock Text="Show notification when toggled by hotkey" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch x:Name="ToggleHotkeyNotification" HorizontalAlignment="Right" OnContent="On" OffContent="Off" IsOn="False" />
+                        </DockPanel>
+
+                        <Separator Margin="0,16" Background="#26FFFFFF" />
+
+                        <TextBlock Text="PiP Crop activation" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="PiP lets you crop an app into a smaller window, interact with it, and hide the original window if needed. When you choose a crop region on the window, PiP mode is enabled with a suitable crop and size."
+                                   TextWrapping="Wrap" Foreground="#A0A0A0" FontSize="12" Margin="0,0,0,8" />
+                        
+                        <Border Background="#2030D158" BorderBrush="#4030D158" BorderThickness="1" CornerRadius="4" Padding="8,4" Margin="0,0,0,12" HorizontalAlignment="Left">
+                            <TextBlock Text="✓ Unlocked Pro Features: 100% Free &amp; Unrestricted in OpenWindow" FontSize="11" Foreground="#30D158" FontWeight="SemiBold" />
+                        </Border>
+
+                        <DockPanel Margin="0,6">
+                            <TextBlock Text="Hide the original window when applying cropping" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch x:Name="ToggleHideOriginalCrop" HorizontalAlignment="Right" OnContent="On" OffContent="Off" IsOn="True" />
+                        </DockPanel>
+
+                        <Separator Margin="0,16" Background="#26FFFFFF" />
+
+                        <TextBlock Text="Opacity &amp; Transparency" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="Smart transparency behavior for managed windows." Foreground="#A0A0A0" FontSize="12" Margin="0,0,0,8" />
+
+                        <DockPanel Margin="0,6">
+                            <StackPanel>
+                                <TextBlock Text="Auto-disable opacity when mouse is over window" VerticalAlignment="Center" FontSize="13" />
+                                <TextBlock Text="Temporarily restores 100% opacity when cursor is on window body so text is clear and readable." Foreground="#888888" FontSize="11" />
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="ToggleDisableOpacityHover" HorizontalAlignment="Right" OnContent="On" OffContent="Off" IsOn="True" />
+                        </DockPanel>
+                    </StackPanel>
+
+                    <!-- 2. ToolBar Settings Panel (Screenshot 5) -->
+                    <StackPanel x:Name="PanelToolbar" Visibility="Collapsed">
+                        <TextBlock Text="ToolBar Settings" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Set-Top" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolSetTop" OnContent="On" OffContent="Off" IsOn="True" />
+                            <TextBlock Grid.Column="2" Text="Alt + Z" Foreground="#888888" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Anchor" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolAnchor" OnContent="On" OffContent="Off" IsOn="True" />
+                            <TextBlock Grid.Column="2" Text="None" Foreground="#888888" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="PiP" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolPip" OnContent="On" OffContent="Off" IsOn="True" />
+                            <TextBlock Grid.Column="2" Text="Alt + Q" Foreground="#888888" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Crop" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolCrop" OnContent="On" OffContent="Off" IsOn="True" />
+                            <TextBlock Grid.Column="2" Text="None" Foreground="#888888" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Set-Dark" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolDark" OnContent="On" OffContent="Off" IsOn="True" />
+                            <TextBlock Grid.Column="2" Text="Alt + D" Foreground="#888888" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Opacity" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolOpacity" OnContent="On" OffContent="Off" IsOn="True" />
+                            <TextBlock Grid.Column="2" Text="Alt + A" Foreground="#888888" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Glass" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolGlass" OnContent="On" OffContent="Off" IsOn="False" />
+                            <TextBlock Grid.Column="2" Text="None" Foreground="#888888" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Separator Margin="0,16" Background="#26FFFFFF" />
+
+                        <TextBlock Text="Hover time" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="Delay before auto-expanding when cursor hovers on the top anchor." Foreground="#888888" FontSize="12" Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal" Margin="0,4">
+                            <Slider x:Name="SliderHoverTime" Minimum="100" Maximum="1000" Value="300" Width="220" TickFrequency="50" IsSnapToTickEnabled="True" ValueChanged="SliderHoverTime_ValueChanged" />
+                            <TextBlock x:Name="TxtHoverTime" Text="300ms" Margin="14,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#4CC2FF" />
+                        </StackPanel>
+
+                        <Separator Margin="0,16" Background="#26FFFFFF" />
+
+                        <TextBlock Text="Integrate with the minimize button" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="Show the toolbar by hovering the minimize button of the window." Foreground="#888888" FontSize="12" Margin="0,0,0,8" />
+                        <ui:ToggleSwitch x:Name="ToggleIntegrateMinimize" OnContent="On" OffContent="Off" IsOn="False" Margin="0,4" />
+
+                        <Separator Margin="0,16" Background="#26FFFFFF" />
+
+                        <!-- Interactive Arrow Color Picker & Swatches -->
+                        <StackPanel Margin="0,8">
+                            <DockPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Arrow (Anchor handle) color" VerticalAlignment="Center" FontSize="13" />
+                                    <TextBlock Text="Choose the accent color of the collapsed anchor chevron." Foreground="#888888" FontSize="11" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Border x:Name="ArrowColorPreview"
+                                            Width="38" Height="26"
+                                            Background="#30D158"
+                                            CornerRadius="4"
+                                            Margin="0,0,8,0"
+                                            BorderBrush="#88FFFFFF"
+                                            BorderThickness="1.5"
+                                            Cursor="Hand"
+                                            ToolTip="Click to open full color dialog"
+                                            MouseDown="ArrowColorPreview_MouseDown" />
+                                    <Button Content="Change Color..." Click="BtnPickArrowColor_Click" Padding="10,4" Background="#2A2A2A" Foreground="White" Margin="0,0,6,0" Cursor="Hand" />
+                                    <Button Content="Reset" Click="BtnResetArrowColor_Click" Padding="10,4" Background="#222222" Foreground="#AAAAAA" Cursor="Hand" />
+                                </StackPanel>
+                            </DockPanel>
+
+                            <!-- Color Presets Row for Arrow -->
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0" HorizontalAlignment="Right">
+                                <TextBlock Text="Quick presets:" Foreground="#888888" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <Button Width="20" Height="20" Background="#30D158" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="Bright Green" Tag="#30D158" Click="BtnPresetArrowColor_Click" />
+                                <Button Width="20" Height="20" Background="#00A2FF" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="Cyan" Tag="#00A2FF" Click="BtnPresetArrowColor_Click" />
+                                <Button Width="20" Height="20" Background="#FF0000" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="Red" Tag="#FF0000" Click="BtnPresetArrowColor_Click" />
+                                <Button Width="20" Height="20" Background="#FF9500" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="Orange" Tag="#FF9500" Click="BtnPresetArrowColor_Click" />
+                                <Button Width="20" Height="20" Background="#AF52DE" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="Purple" Tag="#AF52DE" Click="BtnPresetArrowColor_Click" />
+                                <Button Width="20" Height="20" Background="#FFD60A" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="Gold" Tag="#FFD60A" Click="BtnPresetArrowColor_Click" />
+                                <Button Width="20" Height="20" Background="#FFFFFF" BorderThickness="0" Margin="2,0" Cursor="Hand" ToolTip="White" Tag="#FFFFFF" Click="BtnPresetArrowColor_Click" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <DockPanel Margin="0,8">
+                            <TextBlock Text="Auto-hide toolbar when mouse leaves" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch x:Name="ToggleAutoHide" HorizontalAlignment="Right" OnContent="On" OffContent="Off" IsOn="True" />
+                        </DockPanel>
+
+                        <DockPanel Margin="0,8">
+                            <StackPanel>
+                                <TextBlock Text="Remember toolbar position per window" VerticalAlignment="Center" FontSize="13" />
+                                <TextBlock Text="Each window and tab remembers its own exact toolbar drag location." Foreground="#888888" FontSize="11" />
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="ToggleRememberPosition" HorizontalAlignment="Right" OnContent="On" OffContent="Off" IsOn="True" />
+                        </DockPanel>
+
+                        <DockPanel Margin="0,8">
+                            <StackPanel>
+                                <TextBlock Text="Require click to expand toolbar" VerticalAlignment="Center" FontSize="13" />
+                                <TextBlock Text="Only expand when clicked on anchor handle, ignoring mouse hover movements." Foreground="#888888" FontSize="11" />
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="ToggleClickToExpandToolbar" HorizontalAlignment="Right" OnContent="On" OffContent="Off" IsOn="False" />
+                        </DockPanel>
+                    </StackPanel>
+
+                    <!-- 3. HotKeys Settings Panel (Screenshot 3) -->
+                    <StackPanel x:Name="PanelHotkeys" Visibility="Collapsed">
+                        <TextBlock Text="HotKeys Settings" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />
+
+                        <TextBlock Text="Always-on-Top" FontSize="15" FontWeight="SemiBold" Margin="0,4,0,8" />
+                        <DockPanel Margin="0,4">
+                            <TextBlock Text="Toggle SET-TOP (Always-on-top) mode:" VerticalAlignment="Center" />
+                            <Border Background="#2A2A2A" CornerRadius="4" Padding="12,4" HorizontalAlignment="Right">
+                                <TextBlock Text="Alt + Z" FontWeight="SemiBold" Foreground="#4CC2FF" />
+                            </Border>
+                        </DockPanel>
+                        <DockPanel Margin="0,4">
+                            <TextBlock Text="Disable SET-TOP (Always-on-top) mode for all windows:" VerticalAlignment="Center" />
+                            <Border Background="#2A2A2A" CornerRadius="4" Padding="12,4" HorizontalAlignment="Right">
+                                <TextBlock Text="None" Foreground="#888888" />
+                            </Border>
+                        </DockPanel>
+
+                        <Separator Margin="0,12" Background="#26FFFFFF" />
+
+                        <TextBlock Text="Opacity (window transparency) and Click-Through" FontSize="15" FontWeight="SemiBold" Margin="0,4,0,8" />
+                        <DockPanel Margin="0,4">
+                            <TextBlock Text="Hold modifier key and scroll mouse wheel to adjust opacity:" VerticalAlignment="Center" />
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <ComboBox x:Name="ComboWheelModifier" SelectedIndex="0" Width="90" Margin="0,0,8,0">
+                                    <ComboBoxItem Content="Alt" />
+                                    <ComboBoxItem Content="Ctrl" />
+                                    <ComboBoxItem Content="Disabled" />
+                                </ComboBox>
+                                <ComboBox x:Name="ComboWheelSensitivity" SelectedIndex="0" Width="100">
+                                    <ComboBoxItem Content="10 Units" />
+                                    <ComboBoxItem Content="5 Units" />
+                                    <ComboBoxItem Content="20 Units" />
+                                </ComboBox>
+                            </StackPanel>
+                        </DockPanel>
+                        <DockPanel Margin="0,4">
+                            <TextBlock Text="Toggle OPACITY (window transparency) mode:" VerticalAlignment="Center" />
+                            <Border Background="#2A2A2A" CornerRadius="4" Padding="12,4" HorizontalAlignment="Right">
+                                <TextBlock Text="Alt + A" FontWeight="SemiBold" Foreground="#4CC2FF" />
+                            </Border>
+                        </DockPanel>
+                        <DockPanel Margin="0,4">
+                            <TextBlock Text="Toggle Click-Through mode (enables opacity &amp; set-top):" VerticalAlignment="Center" />
+                            <Border Background="#2A2A2A" CornerRadius="4" Padding="12,4" HorizontalAlignment="Right">
+                                <TextBlock Text="Alt + C" FontWeight="SemiBold" Foreground="#4CC2FF" />
+                            </Border>
+                        </DockPanel>
+                        <DockPanel Margin="0,4">
+                            <TextBlock Text="Toggle GLASS (Smart Transparency) mode:" VerticalAlignment="Center" />
+                            <Border Background="#2A2A2A" CornerRadius="4" Padding="12,4" HorizontalAlignment="Right">
+                                <TextBlock Text="None" Foreground="#888888" />
+                            </Border>
+                        </DockPanel>
+
+                        <Separator Margin="0,12" Background="#26FFFFFF" />
+
+                        <TextBlock Text="Picture-in-Picture (PiP) and Crop" FontSize="15" FontWeight="SemiBold" Margin="0,4,0,8" />
+                        <DockPanel Margin="0,4">
+                            <TextBlock Text="Toggle PiP (Picture-in-Picture) mode:" VerticalAlignment="Center" />
+                            <Border Background="#2A2A2A" CornerRadius="4" Padding="12,4" HorizontalAlignment="Right">
+                                <TextBlock Text="Alt + Q" FontWeight="SemiBold" Foreground="#4CC2FF" />
+                            </Border>
+                        </DockPanel>
+                        <DockPanel Margin="0,4">
+                            <TextBlock Text="Toggle INTERACT mode (control window via PiP):" VerticalAlignment="Center" />
+                            <Border Background="#2A2A2A" CornerRadius="4" Padding="12,4" HorizontalAlignment="Right">
+                                <TextBlock Text="Alt + I" FontWeight="SemiBold" Foreground="#4CC2FF" />
+                            </Border>
+                        </DockPanel>
+                        <DockPanel Margin="0,4">
+                            <TextBlock Text="Choose crop region in picture-in-picture mode:" VerticalAlignment="Center" />
+                            <Border Background="#2A2A2A" CornerRadius="4" Padding="12,4" HorizontalAlignment="Right">
+                                <TextBlock Text="None" Foreground="#888888" />
+                            </Border>
+                        </DockPanel>
+                        <DockPanel Margin="0,4">
+                            <TextBlock Text="Disable PiP (Picture-in-Picture) mode for all windows:" VerticalAlignment="Center" />
+                            <Border Background="#2A2A2A" CornerRadius="4" Padding="12,4" HorizontalAlignment="Right">
+                                <TextBlock Text="None" Foreground="#888888" />
+                            </Border>
+                        </DockPanel>
+
+                        <Separator Margin="0,12" Background="#26FFFFFF" />
+
+                        <TextBlock Text="Dark Mode" FontSize="15" FontWeight="SemiBold" Margin="0,4,0,8" />
+                        <DockPanel Margin="0,4">
+                            <TextBlock Text="Toggle SET-DARK mode:" VerticalAlignment="Center" />
+                            <Border Background="#2A2A2A" CornerRadius="4" Padding="12,4" HorizontalAlignment="Right">
+                                <TextBlock Text="Alt + D" FontWeight="SemiBold" Foreground="#4CC2FF" />
+                            </Border>
+                        </DockPanel>
+                    </StackPanel>
+
+                    <!-- 4. Exclusions Settings Panel (Screenshot 4) -->
+                    <StackPanel x:Name="PanelExclusions" Visibility="Collapsed">
+                        <TextBlock Text="Exclusions Settings" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />
+                        <TextBlock Text="Use this option to disable/enable OpenWindow for specific programs." Foreground="#888888" FontSize="12" Margin="0,0,0,10" />
+
+                        <TextBlock Text="Blacklist / Whitelist the following programs:" FontWeight="SemiBold" Margin="0,0,0,6" />
+                        <ListBox x:Name="ListExclusions" Height="140" Background="#222222" BorderBrush="#33FFFFFF" Foreground="White" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,8">
+                            <TextBox x:Name="TxtNewExclusion" Width="200" Margin="0,0,8,0" Background="#2A2A2A" Foreground="White" BorderBrush="#44FFFFFF" />
+                            <Button Content="+ Add Process" Click="BtnAddExclusion_Click" Padding="10,4" Background="#333333" Foreground="White" Margin="0,0,8,0" />
+                            <Button Content="Remove" Click="BtnRemoveExclusion_Click" Padding="10,4" Background="#333333" Foreground="White" />
+                        </StackPanel>
+
+                        <StackPanel Margin="0,10">
+                            <RadioButton x:Name="RadioBlacklist" Content="Blacklist the specified programs" IsChecked="True" Margin="0,4" />
+                            <RadioButton x:Name="RadioWhitelist" Content="Whitelist the specified programs" Margin="0,4" />
+                        </StackPanel>
+
+                        <Separator Margin="0,12" Background="#26FFFFFF" />
+
+                        <TextBlock Text="Game Mode detection" FontSize="15" FontWeight="SemiBold" Margin="0,4,0,6" />
+                        <DockPanel Margin="0,4">
+                            <TextBlock Text="Disable when Game Mode detected" VerticalAlignment="Center" />
+                            <ui:ToggleSwitch x:Name="ToggleGameMode" HorizontalAlignment="Right" OnContent="On" OffContent="Off" IsOn="True" />
+                        </DockPanel>
+                    </StackPanel>
+
+                    <!-- 5. Window Profiles & Memory Panel -->
+                    <StackPanel x:Name="PanelWindowProfiles" Visibility="Collapsed">
+                        <TextBlock Text="Saved Window Profiles" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />
+                        <TextBlock Text="OpenWindow remembers your personalized topmost, opacity, and toolbar positions per application." Foreground="#888888" FontSize="12" Margin="0,0,0,12" />
+
+                        <TextBlock Text="Configured Applications &amp; History:" FontWeight="SemiBold" Margin="0,0,0,6" />
+                        <ListBox x:Name="ListWindowProfiles" Height="200" Background="#222222" BorderBrush="#33FFFFFF" Foreground="White" SelectionMode="Single">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="4,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="180" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="🪟" Margin="0,0,8,0" Foreground="#4CC2FF" />
+                                            <TextBlock Text="{Binding ProcessName}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <WrapPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <Border Background="#33FF3B30" CornerRadius="3" Padding="6,2" Margin="2,0" Visibility="{Binding TopmostBadgeVisibility}">
+                                                <TextBlock Text="📌 Topmost" FontSize="10" Foreground="#FF3B30" FontWeight="SemiBold" />
+                                            </Border>
+                                            <Border Background="#334CC2FF" CornerRadius="3" Padding="6,2" Margin="2,0">
+                                                <TextBlock Text="{Binding OpacitySummary}" FontSize="10" Foreground="#4CC2FF" FontWeight="SemiBold" />
+                                            </Border>
+                                            <Border Background="#3330D158" CornerRadius="3" Padding="6,2" Margin="2,0" Visibility="{Binding ClickThroughBadgeVisibility}">
+                                                <TextBlock Text="🖱️ Click-Through" FontSize="10" Foreground="#30D158" FontWeight="SemiBold" />
+                                            </Border>
+                                            <Border Background="#22FFFFFF" CornerRadius="3" Padding="6,2" Margin="2,0">
+                                                <TextBlock Text="{Binding PositionSummary}" FontSize="10" Foreground="#AAAAAA" />
+                                            </Border>
+                                        </WrapPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,10">
+                            <TextBox x:Name="TxtNewProfileProcess" Width="180" Margin="0,0,8,0" Background="#2A2A2A" Foreground="White" BorderBrush="#44FFFFFF" />
+                            <Button Content="+ Add Application" Click="BtnAddProfile_Click" Padding="10,4" Background="#333333" Foreground="White" Margin="0,0,8,0" Cursor="Hand" />
+                            <Button Content="Remove Selected" Click="BtnRemoveProfile_Click" Padding="10,4" Background="#333333" Foreground="White" Margin="0,0,8,0" Cursor="Hand" />
+                            <Button Content="Clear All Profiles" Click="BtnClearProfiles_Click" Padding="10,4" Background="#222222" Foreground="#FF453A" Cursor="Hand" />
+                        </StackPanel>
+
+                        <Separator Margin="0,12" Background="#26FFFFFF" />
+
+                        <DockPanel Margin="0,4">
+                            <StackPanel>
+                                <TextBlock Text="Auto-remember window preferences" VerticalAlignment="Center" FontSize="13" />
+                                <TextBlock Text="Automatically persist changes made via the floating toolbar to this list." Foreground="#888888" FontSize="11" />
+                            </StackPanel>
+                            <ui:ToggleSwitch x:Name="ToggleRememberProfiles" HorizontalAlignment="Right" OnContent="On" OffContent="Off" IsOn="True" />
+                        </DockPanel>
+                    </StackPanel>
+
+                    <!-- 6. About Panel (Screenshot 1) -->
+                    <StackPanel x:Name="PanelAbout" Visibility="Collapsed">
+                        <TextBlock Text="About OpenWindow" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />
+                        
+                        <TextBlock Text="Version Information" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="Version: v1.1.0 (Production Release)" Foreground="#888888" Margin="0,0,0,14" />
+
+                        <DockPanel Margin="0,4,0,12">
+                            <TextBlock Text="Automatically check for updates on startup" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch x:Name="ToggleAutoUpdates" HorizontalAlignment="Right" OnContent="On" OffContent="Off" IsOn="True" />
+                        </DockPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <Button x:Name="BtnCheckUpdates" Content="Check for Updates Now" Click="BtnCheckUpdates_Click" Padding="14,6" Background="#2A2A2E" Foreground="White" Cursor="Hand" />
+                            <TextBlock x:Name="TxtUpdateStatus" Text="" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="#AAAAAA" FontSize="12" />
+                        </StackPanel>
+
+                        <TextBlock Text="OpenWindow enables you to manage your windows practically and efficiently with several excellent features."
+                                   TextWrapping="Wrap" Margin="0,0,0,10" Foreground="#BBBBBB" />
+                        <TextBlock Text="With OpenWindow, you can easily set windows on top with one button click or via hotkeys. In addition, OpenWindow also provides a unique set of features such as a dark mode for any window, PiP mode for any window, opacity, click-through, and more."
+                                   TextWrapping="Wrap" Margin="0,0,0,10" Foreground="#BBBBBB" />
+                        <TextBlock Text="This product aims to help you be more productive on your computer by managing your windows efficiently with 100% free, unlocked native capabilities."
+                                   TextWrapping="Wrap" Margin="0,0,0,16" Foreground="#BBBBBB" />
+
+                        <Border Background="#222222" BorderBrush="#33FFFFFF" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,4,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Engine Architecture:" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4" />
+                                <TextBlock Text="• Microsoft .NET 8.0 WindowsDesktop (C# 12 / WPF / XAML)" Foreground="#AAAAAA" />
+                                <TextBlock Text="• Desktop Window Manager (DWM) Direct Thumbnail Composition API" Foreground="#AAAAAA" />
+                                <TextBlock Text="• Windows Magnification API (GPU Fullscreen Color Inversion Matrix)" Foreground="#AAAAAA" />
+                                <TextBlock Text="• Win32 User32 Hooking &amp; Real-time Window State Tracking" Foreground="#AAAAAA" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>

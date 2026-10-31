@@ -1,0 +1,117 @@
+<Window x:Class="CodeByatta.UI.Views.PipWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Picture in Picture"
+        Width="420"
+        Height="270"
+        MinWidth="220"
+        MinHeight="150"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ResizeMode="CanResizeWithGrip">
+
+    <Border Background="#1C1C1C"
+            BorderBrush="#40FFFFFF"
+            BorderThickness="1"
+            CornerRadius="10"
+            ClipToBounds="True">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="34" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Header / Drag Bar -->
+            <Grid Grid.Row="0"
+                  Background="#25272F"
+                  MouseDown="Header_MouseDown"
+                  Cursor="SizeAll">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0">
+                    <TextBlock Text="🖼️" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center" />
+                    <TextBlock x:Name="TxtTitle"
+                               Text="PiP Stream"
+                               Foreground="#FFFFFF"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center" />
+                    <Border x:Name="CroppedBadge"
+                            Background="#D90078D7"
+                            CornerRadius="3"
+                            Padding="4,1"
+                            Margin="6,0,0,0"
+                            Visibility="Collapsed">
+                        <TextBlock Text="CROPPED" FontSize="9" FontWeight="Bold" Foreground="White" />
+                    </Border>
+                </StackPanel>
+
+                <!-- Actions -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0">
+                    <!-- Interact Control Mode Toggle Button -->
+                    <Button x:Name="BtnInteract"
+                            ToolTip="Toggle Interactive Control (click &amp; control the live target window with mouse)"
+                            Click="BtnInteract_Click"
+                            Background="#2630D158"
+                            BorderBrush="#4030D158"
+                            BorderThickness="1"
+                            Padding="6,2"
+                            Margin="0,0,6,0"
+                            Cursor="Hand">
+                        <TextBlock x:Name="TxtInteract" Text="🖱️ Control: ON" FontSize="10" FontWeight="Bold" Foreground="#30D158" />
+                    </Button>
+
+                    <!-- Restore / Return Original Window Button -->
+                    <Button x:Name="BtnRestore"
+                            ToolTip="Restore and Return to Original Window"
+                            Click="BtnRestore_Click"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="6,3"
+                            Cursor="Hand">
+                        <TextBlock Text="↩️ Return" FontSize="11" Foreground="#4CC2FF" FontWeight="SemiBold" />
+                    </Button>
+
+                    <!-- Opacity Toggle -->
+                    <Button x:Name="BtnOpacityToggle"
+                            ToolTip="Toggle PiP Window Transparency"
+                            Click="BtnOpacityToggle_Click"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="6,3"
+                            Cursor="Hand">
+                        <TextBlock Text="🪟" FontSize="11" Foreground="#CCCCCC" />
+                    </Button>
+
+                    <!-- Close -->
+                    <Button x:Name="BtnClose"
+                            ToolTip="Close PiP and restore window"
+                            Click="BtnClose_Click"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Padding="6,3"
+                            Cursor="Hand">
+                        <TextBlock Text="✕" FontSize="11" Foreground="#CCCCCC" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Thumbnail Client Area (DWM Renders Directly Here + User Mouse Clicks Forwarded) -->
+            <Border Grid.Row="1"
+                    x:Name="ThumbnailHost"
+                    Background="#101216"
+                    SizeChanged="ThumbnailHost_SizeChanged"
+                    MouseDown="ThumbnailHost_MouseDown"
+                    MouseUp="ThumbnailHost_MouseUp"
+                    MouseMove="ThumbnailHost_MouseMove"
+                    MouseWheel="ThumbnailHost_MouseWheel"
+                    Cursor="Cross" />
+        </Grid>
+    </Border>
+</Window>
