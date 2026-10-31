@@ -289,8 +289,9 @@
                 <!-- Opacity Button / Percentage Display -->
                 <Button x:Name="BtnOpacity"
                         Style="{StaticResource ToolbarPillButton}"
-                        ToolTip="Transparency (Alt+A) - Click to cycle or scroll mouse wheel"
+                        ToolTip="Transparency (Alt+A) - Hover to open, click to cycle, or scroll wheel"
                         Click="BtnOpacity_Click"
+                        MouseEnter="BtnOpacity_MouseEnter"
                         MouseWheel="BtnOpacity_MouseWheel">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <!-- Layered Windows Vector Path -->
@@ -450,7 +451,8 @@
                     Padding="14,12"
                     Width="250"
                     MouseEnter="PopupOpacityBorder_MouseEnter"
-                    MouseLeave="PopupOpacityBorder_MouseLeave">
+                    MouseLeave="PopupOpacityBorder_MouseLeave"
+                    MouseWheel="PopupOpacityBorder_MouseWheel">
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="20" ShadowDepth="4" Opacity="0.8" Color="#000000" />
                 </Border.Effect>
@@ -478,7 +480,7 @@
                         <TextBlock x:Name="TxtSliderPercentBadge" Text="100%" FontSize="11.5" FontWeight="Bold" Foreground="#E2E8F0" HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
 
-                    <!-- Horizontal Slider (5 to 100%) with Fluent Silver Style -->
+                    <!-- Horizontal Slider (5 to 100%) with Fluent Silver Style & Instant Click-to-Point -->
                     <Slider Grid.Row="1"
                             x:Name="SliderOpacity"
                             Style="{StaticResource FluentSilverSlider}"
@@ -488,6 +490,7 @@
                             SmallChange="5"
                             LargeChange="10"
                             IsSnapToTickEnabled="False"
+                            IsMoveToPointEnabled="True"
                             ValueChanged="SliderOpacity_ValueChanged"
                             Cursor="Hand"
                             Height="24"

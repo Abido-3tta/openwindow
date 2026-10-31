@@ -127,6 +127,39 @@ namespace CodeByatta.UI.Views
             BtnDarkMode.Visibility = _config.ShowDarkModeButton ? Visibility.Visible : Visibility.Collapsed;
             BtnCinemaFocus.Visibility = _config.ShowCinemaFocusButton ? Visibility.Visible : Visibility.Collapsed;
             AutoHideEnabled = _config.AutoHideToolbar;
+
+            // Apply modern Frosted Glass Acrylic styling when Aero Glass option is active
+            bool isGlass = _config.ShowGlassButton;
+            if (isGlass)
+            {
+                FullToolbarPill.Background = new SolidColorBrush(MediaColor.FromArgb(0x55, 0x10, 0x12, 0x18));
+                FullToolbarPill.BorderBrush = new SolidColorBrush(MediaColor.FromArgb(0x55, 0x94, 0xA3, 0xB8));
+                if (PopupOpacityBorder != null)
+                {
+                    PopupOpacityBorder.Background = new SolidColorBrush(MediaColor.FromArgb(0x66, 0x10, 0x12, 0x18));
+                    PopupOpacityBorder.BorderBrush = new SolidColorBrush(MediaColor.FromArgb(0x66, 0x94, 0xA3, 0xB8));
+                }
+            }
+            else
+            {
+                FullToolbarPill.Background = new SolidColorBrush(MediaColor.FromArgb(0xF0, 0x0A, 0x0B, 0x0E));
+                FullToolbarPill.BorderBrush = new SolidColorBrush(MediaColor.FromArgb(0xFF, 0x25, 0x27, 0x30));
+                if (PopupOpacityBorder != null)
+                {
+                    PopupOpacityBorder.Background = new SolidColorBrush(MediaColor.FromArgb(0xFA, 0x0B, 0x0C, 0x0F));
+                    PopupOpacityBorder.BorderBrush = new SolidColorBrush(MediaColor.FromArgb(0xFF, 0x26, 0x28, 0x32));
+                }
+            }
+
+            try
+            {
+                IntPtr hwnd = new WindowInteropHelper(this).Handle;
+                if (hwnd != IntPtr.Zero)
+                {
+                    DwmApi.ApplyAcrylicBackdrop(hwnd, isGlass);
+                }
+            }
+            catch { }
         }
 
         private void TitleBarToolbarView_SourceInitialized(object? sender, EventArgs e)
@@ -135,6 +168,10 @@ namespace CodeByatta.UI.Views
             IntPtr exStyle = User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
             long newStyle = (long)exStyle | User32.WS_EX_NOACTIVATE | User32.WS_EX_TOOLWINDOW;
             User32.SetWindowLongPtr(hwnd, User32.GWL_EXSTYLE, (IntPtr)newStyle);
+            if (_config.ShowGlassButton)
+            {
+                DwmApi.ApplyAcrylicBackdrop(hwnd, true);
+            }
         }
 
         public void AttachTo(ManagedWindow? target, bool keepVisible = false)
@@ -181,7 +218,7 @@ namespace CodeByatta.UI.Views
             }
 
             _targetWindow = target;
-            if (_targetWindow == null || !User32.IsWindow(_targetWindow.Hwnd) || User32.IsIconic(_targetWindow.Hwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && _targetWindow.Hwnd == App.CurrentPipTargetHwnd))
+            if (_targetWindow == null || !User32.IsWindow(_targetWindow.Hwnd) || User32.IsIconic(_targetWindow.Hwnd) || App.IsPipTargetWindow(_targetWindow.Hwnd))
             {
                 Hide();
                 return;
@@ -334,7 +371,7 @@ namespace CodeByatta.UI.Views
             var ctHwnds = _opacityService.ActiveClickThroughWindows;
             foreach (var ctHwnd in ctHwnds)
             {
-                if (!User32.IsWindow(ctHwnd) || User32.IsIconic(ctHwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && ctHwnd == App.CurrentPipTargetHwnd)) continue;
+                if (!User32.IsWindow(ctHwnd) || User32.IsIconic(ctHwnd) || App.IsPipTargetWindow(ctHwnd)) continue;
                 if (!User32.GetWindowRect(ctHwnd, out RECT ctBounds)) continue;
                 if (ctBounds.Left < -10000 || ctBounds.Width <= 50 || ctBounds.Height <= 50) continue;
 
@@ -380,7 +417,7 @@ namespace CodeByatta.UI.Views
                 }
             }
 
-            if (_targetWindow == null || !User32.IsWindow(_targetWindow.Hwnd) || User32.IsIconic(_targetWindow.Hwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && _targetWindow.Hwnd == App.CurrentPipTargetHwnd))
+            if (_targetWindow == null || !User32.IsWindow(_targetWindow.Hwnd) || User32.IsIconic(_targetWindow.Hwnd) || App.IsPipTargetWindow(_targetWindow.Hwnd))
             {
                 if (IsVisible) Hide();
                 return;
@@ -541,7 +578,7 @@ namespace CodeByatta.UI.Views
 
             foreach (var tHwnd in transparentHwnds)
             {
-                if (App.CurrentPipTargetHwnd != IntPtr.Zero && tHwnd == App.CurrentPipTargetHwnd) continue;
+                if (App.IsPipTargetWindow(tHwnd)) continue;
                 if (!User32.IsWindow(tHwnd) || User32.IsIconic(tHwnd)) continue;
                 if (_opacityService.IsClickThrough(tHwnd)) continue;
 
@@ -592,7 +629,7 @@ namespace CodeByatta.UI.Views
 
         public void UpdatePosition(RECT bounds, bool? forceExpanded = null)
         {
-            if (_targetWindow == null || User32.IsIconic(_targetWindow.Hwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && _targetWindow.Hwnd == App.CurrentPipTargetHwnd))
+            if (_targetWindow == null || User32.IsIconic(_targetWindow.Hwnd) || App.IsPipTargetWindow(_targetWindow.Hwnd))
             {
                 Hide();
                 return;
@@ -775,7 +812,7 @@ namespace CodeByatta.UI.Views
 
         private void SaveCurrentWindowPreferenceState()
         {
-            if (_targetWindow == null || ShellSanitizer.IsShellOrTaskbarWindow(_targetWindow.Hwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && _targetWindow.Hwnd == App.CurrentPipTargetHwnd)) return;
+            if (_targetWindow == null || ShellSanitizer.IsShellOrTaskbarWindow(_targetWindow.Hwnd) || App.IsPipTargetWindow(_targetWindow.Hwnd)) return;
 
             // Update live per-window state strictly isolated to this HWND
             if (!_windowPreferencesByHwnd.TryGetValue(_targetWindow.Hwnd, out var pref))
@@ -883,6 +920,28 @@ namespace CodeByatta.UI.Views
             _topmostService.ToggleTopmost(_targetWindow.Hwnd);
             UpdateVisualState();
             SaveCurrentWindowPreferenceState();
+        }
+
+        private void BtnOpacity_MouseEnter(object sender, WpfMouseEventArgs e)
+        {
+            _autoHideTimer.Stop();
+            if (_targetWindow != null)
+            {
+                PopupOpacitySlider.IsOpen = true;
+                _autoHideTimer.Stop();
+            }
+        }
+
+        private void PopupOpacityBorder_MouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (_targetWindow == null) return;
+            _autoHideTimer.Stop();
+
+            double step = 5.0;
+            double current = SliderOpacity.Value;
+            double next = Math.Clamp(e.Delta > 0 ? current + step : current - step, 5.0, 100.0);
+            SliderOpacity.Value = next;
+            e.Handled = true;
         }
 
         private void BtnOpacity_Click(object sender, RoutedEventArgs e)

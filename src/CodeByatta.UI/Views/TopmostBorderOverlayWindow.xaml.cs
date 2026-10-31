@@ -47,9 +47,7 @@ namespace CodeByatta.UI.Views
 
         public void BringBorderToTop()
         {
-            IntPtr targetRoot = User32.GetAncestor(TargetHwnd, User32.GA_ROOT);
-            IntPtr pipRoot = App.CurrentPipTargetHwnd != IntPtr.Zero ? User32.GetAncestor(App.CurrentPipTargetHwnd, User32.GA_ROOT) : IntPtr.Zero;
-            if (pipRoot != IntPtr.Zero && (TargetHwnd == App.CurrentPipTargetHwnd || (targetRoot != IntPtr.Zero && targetRoot == pipRoot)))
+            if (App.IsPipTargetWindow(TargetHwnd))
             {
                 Hide();
                 return;
@@ -66,10 +64,7 @@ namespace CodeByatta.UI.Views
 
         public void UpdateBounds()
         {
-            IntPtr targetRoot = User32.GetAncestor(TargetHwnd, User32.GA_ROOT);
-            IntPtr pipRoot = App.CurrentPipTargetHwnd != IntPtr.Zero ? User32.GetAncestor(App.CurrentPipTargetHwnd, User32.GA_ROOT) : IntPtr.Zero;
-
-            if (!User32.IsWindow(TargetHwnd) || User32.IsIconic(TargetHwnd) || (pipRoot != IntPtr.Zero && (TargetHwnd == App.CurrentPipTargetHwnd || (targetRoot != IntPtr.Zero && targetRoot == pipRoot))))
+            if (!User32.IsWindow(TargetHwnd) || User32.IsIconic(TargetHwnd) || App.IsPipTargetWindow(TargetHwnd))
             {
                 Hide();
                 return;

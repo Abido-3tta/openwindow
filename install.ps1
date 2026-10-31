@@ -132,6 +132,14 @@ if ($Uninstall) {
 
 Write-Host "Installing $AppName..." -ForegroundColor Cyan
 
+# 0. Backup user configuration if exists to guarantee settings persistence across all reinstalls
+$ConfigDir = Join-Path $env:APPDATA "CodeByatta\OpenWindow"
+$ConfigFile = Join-Path $ConfigDir "config.json"
+$ConfigBackup = Join-Path $env:TEMP "OpenWindow_config_backup.json"
+if (Test-Path $ConfigFile) {
+    Copy-Item -Path $ConfigFile -Destination $ConfigBackup -Force
+}
+
 # 1. Clean up windows & stop existing process if running
 Invoke-WindowRestoration
 Get-Process -Name "CodeByatta.UI" -ErrorAction SilentlyContinue | Stop-Process -Force
@@ -148,6 +156,12 @@ if (Test-Path $InstallDir) {
 # 3. Copy Published Binaries
 Write-Host "Copying application binaries to $InstallDir..."
 Copy-Item -Path "$SourceDir\*" -Destination $InstallDir -Recurse -Force
+
+# 3b. Restore user configuration if missing
+if ((Test-Path $ConfigBackup) -and !(Test-Path $ConfigFile)) {
+    if (!(Test-Path $ConfigDir)) { New-Item -ItemType Directory -Path $ConfigDir -Force | Out-Null }
+    Copy-Item -Path $ConfigBackup -Destination $ConfigFile -Force
+}
 
 # 4. Create Desktop & Start Menu Shortcuts via WScript.Shell
 $StartMenuDir = [Environment]::GetFolderPath("Programs")

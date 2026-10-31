@@ -167,8 +167,15 @@ namespace CodeByatta.Core.Services
         public bool IsClickThrough(IntPtr hwnd)
         {
             if (!User32.IsWindow(hwnd)) return false;
+            if (_activeClickThroughWindows.ContainsKey(hwnd)) return true;
             IntPtr style = User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
             return ((long)style & User32.WS_EX_TRANSPARENT) != 0;
+        }
+
+        public bool IsClickThroughAuthoritative(IntPtr hwnd)
+        {
+            if (!User32.IsWindow(hwnd)) return false;
+            return _activeClickThroughWindows.ContainsKey(hwnd);
         }
 
         public bool SetClickThrough(IntPtr hwnd, bool enable)

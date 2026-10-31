@@ -123,6 +123,14 @@ namespace CodeByatta.Core.Models
 
         private static readonly string ConfigPath = Path.Combine(ConfigDir, "config.json");
 
+        private static readonly JsonSerializerOptions JsonOpts = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true,
+            WriteIndented = true
+        };
+
         public static AppConfig Load()
         {
             try
@@ -130,9 +138,12 @@ namespace CodeByatta.Core.Models
                 if (File.Exists(ConfigPath))
                 {
                     string json = File.ReadAllText(ConfigPath);
-                    var cfg = JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
-                    cfg.SanitizePreferences();
-                    return cfg;
+                    var cfg = JsonSerializer.Deserialize<AppConfig>(json, JsonOpts);
+                    if (cfg != null)
+                    {
+                        cfg.SanitizePreferences();
+                        return cfg;
+                    }
                 }
 
                 // Smooth migration from legacy WindowsTop config path if present
@@ -140,15 +151,27 @@ namespace CodeByatta.Core.Models
                 if (File.Exists(legacyPath))
                 {
                     string json = File.ReadAllText(legacyPath);
-                    var legacyConfig = JsonSerializer.Deserialize<AppConfig>(json) ?? new AppConfig();
-                    legacyConfig.SanitizePreferences();
-                    legacyConfig.Save();
-                    return legacyConfig;
+                    var legacyConfig = JsonSerializer.Deserialize<AppConfig>(json, JsonOpts);
+                    if (legacyConfig != null)
+                    {
+                        legacyConfig.SanitizePreferences();
+                        legacyConfig.Save();
+                        return legacyConfig;
+                    }
                 }
             }
             catch
             {
-                // Fallback to default on read failure
+                // Never immediately overwrite corrupt or partial config! Backup first!
+                try
+                {
+                    if (File.Exists(ConfigPath))
+                    {
+                        string corruptBackup = ConfigPath + $".bak_{DateTime.UtcNow:yyyyMMddHHmmss}";
+                        File.Copy(ConfigPath, corruptBackup, true);
+                    }
+                }
+                catch { }
             }
 
             var config = new AppConfig();
@@ -165,8 +188,7 @@ namespace CodeByatta.Core.Models
                     Directory.CreateDirectory(ConfigDir);
                 }
 
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                string json = JsonSerializer.Serialize(this, options);
+                string json = JsonSerializer.Serialize(this, JsonOpts);
                 File.WriteAllText(ConfigPath, json);
             }
             catch

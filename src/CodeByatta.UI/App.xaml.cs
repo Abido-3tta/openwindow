@@ -37,6 +37,17 @@ namespace CodeByatta.UI
         private SettingsWindow? _activeSettingsWindow;
         private PipWindow? _currentPipWindow;
         public static IntPtr CurrentPipTargetHwnd { get; private set; } = IntPtr.Zero;
+
+        public static bool IsPipTargetWindow(IntPtr hwnd)
+        {
+            if (hwnd == IntPtr.Zero || CurrentPipTargetHwnd == IntPtr.Zero) return false;
+            if (hwnd == CurrentPipTargetHwnd) return true;
+            IntPtr root = User32.GetAncestor(hwnd, User32.GA_ROOT);
+            IntPtr pipRoot = User32.GetAncestor(CurrentPipTargetHwnd, User32.GA_ROOT);
+            return (root != IntPtr.Zero && pipRoot != IntPtr.Zero && root == pipRoot) ||
+                   (root != IntPtr.Zero && root == CurrentPipTargetHwnd) ||
+                   (pipRoot != IntPtr.Zero && hwnd == pipRoot);
+        }
         private CropOverlayWindow? _currentCropOverlay;
         private readonly Dictionary<IntPtr, TopmostBorderOverlayWindow> _activeBorders = new();
         private readonly Dictionary<IntPtr, DarkModeOverlayWindow> _activeDarkOverlays = new();
@@ -140,7 +151,7 @@ namespace CodeByatta.UI
                 };
                 _pinEnforcerTimer.Tick += (s, ev) =>
                 {
-                    _topmostService.EnforcePinnedWindows();
+                    _topmostService.EnforcePinnedWindows(hwnd => IsPipTargetWindow(hwnd));
                     SyncBorderOverlays();
                     ShellSanitizer.SanitizeShellWindows();
                     ShellSanitizer.EnsureTaskbarOnTop();
@@ -470,7 +481,7 @@ namespace CodeByatta.UI
                 {
                     deadHwnds.Add(kvp.Key);
                 }
-                else if (CurrentPipTargetHwnd != IntPtr.Zero && kvp.Key == CurrentPipTargetHwnd)
+                else if (IsPipTargetWindow(kvp.Key))
                 {
                     kvp.Value.Hide();
                 }
@@ -493,7 +504,7 @@ namespace CodeByatta.UI
             // Ensure all pinned windows have active borders (except the window currently in PiP)
             foreach (var hwnd in _topmostService.PinnedWindows)
             {
-                if (CurrentPipTargetHwnd != IntPtr.Zero && hwnd == CurrentPipTargetHwnd) continue;
+                if (IsPipTargetWindow(hwnd)) continue;
                 if (User32.IsWindow(hwnd) && !_activeBorders.ContainsKey(hwnd))
                 {
                     var border = new TopmostBorderOverlayWindow(hwnd, _config.TopmostBorderColor, _config.TopmostBorderWidth);
@@ -587,7 +598,7 @@ namespace CodeByatta.UI
                     ShellSanitizer.EnsureTaskbarOnTop();
                 }
 
-                if (window == null || IsOwnProcessOrWindow(window.Hwnd) || ShellSanitizer.IsShellOrTaskbarWindow(window.Hwnd) || (CurrentPipTargetHwnd != IntPtr.Zero && window.Hwnd == CurrentPipTargetHwnd))
+                if (window == null || IsOwnProcessOrWindow(window.Hwnd) || ShellSanitizer.IsShellOrTaskbarWindow(window.Hwnd) || IsPipTargetWindow(window.Hwnd))
                 {
                     _toolbarView?.Hide();
                     return; // Strictly hide toolbar on own windows, taskbar/desktop, or active PiP target
@@ -617,7 +628,7 @@ namespace CodeByatta.UI
                     {
                         foreach (var ctHwnd in _opacityService.ActiveClickThroughWindows)
                         {
-                            if (ctHwnd == CurrentPipTargetHwnd) continue;
+                            if (IsPipTargetWindow(ctHwnd)) continue;
                             if (User32.IsWindow(ctHwnd) && !User32.IsIconic(ctHwnd) && User32.GetWindowRect(ctHwnd, out var ctBounds))
                             {
                                 if (pt.X >= ctBounds.Left && pt.X <= ctBounds.Right &&
@@ -640,7 +651,7 @@ namespace CodeByatta.UI
         {
             Dispatcher.Invoke(() =>
             {
-                if (_trackingService.CurrentWindow != null && CurrentPipTargetHwnd != IntPtr.Zero && _trackingService.CurrentWindow.Hwnd == CurrentPipTargetHwnd)
+                if (_trackingService.CurrentWindow != null && IsPipTargetWindow(_trackingService.CurrentWindow.Hwnd))
                 {
                     return;
                 }
@@ -693,11 +704,9 @@ namespace CodeByatta.UI
 
                 // If target had a full-screen border overlay, hide it during PiP
                 bool isTopmost = _topmostService.IsTopmost(target.Hwnd);
-                IntPtr targetRoot = User32.GetAncestor(target.Hwnd, User32.GA_ROOT);
                 foreach (var kvp in _activeBorders)
                 {
-                    IntPtr borderRoot = User32.GetAncestor(kvp.Key, User32.GA_ROOT);
-                    if (kvp.Key == target.Hwnd || (targetRoot != IntPtr.Zero && (borderRoot == targetRoot || kvp.Key == targetRoot)))
+                    if (IsPipTargetWindow(kvp.Key))
                     {
                         kvp.Value.Hide();
                     }
@@ -780,11 +789,9 @@ namespace CodeByatta.UI
                     CurrentPipTargetHwnd = target.Hwnd;
 
                     bool isTopmost = _topmostService.IsTopmost(target.Hwnd);
-                    IntPtr targetRoot = User32.GetAncestor(target.Hwnd, User32.GA_ROOT);
                     foreach (var kvp in _activeBorders)
                     {
-                        IntPtr borderRoot = User32.GetAncestor(kvp.Key, User32.GA_ROOT);
-                        if (kvp.Key == target.Hwnd || (targetRoot != IntPtr.Zero && (borderRoot == targetRoot || kvp.Key == targetRoot)))
+                        if (IsPipTargetWindow(kvp.Key))
                         {
                             kvp.Value.Hide();
                         }
@@ -858,6 +865,16 @@ namespace CodeByatta.UI
             });
         }
 
+        public void RefreshVisualsAfterConfigChange()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                _toolbarView?.ApplyConfigStyles();
+                _toolbarView?.UpdateVisualState();
+                SyncBorderOverlays();
+            });
+        }
+
         private void StartPeriodicUpdateChecks()
         {
             var initialTimer = new DispatcherTimer
@@ -888,7 +905,7 @@ namespace CodeByatta.UI
 
             try
             {
-                var currentVer = new Version(1, 1, 0);
+                var currentVer = new Version(1, 1, 1);
                 var info = await _updateService.CheckForUpdatesAsync(currentVer).ConfigureAwait(false);
 
                 if (info != null && info.IsNewer)

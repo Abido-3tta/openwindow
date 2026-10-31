@@ -67,11 +67,13 @@ namespace CodeByatta.Core.Services
             return SetTopmost(hwnd, !currentState);
         }
 
-        public void EnforcePinnedWindows()
+        public void EnforcePinnedWindows(Func<IntPtr, bool>? isIgnored = null)
         {
             bool hasPinned = false;
             foreach (var hwnd in _pinnedWindows.Keys)
             {
+                if (isIgnored != null && isIgnored(hwnd)) continue;
+
                 if (User32.IsWindow(hwnd))
                 {
                     hasPinned = true;

@@ -57,6 +57,7 @@ namespace CodeByatta.UI.Views
 
             LoadSettings();
             SelectTab(initialTab);
+            Closing += (s, e) => SaveAllSettings();
         }
 
         public void SelectTab(string tabTag)
@@ -90,6 +91,7 @@ namespace CodeByatta.UI.Views
                 User32.SetWindowPos(hwnd, User32.HWND_TOPMOST, 0, 0, 0, 0, User32.SWP_NOMOVE | User32.SWP_NOSIZE);
                 User32.BringWindowToTop(hwnd);
                 User32.SetForegroundWindow(hwnd);
+                DwmApi.ApplyAcrylicBackdrop(hwnd, _config.ShowGlassButton);
             }
             catch { }
         }
@@ -605,66 +607,84 @@ namespace CodeByatta.UI.Views
 
         #endregion
 
+        private bool _isSaved = false;
+
+        public void SaveAllSettings()
+        {
+            if (_isSaved) return;
+            try
+            {
+                // 0. Startup
+                _config.StartWithWindows = ToggleStartWithWindows.IsOn;
+                SetStartWithWindows(ToggleStartWithWindows.IsOn);
+
+                // 1. Save Advanced
+                _config.HighlightTopmostWithBorder = ToggleHighlightBorder.IsOn;
+                _config.DisableTopmostOnMaximized = ToggleDisableMaximized.IsOn;
+                _config.TopmostBorderWidth = SliderBorderWidth.Value;
+                if (BorderColorPreview.Background is SolidColorBrush scb)
+                {
+                    _config.TopmostBorderColor = $"#{scb.Color.R:X2}{scb.Color.G:X2}{scb.Color.B:X2}";
+                }
+                if (ArrowColorPreview.Background is SolidColorBrush acb)
+                {
+                    _config.ArrowColor = $"#{acb.Color.R:X2}{acb.Color.G:X2}{acb.Color.B:X2}";
+                }
+                _config.ShowNotificationOnHotkey = ToggleHotkeyNotification.IsOn;
+                _config.HideOriginalWindowOnCrop = ToggleHideOriginalCrop.IsOn;
+                _config.DisableOpacityOnMouseOver = ToggleDisableOpacityHover.IsOn;
+
+                // 2. Save Toolbar
+                _config.ShowSetTopButton = ToggleToolSetTop.IsOn;
+                _config.ShowAnchorButton = ToggleToolAnchor.IsOn;
+                _config.ShowPipButton = ToggleToolPip.IsOn;
+                _config.ShowCropButton = ToggleToolCrop.IsOn;
+                _config.ShowOpacityButton = ToggleToolOpacity.IsOn;
+                _config.ShowHoverOpacityButton = ToggleToolHoverOpacity.IsOn;
+                _config.ShowClickThroughButton = ToggleToolClickThrough.IsOn;
+                _config.ShowCinemaFocusButton = ToggleToolCinemaFocus.IsOn;
+                _config.ShowDarkModeButton = ToggleToolDark.IsOn;
+                _config.ShowGlassButton = ToggleToolGlass.IsOn;
+                _config.EnablePipCornerSnapping = TogglePipSnapping.IsOn;
+                _config.EnablePipWheelResize = TogglePipWheelZoom.IsOn;
+                _config.CinemaFocusDimLevel = SliderDimLevel.Value / 100.0;
+                _config.HoverTimeMs = (int)SliderHoverTime.Value;
+                _config.AutoHideToolbar = ToggleAutoHide.IsOn;
+                _config.AutoRememberWindowPreferences = ToggleRememberPosition.IsOn || ToggleRememberProfiles.IsOn;
+                _config.RequireClickToExpandToolbar = ToggleClickToExpandToolbar.IsOn;
+                _config.IntegrateWithMinimizeButton = ToggleIntegrateMinimize.IsOn;
+
+                // 3. Save Hotkeys
+                _config.MouseWheelOpacityModifier = (ComboWheelModifier.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Alt";
+                string sens = (ComboWheelSensitivity.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "10 Units";
+                _config.MouseWheelSensitivity = int.TryParse(sens.Replace(" Units", ""), out int val) ? val : 10;
+
+                // 4. Save Exclusions
+                _config.ExcludedProcesses.Clear();
+                foreach (var item in ListExclusions.Items)
+                {
+                    _config.ExcludedProcesses.Add(item.ToString()!);
+                }
+                _config.IsWhitelistMode = RadioWhitelist.IsChecked ?? false;
+                _config.DisableOnGameMode = ToggleGameMode.IsOn;
+
+                // 5. Save About & Updates
+                _config.AutoCheckForUpdates = ToggleAutoUpdates.IsOn;
+
+                _config.Save();
+                _isSaved = true;
+
+                if (System.Windows.Application.Current is App app)
+                {
+                    app.Dispatcher.Invoke(() => app.RefreshVisualsAfterConfigChange());
+                }
+            }
+            catch { }
+        }
+
         private void BtnSaveSettings_Click(object sender, RoutedEventArgs e)
         {
-            // 0. Startup
-            _config.StartWithWindows = ToggleStartWithWindows.IsOn;
-            SetStartWithWindows(ToggleStartWithWindows.IsOn);
-
-            // 1. Save Advanced
-            _config.HighlightTopmostWithBorder = ToggleHighlightBorder.IsOn;
-            _config.DisableTopmostOnMaximized = ToggleDisableMaximized.IsOn;
-            _config.TopmostBorderWidth = SliderBorderWidth.Value;
-            if (BorderColorPreview.Background is SolidColorBrush scb)
-            {
-                _config.TopmostBorderColor = $"#{scb.Color.R:X2}{scb.Color.G:X2}{scb.Color.B:X2}";
-            }
-            if (ArrowColorPreview.Background is SolidColorBrush acb)
-            {
-                _config.ArrowColor = $"#{acb.Color.R:X2}{acb.Color.G:X2}{acb.Color.B:X2}";
-            }
-            _config.ShowNotificationOnHotkey = ToggleHotkeyNotification.IsOn;
-            _config.HideOriginalWindowOnCrop = ToggleHideOriginalCrop.IsOn;
-            _config.DisableOpacityOnMouseOver = ToggleDisableOpacityHover.IsOn;
-
-            // 2. Save Toolbar
-            _config.ShowSetTopButton = ToggleToolSetTop.IsOn;
-            _config.ShowAnchorButton = ToggleToolAnchor.IsOn;
-            _config.ShowPipButton = ToggleToolPip.IsOn;
-            _config.ShowCropButton = ToggleToolCrop.IsOn;
-            _config.ShowOpacityButton = ToggleToolOpacity.IsOn;
-            _config.ShowHoverOpacityButton = ToggleToolHoverOpacity.IsOn;
-            _config.ShowClickThroughButton = ToggleToolClickThrough.IsOn;
-            _config.ShowCinemaFocusButton = ToggleToolCinemaFocus.IsOn;
-            _config.ShowDarkModeButton = ToggleToolDark.IsOn;
-            _config.ShowGlassButton = ToggleToolGlass.IsOn;
-            _config.EnablePipCornerSnapping = TogglePipSnapping.IsOn;
-            _config.EnablePipWheelResize = TogglePipWheelZoom.IsOn;
-            _config.CinemaFocusDimLevel = SliderDimLevel.Value / 100.0;
-            _config.HoverTimeMs = (int)SliderHoverTime.Value;
-            _config.AutoHideToolbar = ToggleAutoHide.IsOn;
-            _config.AutoRememberWindowPreferences = ToggleRememberPosition.IsOn || ToggleRememberProfiles.IsOn;
-            _config.RequireClickToExpandToolbar = ToggleClickToExpandToolbar.IsOn;
-            _config.IntegrateWithMinimizeButton = ToggleIntegrateMinimize.IsOn;
-
-            // 3. Save Hotkeys
-            _config.MouseWheelOpacityModifier = (ComboWheelModifier.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "Alt";
-            string sens = (ComboWheelSensitivity.SelectedItem as ComboBoxItem)?.Content.ToString() ?? "10 Units";
-            _config.MouseWheelSensitivity = int.TryParse(sens.Replace(" Units", ""), out int val) ? val : 10;
-
-            // 4. Save Exclusions
-            _config.ExcludedProcesses.Clear();
-            foreach (var item in ListExclusions.Items)
-            {
-                _config.ExcludedProcesses.Add(item.ToString()!);
-            }
-            _config.IsWhitelistMode = RadioWhitelist.IsChecked ?? false;
-            _config.DisableOnGameMode = ToggleGameMode.IsOn;
-
-            // 5. Save About & Updates
-            _config.AutoCheckForUpdates = ToggleAutoUpdates.IsOn;
-
-            _config.Save();
+            SaveAllSettings();
             Close();
         }
     }

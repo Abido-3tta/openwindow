@@ -1,7 +1,7 @@
 # OpenWindow - Automated Release Packaging Script
 # Produces standalone, self-contained desktop native packages for Windows x64 and x86
 param(
-    [string]$Version = "1.1.1"
+    [string]$Version = "1.1.2"
 )
 
 $ErrorActionPreference = "Stop"

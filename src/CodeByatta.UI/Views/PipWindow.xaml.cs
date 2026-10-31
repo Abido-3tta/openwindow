@@ -87,7 +87,7 @@ namespace CodeByatta.UI.Views
 
             // Record authentic pre-PiP state to guarantee 100% clean restoration
             _prePipOpacity = _opacityService?.GetConfiguredOpacity(_targetWindow.Hwnd) ?? 255;
-            _prePipClickThrough = _opacityService?.IsClickThrough(_targetWindow.Hwnd) ?? false;
+            _prePipClickThrough = _opacityService?.IsClickThroughAuthoritative(_targetWindow.Hwnd) ?? false;
 
             // Calculate source aspect ratio
             int sourceW = 0, sourceH = 0;
@@ -407,18 +407,18 @@ namespace CodeByatta.UI.Views
 
             if (_isInteractMode)
             {
-                TxtInteract.Text = "🖱️ Control: ON";
+                TxtInteract.Text = "Control: ON";
                 TxtInteract.Foreground = new SolidColorBrush(MediaColor.FromRgb(0x30, 0xD1, 0x58));
-                BtnInteract.Background = new SolidColorBrush(MediaColor.FromArgb(0x26, 0x30, 0xD1, 0x58));
-                BtnInteract.BorderBrush = new SolidColorBrush(MediaColor.FromArgb(0x40, 0x30, 0xD1, 0x58));
-                ThumbnailHost.Cursor = Cursors.Cross;
+                BtnInteract.Background = new SolidColorBrush(MediaColor.FromArgb(0x1E, 0x30, 0xD1, 0x58));
+                BtnInteract.BorderBrush = new SolidColorBrush(MediaColor.FromArgb(0x33, 0x30, 0xD1, 0x58));
+                ThumbnailHost.Cursor = Cursors.Arrow;
             }
             else
             {
-                TxtInteract.Text = "✋ Move: ON";
+                TxtInteract.Text = "Move: ON";
                 TxtInteract.Foreground = new SolidColorBrush(MediaColor.FromRgb(0xAA, 0xAA, 0xAA));
-                BtnInteract.Background = new SolidColorBrush(MediaColor.FromArgb(0x26, 0x88, 0x88, 0x88));
-                BtnInteract.BorderBrush = new SolidColorBrush(MediaColor.FromArgb(0x40, 0x88, 0x88, 0x88));
+                BtnInteract.Background = new SolidColorBrush(MediaColor.FromArgb(0x20, 0x88, 0x88, 0x88));
+                BtnInteract.BorderBrush = new SolidColorBrush(MediaColor.FromArgb(0x33, 0x88, 0x88, 0x88));
                 ThumbnailHost.Cursor = Cursors.SizeAll;
             }
         }
@@ -473,8 +473,10 @@ namespace CodeByatta.UI.Views
                     User32.SetLayeredWindowAttributes(_targetWindow.Hwnd, 0, _prePipOpacity, User32.LWA_ALPHA);
                 }
 
-                User32.SetWindowPos(_targetWindow.Hwnd, IntPtr.Zero, 0, 0, 0, 0,
-                    User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOZORDER | User32.SWP_FRAMECHANGED);
+                IntPtr insertAfter = _isTopmost ? User32.HWND_TOPMOST : User32.HWND_TOP;
+                User32.SetWindowPos(_targetWindow.Hwnd, insertAfter, 0, 0, 0, 0,
+                    User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_SHOWWINDOW | User32.SWP_FRAMECHANGED);
+                User32.BringWindowToTop(_targetWindow.Hwnd);
                 _originalWindowGhosted = false;
             }
 
@@ -492,6 +494,8 @@ namespace CodeByatta.UI.Views
                 }
             }
 
+            _targetWindow.IsClickThrough = _prePipClickThrough;
+
             // Sanitize window preference in config so ghost mode state is never persisted
             if (_config != null)
             {
@@ -503,6 +507,7 @@ namespace CodeByatta.UI.Views
 
             User32.ShowWindow(_targetWindow.Hwnd, User32.SW_SHOW);
             User32.ShowWindow(_targetWindow.Hwnd, User32.SW_RESTORE);
+            User32.BringWindowToTop(_targetWindow.Hwnd);
             User32.SetForegroundWindow(_targetWindow.Hwnd);
         }
 

@@ -18,6 +18,9 @@
             BorderThickness="1.5"
             CornerRadius="10"
             ClipToBounds="True">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.65" Color="#000000" />
+        </Border.Effect>
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="34" />
@@ -60,35 +63,59 @@
                     <Button x:Name="BtnInteract"
                             ToolTip="Toggle Interactive Control (click &amp; control the live target window with mouse)"
                             Click="BtnInteract_Click"
-                            Background="#2630D158"
-                            BorderBrush="#4030D158"
+                            Background="#1E30D158"
+                            BorderBrush="#3330D158"
                             BorderThickness="1"
-                            Padding="6,2"
+                            Padding="8,3"
                             Margin="0,0,6,0"
                             Cursor="Hand">
-                        <TextBlock x:Name="TxtInteract" Text="🖱️ Control: ON" FontSize="10" FontWeight="Bold" Foreground="#30D158" />
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="6" />
+                            </Style>
+                        </Button.Resources>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="6" Height="6" Fill="#30D158" Margin="0,0,5,0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TxtInteract" Text="Control: ON" FontSize="10.5" FontWeight="Bold" Foreground="#30D158" />
+                        </StackPanel>
                     </Button>
 
                     <!-- Restore / Return Original Window Button -->
                     <Button x:Name="BtnRestore"
                             ToolTip="Restore and Return to Original Window"
                             Click="BtnRestore_Click"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Padding="6,3"
+                            Background="#1A4CC2FF"
+                            BorderBrush="#334CC2FF"
+                            BorderThickness="1"
+                            Padding="8,3"
+                            Margin="0,0,6,0"
                             Cursor="Hand">
-                        <TextBlock Text="↩️ Return" FontSize="11" Foreground="#4CC2FF" FontWeight="SemiBold" />
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="6" />
+                            </Style>
+                        </Button.Resources>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="↩" FontSize="11" Foreground="#4CC2FF" Margin="0,0,4,0" FontWeight="Bold" VerticalAlignment="Center" />
+                            <TextBlock Text="Return" FontSize="10.5" Foreground="#4CC2FF" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        </StackPanel>
                     </Button>
 
                     <!-- Close -->
                     <Button x:Name="BtnClose"
                             ToolTip="Close PiP and restore window"
                             Click="BtnClose_Click"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Padding="6,3"
+                            Background="#15FFFFFF"
+                            BorderBrush="#25FFFFFF"
+                            BorderThickness="1"
+                            Padding="7,3"
                             Cursor="Hand">
-                        <TextBlock Text="✕" FontSize="11" Foreground="#CCCCCC" />
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="6" />
+                            </Style>
+                        </Button.Resources>
+                        <TextBlock Text="✕" FontSize="10" Foreground="#CCCCCC" FontWeight="Bold" VerticalAlignment="Center" />
                     </Button>
                 </StackPanel>
             </Grid>
@@ -102,7 +129,7 @@
                     MouseUp="ThumbnailHost_MouseUp"
                     MouseMove="ThumbnailHost_MouseMove"
                     MouseWheel="ThumbnailHost_MouseWheel"
-                    Cursor="Cross" />
+                    Cursor="Arrow" />
         </Grid>
     </Border>
 </Window>
