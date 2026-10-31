@@ -36,4 +36,9 @@
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Resource Include="Resources\app_icon.png" />
+    <Resource Include="Resources\developer_avatar.png" />
+  </ItemGroup>
+
 </Project>

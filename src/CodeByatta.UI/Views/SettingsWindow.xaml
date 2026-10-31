@@ -970,9 +970,18 @@
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
 
-                                <!-- Developer Monogram Avatar -->
-                                <Border Grid.Column="0" Width="52" Height="52" CornerRadius="26" Background="#252A38" BorderBrush="#4CC2FF" BorderThickness="1.5" Margin="0,0,16,0" VerticalAlignment="Center">
-                                    <TextBlock Text="CB" FontSize="18" FontWeight="Bold" Foreground="#4CC2FF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <!-- Developer Avatar Image -->
+                                <Border Grid.Column="0" Width="52" Height="52" CornerRadius="26" BorderBrush="#4CC2FF" BorderThickness="1.5" Margin="0,0,16,0" VerticalAlignment="Center">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="12" ShadowDepth="0" Color="#4CC2FF" Opacity="0.45" />
+                                    </Border.Effect>
+                                    <Grid>
+                                        <Ellipse Width="50" Height="50">
+                                            <Ellipse.Fill>
+                                                <ImageBrush ImageSource="/Resources/developer_avatar.png" Stretch="UniformToFill" />
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                    </Grid>
                                 </Border>
 
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
