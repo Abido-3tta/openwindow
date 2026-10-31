@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.3] - 2026-10-31
+
+### Added
+- **Full Picture-in-Picture Mouse Control Suite:** Complete interactive control inside both full PiP and cropped sub-region PiP viewports:
+  - **Cropped Region 1:1 Screen Translation:** Converted crop overlays to record absolute physical screen coordinates (`PointToScreen`), eliminating DWM `rcSource` offset bugs, DPI scaling mismatches, and negative maximized window bounds.
+  - **Deepest Child Window Resolution:** Recursively traverses nested child HWNDs up to 8 levels deep using `RealChildWindowFromPoint` and `ChildWindowFromPointEx` (skipping transparent and invisible overlays) to deliver clicks directly to leaf controls and Chromium render widgets.
+  - **`WM_MOUSEACTIVATE` Pre-Waking:** Dispatches `WM_MOUSEACTIVATE` before mouse messages so inactive applications and web browsers immediately accept click and drag inputs.
+  - **Mouse Wheel Tunneling & Horizontal Scrolling:** Switched to tunneling `PreviewMouseWheel` to bypass WPF border focus blocks; dispatches `WM_MOUSEWHEEL` via `PostMessage` to child controls and root windows, and supports horizontal scrolling via Shift (`WM_MOUSEHWHEEL`).
+  - **Right-Click & Context Menus:** Native right-click forwarding (`WM_RBUTTONDOWN`/`UP`) with `WM_CONTEXTMENU` dispatch at exact target screen coordinates.
+  - **Middle-Click & Double-Click Support:** Middle-click (`WM_MBUTTONDOWN`/`UP`) for opening links in new tabs / closing tabs; double-click (`WM_LBUTTONDBLCLK`/`WM_RBUTTONDBLCLK`).
+  - **Header Restore & Context Menu:** Double-clicking the PiP header or thumbnail (when interact is off) instantly restores and focuses the original window; right-clicking the header opens a Fluent context menu to toggle control mode or restore.
+- **CrashReporterService & Telemetry:**
+  - Automated crash handling intercepting `AppDomain.UnhandledException`, `DispatcherUnhandledException`, and `TaskScheduler.UnobservedTaskException`.
+  - Structured JSON crash dumps saved to `%APPDATA%\CodeByatta\OpenWindow\crash_reports\`.
+  - Remote telemetry dispatch to Discord, Telegram, or custom HTTP webhooks.
+  - Next-boot diagnostics dialog (`CrashReportDialog.xaml`) allowing users to inspect, copy, or submit crash reports.
+- **Developer Profile Card & Visual Settings:**
+  - High-resolution circular developer avatar (`developer_avatar.png`) with cyan neon drop shadow glow in Settings.
+  - Glowing red vector pin button (`#FF3B30`) when Always-on-Top is active; muted slate (`#8E8E93`) when inactive.
+  - Webhook endpoint configuration with real-time `⚡ Test Ping` verification.
+
+### Fixed
+- **Always-on-Top Input Caret & Focus Loss Fix:**
+  - Removed `User32.BringWindowToTop` from `TopmostBorderOverlayWindow` and `App.xaml.cs`.
+  - Set `Background="{x:Null}"` on overlay window to ensure mouse hit-testing passes straight through without intercepting text carets.
+  - Strictly enforced `SWP_NOACTIVATE` on all overlay positioning and foreground tracking so typing focus is never lost.
+- **Acrylic 90° Rectangular Box Artifact Elimination:**
+  - Removed Win32 HWND-level `DwmApi.ApplyAcrylicBackdrop` from floating toolbars.
+  - Replaced with pure WPF 3D frosted obsidian glass styling, specular highlights, omnidirectional drop shadows, and true rounded corners (`CornerRadius="18"` on pill, `14` on anchor).
+- **Crash Hardening:**
+  - Patched `WindowTrackingService.cs` line 179 bounds check (`managed.GetBounds` instead of mutable `CurrentWindow`).
+  - Added `_ownsMutex` tracking in `App.xaml.cs` to prevent `ApplicationException` on exit.
+
+---
+
 ## [1.1.0] - 2026-10-31
 
 ### Added

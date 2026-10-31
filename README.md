@@ -38,10 +38,12 @@ Available both as a **standalone zero-dependency native desktop application** (n
 - **Ghost Mode Technology:** When shrinking an app to PiP, OpenWindow makes the original window invisible to human eyes (`WS_EX_LAYERED | WS_EX_TRANSPARENT`, Alpha = 1) without using `SW_HIDE`.
   - **Zero Tab Throttling:** Chrome, Edge, and Firefox never pause timers, WebSockets, or audio.
   - **Zero Automation Conflicts:** External automation systems (Selenium, Playwright, RPA) continue interacting with the window unimpeded.
-- **Interactive Mouse Control:** Click, scroll, and drag inside the PiP viewport; clicks are translated into target client coordinates in real-time.
+- **Interactive Mouse Control:** Click, right-click, middle-click, double-click, scroll (vertical and horizontal), and drag inside the PiP viewport; clicks and wheel events are translated into target client coordinates in real-time across both child controls and root application windows.
+- **Header Double-Click & Context Menu:** Double-clicking the PiP header or thumbnail instantly restores and focuses the original window. Right-clicking the header opens quick controls to toggle interactive mouse mode or exit PiP.
 
-### ✂️ 3. Sub-Region Cropping
+### ✂️ 3. Sub-Region Cropping with 1:1 Mouse Control
 - Crop any sub-rectangle of a window (video player, dashboard chart, terminal pane) to stream in a dedicated PiP view.
+- **Exact 1:1 Physical Coordinate Mapping:** Fully supports full mouse interaction (clicks, drags, and scrolling) within the cropped viewport using high-precision screen coordinate translation.
 
 ### 🪟 4. Smart Opacity & Hover Auto-Disable — `Alt + A`
 - Cycle transparency instantly (`100% -> 80% -> 60% -> 40% -> 100%`) or fine-tune using mouse wheel scrolling while holding `Alt`.

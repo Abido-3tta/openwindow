@@ -116,9 +116,22 @@ namespace CodeByatta.Core.Interop
         public const int WM_MBUTTONDBLCLK = 0x0209;
         public const int WM_MOUSEHWHEEL = 0x020E;
         public const int WM_CONTEXTMENU = 0x007B;
+        public const int WM_MOUSEACTIVATE = 0x0021;
+        public const int MA_ACTIVATE = 1;
+        public const int MA_ACTIVATEANDEAT = 2;
+        public const int MA_NOACTIVATE = 3;
+        public const int MA_NOACTIVATEANDEAT = 4;
+
+        public const uint CWP_ALL = 0x0000;
+        public const uint CWP_SKIPINVISIBLE = 0x0001;
+        public const uint CWP_SKIPDISABLED = 0x0002;
+        public const uint CWP_SKIPTRANSPARENT = 0x0004;
 
         [DllImport("user32.dll")]
         public static extern IntPtr RealChildWindowFromPoint(IntPtr hwndParent, POINT ptParentClientCoords);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr ChildWindowFromPointEx(IntPtr hwndParent, POINT pt, uint uFlags);
 
         public const int MK_LBUTTON = 0x0001;
         public const int MK_RBUTTON = 0x0002;

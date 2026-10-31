@@ -89,18 +89,24 @@ namespace CodeByatta.UI.Views
             double left = Canvas.GetLeft(SelectionBox);
             double top = Canvas.GetTop(SelectionBox);
 
-            Close();
-
             if (width > 20 && height > 20)
             {
-                var dpi = VisualTreeHelper.GetDpi(this);
-                RECT cropRect = new RECT(
-                    (int)Math.Round(left * dpi.DpiScaleX),
-                    (int)Math.Round(top * dpi.DpiScaleY),
-                    (int)Math.Round((left + width) * dpi.DpiScaleX),
-                    (int)Math.Round((top + height) * dpi.DpiScaleY));
+                // Convert relative canvas coordinates to absolute physical screen coordinates prior to window close
+                WpfPoint screenTopLeft = PointToScreen(new WpfPoint(left, top));
+                WpfPoint screenBottomRight = PointToScreen(new WpfPoint(left + width, top + height));
 
-                _onCropped(cropRect);
+                RECT cropScreenRect = new RECT(
+                    (int)Math.Round(screenTopLeft.X),
+                    (int)Math.Round(screenTopLeft.Y),
+                    (int)Math.Round(screenBottomRight.X),
+                    (int)Math.Round(screenBottomRight.Y));
+
+                Close();
+                _onCropped(cropScreenRect);
+            }
+            else
+            {
+                Close();
             }
         }
 

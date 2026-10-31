@@ -311,13 +311,27 @@ namespace CodeByatta.UI.Views
 
             RECT destRect = new RECT(destLeft, destTop, destLeft + destWidth, destTop + destHeight);
 
+            // Compute DWM rcSource relative to source window rect
+            RECT? dwmCropSource = null;
+            if (_cropRect.HasValue && _cropRect.Value.Width > 0 && _cropRect.Value.Height > 0)
+            {
+                if (User32.GetWindowRect(_targetWindow.Hwnd, out RECT wr))
+                {
+                    int dLeft = Math.Max(0, _cropRect.Value.Left - wr.Left);
+                    int dTop = Math.Max(0, _cropRect.Value.Top - wr.Top);
+                    int dRight = Math.Min(wr.Width, dLeft + _cropRect.Value.Width);
+                    int dBottom = Math.Min(wr.Height, dTop + _cropRect.Value.Height);
+                    dwmCropSource = new RECT(dLeft, dTop, dRight, dBottom);
+                }
+            }
+
             if (_hThumbnail == IntPtr.Zero)
             {
-                _hThumbnail = _pipManager.RegisterPipThumbnail(destHwnd, _targetWindow.Hwnd, destRect, _cropRect);
+                _hThumbnail = _pipManager.RegisterPipThumbnail(destHwnd, _targetWindow.Hwnd, destRect, dwmCropSource);
             }
             else
             {
-                _pipManager.UpdatePipBounds(_hThumbnail, destRect, _cropRect);
+                _pipManager.UpdatePipBounds(_hThumbnail, destRect, dwmCropSource);
             }
         }
 
@@ -532,6 +546,24 @@ namespace CodeByatta.UI.Views
 
         #region Interactive Mouse Control & Message Translation
 
+        private IntPtr GetDeepestChildWindow(IntPtr rootHwnd, User32.POINT screenPt)
+        {
+            IntPtr current = rootHwnd;
+            for (int depth = 0; depth < 8; depth++)
+            {
+                var clientPt = screenPt;
+                User32.ScreenToClient(current, ref clientPt);
+                IntPtr child = User32.RealChildWindowFromPoint(current, clientPt);
+                if (child == IntPtr.Zero || child == current)
+                {
+                    child = User32.ChildWindowFromPointEx(current, clientPt, User32.CWP_SKIPINVISIBLE | User32.CWP_SKIPTRANSPARENT);
+                    if (child == IntPtr.Zero || child == current) break;
+                }
+                current = child;
+            }
+            return current;
+        }
+
         private bool TranslatePipToTargetCoordinates(
             WpfPoint hostPoint,
             out IntPtr targetHwnd,
@@ -545,7 +577,6 @@ namespace CodeByatta.UI.Views
             screenY = 0;
 
             if (_targetWindow.Hwnd == IntPtr.Zero || !User32.IsWindow(_targetWindow.Hwnd)) return false;
-            if (!_targetWindow.GetBounds(out RECT targetRect)) return false;
 
             double hostW = ThumbnailHost.ActualWidth;
             double hostH = ThumbnailHost.ActualHeight;
@@ -554,49 +585,37 @@ namespace CodeByatta.UI.Views
             double relX = Math.Clamp(hostPoint.X / hostW, 0.0, 1.0);
             double relY = Math.Clamp(hostPoint.Y / hostH, 0.0, 1.0);
 
-            int targetLocalX;
-            int targetLocalY;
-
             if (_cropRect.HasValue && _cropRect.Value.Width > 0 && _cropRect.Value.Height > 0)
             {
-                targetLocalX = _cropRect.Value.Left + (int)Math.Round(relX * _cropRect.Value.Width);
-                targetLocalY = _cropRect.Value.Top + (int)Math.Round(relY * _cropRect.Value.Height);
+                // Exact 1:1 physical screen coordinates recorded during crop selection
+                screenX = _cropRect.Value.Left + (int)Math.Round(relX * _cropRect.Value.Width);
+                screenY = _cropRect.Value.Top + (int)Math.Round(relY * _cropRect.Value.Height);
             }
             else
             {
-                targetLocalX = (int)Math.Round(relX * targetRect.Width);
-                targetLocalY = (int)Math.Round(relY * targetRect.Height);
+                if (!_targetWindow.GetBounds(out RECT targetRect)) return false;
+                screenX = targetRect.Left + (int)Math.Round(relX * targetRect.Width);
+                screenY = targetRect.Top + (int)Math.Round(relY * targetRect.Height);
             }
 
-            screenX = targetRect.Left + targetLocalX;
-            screenY = targetRect.Top + targetLocalY;
-
-            // Route to specific inner child window or control
+            // Route to deepest child window or specific control under physical point
             var screenPoint = new User32.POINT(screenX, screenY);
-            targetHwnd = _targetWindow.Hwnd;
-
             try
             {
-                var targetClientPt = screenPoint;
-                User32.ScreenToClient(_targetWindow.Hwnd, ref targetClientPt);
-                IntPtr child = User32.RealChildWindowFromPoint(_targetWindow.Hwnd, targetClientPt);
-                if (child != IntPtr.Zero && child != _targetWindow.Hwnd)
-                {
-                    var childClientPt = screenPoint;
-                    User32.ScreenToClient(child, ref childClientPt);
-                    IntPtr subChild = User32.RealChildWindowFromPoint(child, childClientPt);
-                    targetHwnd = (subChild != IntPtr.Zero && subChild != child) ? subChild : child;
-                }
+                targetHwnd = GetDeepestChildWindow(_targetWindow.Hwnd, screenPoint);
             }
-            catch { }
+            catch
+            {
+                targetHwnd = _targetWindow.Hwnd;
+            }
 
             var clientPoint = screenPoint;
             User32.ScreenToClient(targetHwnd, ref clientPoint);
-            lParam = (IntPtr)(((clientPoint.Y & 0xFFFF) << 16) | (clientPoint.X & 0xFFFF));
+            lParam = unchecked((IntPtr)((uint)(((clientPoint.Y & 0xFFFF) << 16) | (clientPoint.X & 0xFFFF))));
             return true;
         }
 
-        private void ForwardMouseMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam)
+        private void ForwardMouseMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam, int screenX = 0, int screenY = 0)
         {
             if (hwnd == IntPtr.Zero || !User32.IsWindow(hwnd)) return;
 
@@ -611,7 +630,20 @@ namespace CodeByatta.UI.Views
 
             try
             {
+                // Send WM_MOUSEACTIVATE to notify target application window of client mouse interaction
+                User32.SendMessage(hwnd, (uint)User32.WM_MOUSEACTIVATE, _targetWindow.Hwnd, (IntPtr)((msg << 16) | User32.HTCLIENT));
+
+                // 1. Deliver mouse message to specific child control / render host
                 User32.PostMessage(hwnd, msg, wParam, lParam);
+
+                // 2. Also deliver to root window if different so framework event dispatchers (WPF, Chromium, WinUI) receive it
+                if (hwnd != _targetWindow.Hwnd && User32.IsWindow(_targetWindow.Hwnd))
+                {
+                    var rootClientPt = new User32.POINT(screenX, screenY);
+                    User32.ScreenToClient(_targetWindow.Hwnd, ref rootClientPt);
+                    IntPtr rootLParam = unchecked((IntPtr)((uint)(((rootClientPt.Y & 0xFFFF) << 16) | (rootClientPt.X & 0xFFFF))));
+                    User32.PostMessage(_targetWindow.Hwnd, msg, wParam, rootLParam);
+                }
             }
             finally
             {
@@ -631,15 +663,18 @@ namespace CodeByatta.UI.Views
             if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0) keyFlags |= User32.MK_SHIFT;
 
             IntPtr wParam = unchecked((IntPtr)((delta << 16) | (keyFlags & 0xFFFF)));
-            IntPtr lParam = unchecked((IntPtr)(((screenY & 0xFFFF) << 16) | (screenX & 0xFFFF)));
+            IntPtr lParam = unchecked((IntPtr)((uint)(((screenY & 0xFFFF) << 16) | (screenX & 0xFFFF))));
 
             bool isHorizontal = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
             uint msg = isHorizontal ? (uint)User32.WM_MOUSEHWHEEL : (uint)User32.WM_MOUSEWHEEL;
 
-            // 1. Post directly to child control / render host (standard Win32 delivery for Chromium, Terminal, etc.)
+            // 1. Send WM_MOUSEACTIVATE
+            User32.SendMessage(targetHwnd, (uint)User32.WM_MOUSEACTIVATE, _targetWindow.Hwnd, (IntPtr)((msg << 16) | User32.HTCLIENT));
+
+            // 2. Post directly to child control / render host (standard Win32 delivery for Chromium, Terminal, etc.)
             User32.PostMessage(targetHwnd, msg, wParam, lParam);
 
-            // 2. Also deliver to root top-level window if different
+            // 3. Also deliver to root top-level window if different
             if (targetHwnd != _targetWindow.Hwnd && User32.IsWindow(_targetWindow.Hwnd))
             {
                 User32.PostMessage(_targetWindow.Hwnd, msg, wParam, lParam);
@@ -663,7 +698,7 @@ namespace CodeByatta.UI.Views
             {
                 ThumbnailHost.CaptureMouse();
                 WpfPoint pt = e.GetPosition(ThumbnailHost);
-                if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
+                if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out int screenX, out int screenY))
                 {
                     uint msg;
                     IntPtr wParam;
@@ -684,7 +719,7 @@ namespace CodeByatta.UI.Views
                         wParam = (IntPtr)User32.MK_LBUTTON;
                     }
 
-                    ForwardMouseMessage(hwnd, msg, wParam, lParam);
+                    ForwardMouseMessage(hwnd, msg, wParam, lParam, screenX, screenY);
                 }
             }
             catch { }
@@ -706,18 +741,18 @@ namespace CodeByatta.UI.Views
                 {
                     if (e.ChangedButton == MouseButton.Right)
                     {
-                        ForwardMouseMessage(hwnd, (uint)User32.WM_RBUTTONUP, IntPtr.Zero, lParam);
+                        ForwardMouseMessage(hwnd, (uint)User32.WM_RBUTTONUP, IntPtr.Zero, lParam, screenX, screenY);
                         // In Win32, trigger WM_CONTEXTMENU with screen coordinates
-                        IntPtr screenLParam = (IntPtr)(((screenY & 0xFFFF) << 16) | (screenX & 0xFFFF));
-                        ForwardMouseMessage(hwnd, (uint)User32.WM_CONTEXTMENU, hwnd, screenLParam);
+                        IntPtr screenLParam = unchecked((IntPtr)((uint)(((screenY & 0xFFFF) << 16) | (screenX & 0xFFFF))));
+                        ForwardMouseMessage(hwnd, (uint)User32.WM_CONTEXTMENU, hwnd, screenLParam, screenX, screenY);
                     }
                     else if (e.ChangedButton == MouseButton.Middle)
                     {
-                        ForwardMouseMessage(hwnd, (uint)User32.WM_MBUTTONUP, IntPtr.Zero, lParam);
+                        ForwardMouseMessage(hwnd, (uint)User32.WM_MBUTTONUP, IntPtr.Zero, lParam, screenX, screenY);
                     }
                     else
                     {
-                        ForwardMouseMessage(hwnd, (uint)User32.WM_LBUTTONUP, IntPtr.Zero, lParam);
+                        ForwardMouseMessage(hwnd, (uint)User32.WM_LBUTTONUP, IntPtr.Zero, lParam, screenX, screenY);
                     }
                 }
             }
@@ -735,14 +770,14 @@ namespace CodeByatta.UI.Views
             try
             {
                 WpfPoint pt = e.GetPosition(ThumbnailHost);
-                if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
+                if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out int screenX, out int screenY))
                 {
                     int moveFlags = 0;
                     if (e.LeftButton == MouseButtonState.Pressed) moveFlags |= User32.MK_LBUTTON;
                     if (e.RightButton == MouseButtonState.Pressed) moveFlags |= User32.MK_RBUTTON;
                     if (e.MiddleButton == MouseButtonState.Pressed) moveFlags |= User32.MK_MBUTTON;
                     IntPtr wParam = (IntPtr)moveFlags;
-                    ForwardMouseMessage(hwnd, (uint)User32.WM_MOUSEMOVE, wParam, lParam);
+                    ForwardMouseMessage(hwnd, (uint)User32.WM_MOUSEMOVE, wParam, lParam, screenX, screenY);
                 }
             }
             catch { }

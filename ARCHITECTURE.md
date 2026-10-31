@@ -69,9 +69,14 @@ graph TD
 
 ### 2. Picture-in-Picture (PiP) & Ghost Mode Engine (`PipWindow`)
 - **Direct DWM Surface Streaming:** Uses `DwmRegisterThumbnail` and `DwmUpdateThumbnailProperties` for hardware-accelerated 60 FPS live rendering.
-- **Ghost Mode:** When streaming an app, OpenWindow applies `WS_EX_LAYERED | WS_EX_TRANSPARENT` with `Alpha = 1` rather than calling `ShowWindow(SW_HIDE)`.
+- **Ghost Mode:** When streaming an app, OpenWindow applies `WS_EX_LAYERED` with `Alpha = 1` and moves to `HWND_BOTTOM` with `SWP_NOACTIVATE` rather than calling `ShowWindow(SW_HIDE)`.
   - **Why Ghost Mode?** Hiding a window destroys its DWM composition buffer and suspends Chromium/Edge tab timers. Ghost Mode keeps the window 99.6% invisible to human eyes on the desktop while keeping DWM compositor surfaces and browser timers running live at 60 FPS.
-- **Interactive Mouse Control:** Translates mouse movements, clicks, and wheel scrolls inside the PiP viewport directly to the target window's client coordinates using `User32.PostMessage`.
+- **Comprehensive Interactive Mouse Control (Full & Cropped Modes):**
+  - **1:1 Physical Screen Translation:** Uses WPF `PointToScreen` during sub-region cropping to eliminate DWM `rcSource` coordinate drift, DPI scaling offsets, and maximized window negative bounds.
+  - **Deep Child Window Traversal:** Searches up to 8 levels deep using `RealChildWindowFromPoint` and `ChildWindowFromPointEx` (filtering out invisible and transparent windows) to deliver inputs directly to leaf controls and Chromium render widgets.
+  - **`WM_MOUSEACTIVATE` Dispatch:** Automatically pre-wakes inactive windows and background browsers before mouse button down, ensuring clicks are never dropped.
+  - **Mouse Wheel Tunneling:** Uses `PreviewMouseWheel` to bypass WPF container focus blocks; posts `WM_MOUSEWHEEL` (and `WM_MOUSEHWHEEL` with Shift) to child controls and root windows.
+  - **Full Button Suite:** Supports left-click, right-click with `WM_CONTEXTMENU`, middle-click, and double-click. Double-clicking the header or thumbnail restores and focuses the original application instantly.
 
 ### 3. Smart Opacity & Click-Through (`OpacityService`)
 - **Layered Attributes & Transparency Registry:** Manages `WS_EX_LAYERED` and `WS_EX_TRANSPARENT`. Maintains a thread-safe registry of all active transparent windows (`ActiveTransparentWindows`), distinguishing persistent base configured opacity levels from temporary hover reveals.
