@@ -144,13 +144,17 @@ namespace CodeByatta.UI.Views
 
             if (_hideOriginalWindow && _targetWindow.Hwnd != IntPtr.Zero && User32.IsWindow(_targetWindow.Hwnd))
             {
-                // Apply Ghost Mode: Layered + Transparent with Alpha=1
-                // Window is 99.6% invisible to human eyes, desktop clicks pass through it,
-                // BUT DWM keeps rendering 100% live, browser tab timers do not suspend, and automation frameworks stay unblocked!
+                // Non-intrusive Ghost Mode:
+                // Layer the target window and set alpha to 1 (virtually invisible)
+                // AND send it to HWND_BOTTOM so desktop clicks fall naturally through to background windows!
+                // CRITICAL SAFETY INVARIANT: Never add WS_EX_TRANSPARENT to the user's application,
+                // because WS_EX_TRANSPARENT marks it as click-through and corrupts state across screenshots and tools!
                 _originalExStyle = (long)User32.GetWindowLongPtr(_targetWindow.Hwnd, User32.GWL_EXSTYLE);
-                long ghostStyle = _originalExStyle | User32.WS_EX_LAYERED | User32.WS_EX_TRANSPARENT;
+                long ghostStyle = _originalExStyle | User32.WS_EX_LAYERED;
                 User32.SetWindowLongPtr(_targetWindow.Hwnd, User32.GWL_EXSTYLE, (IntPtr)ghostStyle);
                 User32.SetLayeredWindowAttributes(_targetWindow.Hwnd, 0, 1, User32.LWA_ALPHA);
+                User32.SetWindowPos(_targetWindow.Hwnd, User32.HWND_BOTTOM, 0, 0, 0, 0,
+                    User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOACTIVATE);
                 _originalWindowGhosted = true;
             }
         }
@@ -160,26 +164,20 @@ namespace CodeByatta.UI.Views
             base.OnRenderSizeChanged(sizeInfo);
             if (_isAdjustingAspect || _aspectRatio <= 0.05) return;
 
-            if (sizeInfo.WidthChanged || sizeInfo.HeightChanged)
+            // Deterministic Single-Driver Aspect Ratio Enforcement:
+            // Master dimension is ALWAYS Width. Height is strictly derived from client width and source aspect ratio.
+            // Never alternate between setting Width and Height to prevent recursive re-entrant layout freezes!
+            double headerHeight = 34.0;
+            double clientW = Math.Max(20.0, ActualWidth - 2.0);
+            double expectedClientH = clientW / _aspectRatio;
+            double targetH = Math.Clamp(expectedClientH + headerHeight, MinHeight, SystemParameters.PrimaryScreenHeight * 0.9);
+
+            if (Math.Abs(ActualHeight - targetH) > 2.0)
             {
                 _isAdjustingAspect = true;
                 try
                 {
-                    double headerHeight = 34.0;
-                    if (sizeInfo.WidthChanged)
-                    {
-                        double clientW = Math.Max(20.0, ActualWidth - 2);
-                        double clientH = clientW / _aspectRatio;
-                        double targetH = Math.Clamp(clientH + headerHeight, MinHeight, SystemParameters.PrimaryScreenHeight * 0.9);
-                        Height = targetH;
-                    }
-                    else if (sizeInfo.HeightChanged)
-                    {
-                        double clientH = Math.Max(20.0, ActualHeight - headerHeight);
-                        double clientW = clientH * _aspectRatio;
-                        double targetW = Math.Clamp(clientW + 2, MinWidth, SystemParameters.PrimaryScreenWidth * 0.9);
-                        Width = targetW;
-                    }
+                    Height = targetH;
                 }
                 finally
                 {
@@ -280,6 +278,73 @@ namespace CodeByatta.UI.Views
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 DragMove();
+                SnapToNearestCornerIfClose();
+            }
+        }
+
+        private void Header_MouseWheel(object sender, WpfMouseWheelEventArgs e)
+        {
+            if (_config == null || !_config.EnablePipWheelResize) return;
+
+            double step = e.Delta > 0 ? 30.0 : -30.0;
+            double targetWidth = Math.Clamp(ActualWidth + step, MinWidth, SystemParameters.PrimaryScreenWidth * 0.85);
+
+            Width = targetWidth;
+            // OnRenderSizeChanged automatically computes proportional Height matching aspect ratio!
+            SnapToNearestCornerIfClose();
+            e.Handled = true;
+        }
+
+        private void SnapToNearestCornerIfClose()
+        {
+            if (_config == null || !_config.EnablePipCornerSnapping) return;
+
+            double snapThreshold = 40.0;
+            double margin = 14.0;
+
+            double screenLeft = SystemParameters.WorkArea.Left;
+            double screenTop = SystemParameters.WorkArea.Top;
+            double screenRight = SystemParameters.WorkArea.Right;
+            double screenBottom = SystemParameters.WorkArea.Bottom;
+
+            double w = ActualWidth;
+            double h = ActualHeight;
+
+            double curLeft = Left;
+            double curTop = Top;
+            double curRight = curLeft + w;
+            double curBottom = curTop + h;
+
+            // 1. Top-Left Corner
+            if (Math.Abs(curLeft - screenLeft) < snapThreshold && Math.Abs(curTop - screenTop) < snapThreshold)
+            {
+                Left = screenLeft + margin;
+                Top = screenTop + margin;
+                return;
+            }
+
+            // 2. Top-Right Corner
+            if (Math.Abs(curRight - screenRight) < snapThreshold && Math.Abs(curTop - screenTop) < snapThreshold)
+            {
+                Left = screenRight - w - margin;
+                Top = screenTop + margin;
+                return;
+            }
+
+            // 3. Bottom-Left Corner
+            if (Math.Abs(curLeft - screenLeft) < snapThreshold && Math.Abs(curBottom - screenBottom) < snapThreshold)
+            {
+                Left = screenLeft + margin;
+                Top = screenBottom - h - margin;
+                return;
+            }
+
+            // 4. Bottom-Right Corner
+            if (Math.Abs(curRight - screenRight) < snapThreshold && Math.Abs(curBottom - screenBottom) < snapThreshold)
+            {
+                Left = screenRight - w - margin;
+                Top = screenBottom - h - margin;
+                return;
             }
         }
 

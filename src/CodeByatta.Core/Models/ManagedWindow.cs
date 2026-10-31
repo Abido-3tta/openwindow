@@ -69,7 +69,8 @@ namespace CodeByatta.Core.Models
             {
                 if ((flags & User32.LWA_ALPHA) != 0)
                 {
-                    Opacity = alpha;
+                    // Defensively ignore ephemeral ghost alpha (<= 1) so background PiP targets never falsely report 0% opacity
+                    Opacity = alpha <= 1 ? (byte)255 : alpha;
                 }
                 else
                 {

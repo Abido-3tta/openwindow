@@ -22,6 +22,13 @@ $ExePath = Join-Path $InstallDir "CodeByatta.UI.exe"
 
 function Invoke-WindowRestoration {
     Write-Host "Restoring external windows to clean state..." -ForegroundColor Cyan
+    # 0. If CodeByatta.UI is installed, trigger clean CLI restore before force-killing
+    if (Test-Path $ExePath) {
+        try {
+            Start-Process -FilePath $ExePath -ArgumentList "--restore-all" -Wait -WindowStyle Hidden -ErrorAction SilentlyContinue
+        } catch { }
+    }
+
     # 1. Stop existing process if running to release all hooks and mutex
     Get-Process -Name "CodeByatta.UI" -ErrorAction SilentlyContinue | Stop-Process -Force
     Start-Sleep -Milliseconds 300
@@ -70,8 +77,9 @@ function Invoke-WindowRestoration {
                     
                     if ((exStyle & WS_EX_LAYERED) != 0) {
                         SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
-                        exStyle &= ~WS_EX_TRANSPARENT;
+                        exStyle &= ~(WS_EX_TRANSPARENT | WS_EX_LAYERED);
                         SetWindowLongPtr(hwnd, GWL_EXSTYLE, (IntPtr)exStyle);
+                        SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
                     }
 
                     if ((exStyle & WS_EX_TOPMOST) != 0) {

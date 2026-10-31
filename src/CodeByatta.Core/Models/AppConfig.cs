@@ -48,7 +48,13 @@ namespace CodeByatta.Core.Models
         public bool ShowCropButton { get; set; } = true;
         public bool ShowDarkModeButton { get; set; } = true;
         public bool ShowOpacityButton { get; set; } = true;
+        public bool ShowClickThroughButton { get; set; } = true;
+        public bool ShowHoverOpacityButton { get; set; } = true;
+        public bool ShowCinemaFocusButton { get; set; } = true;
         public bool ShowGlassButton { get; set; } = false;
+        public bool EnablePipCornerSnapping { get; set; } = true;
+        public bool EnablePipWheelResize { get; set; } = true;
+        public double CinemaFocusDimLevel { get; set; } = 0.65;
         public string ArrowColor { get; set; } = "#30D158"; // Green / Accent
 
         // Hotkeys & Mouse Wheel (Screenshot 2)
@@ -179,5 +185,6 @@ namespace CodeByatta.Core.Models
         public uint ClickThroughKey { get; set; } = 0x43; // 'C' -> Alt+C
         public uint PipKey { get; set; } = 0x51;          // 'Q' -> Alt+Q
         public uint DarkModeKey { get; set; } = 0x44;     // 'D' -> Alt+D
+        public uint CinemaFocusKey { get; set; } = 0x46;  // 'F' -> Alt+F
     }
 }

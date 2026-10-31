@@ -100,8 +100,15 @@ namespace CodeByatta.UI.Views
             ToggleToolPip.IsOn = _config.ShowPipButton;
             ToggleToolCrop.IsOn = _config.ShowCropButton;
             ToggleToolOpacity.IsOn = _config.ShowOpacityButton;
+            ToggleToolHoverOpacity.IsOn = _config.ShowHoverOpacityButton;
+            ToggleToolClickThrough.IsOn = _config.ShowClickThroughButton;
+            ToggleToolCinemaFocus.IsOn = _config.ShowCinemaFocusButton;
             ToggleToolDark.IsOn = _config.ShowDarkModeButton;
             ToggleToolGlass.IsOn = _config.ShowGlassButton;
+            TogglePipSnapping.IsOn = _config.EnablePipCornerSnapping;
+            TogglePipWheelZoom.IsOn = _config.EnablePipWheelResize;
+            SliderDimLevel.Value = (int)Math.Round(_config.CinemaFocusDimLevel * 100);
+            TxtDimLevel.Text = $"{(int)Math.Round(_config.CinemaFocusDimLevel * 100)}%";
             SliderHoverTime.Value = _config.HoverTimeMs;
             TxtHoverTime.Text = $"{_config.HoverTimeMs}ms";
             ToggleAutoHide.IsOn = _config.AutoHideToolbar;
@@ -361,6 +368,14 @@ namespace CodeByatta.UI.Views
             }
         }
 
+        private void SliderDimLevel_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (TxtDimLevel != null)
+            {
+                TxtDimLevel.Text = $"{(int)Math.Round(e.NewValue)}%";
+            }
+        }
+
         private void BtnResetBorderWidth_Click(object sender, RoutedEventArgs e)
         {
             SliderBorderWidth.Value = 3.07;
@@ -595,8 +610,14 @@ namespace CodeByatta.UI.Views
             _config.ShowPipButton = ToggleToolPip.IsOn;
             _config.ShowCropButton = ToggleToolCrop.IsOn;
             _config.ShowOpacityButton = ToggleToolOpacity.IsOn;
+            _config.ShowHoverOpacityButton = ToggleToolHoverOpacity.IsOn;
+            _config.ShowClickThroughButton = ToggleToolClickThrough.IsOn;
+            _config.ShowCinemaFocusButton = ToggleToolCinemaFocus.IsOn;
             _config.ShowDarkModeButton = ToggleToolDark.IsOn;
             _config.ShowGlassButton = ToggleToolGlass.IsOn;
+            _config.EnablePipCornerSnapping = TogglePipSnapping.IsOn;
+            _config.EnablePipWheelResize = TogglePipWheelZoom.IsOn;
+            _config.CinemaFocusDimLevel = SliderDimLevel.Value / 100.0;
             _config.HoverTimeMs = (int)SliderHoverTime.Value;
             _config.AutoHideToolbar = ToggleAutoHide.IsOn;
             _config.AutoRememberWindowPreferences = ToggleRememberPosition.IsOn || ToggleRememberProfiles.IsOn;

@@ -390,6 +390,27 @@
                     </StackPanel>
                 </Button>
 
+                <!-- Cinema Focus (Dim Background) Button -->
+                <Button x:Name="BtnCinemaFocus"
+                        ToolTip="Cinema Focus (Alt+F) - Dim background desktop and distraction windows"
+                        Click="BtnCinemaFocus_Click"
+                        Padding="8,5"
+                        Margin="2,0"
+                        Background="#26FFFFFF"
+                        BorderThickness="0"
+                        Cursor="Hand">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Cinema Projector / Focus Light Vector Path -->
+                        <Path Data="M2,2 L14,2 L14,14 L2,14 Z M6,6 L10,6 L10,10 L6,10 Z"
+                              Stroke="White" StrokeThickness="1.2" Fill="Transparent" Width="13" Height="13" Stretch="Uniform" />
+                        <Ellipse x:Name="DotCinemaFocus"
+                                 Width="6" Height="6"
+                                 Fill="#BF5AF2"
+                                 Margin="5,0,0,0"
+                                 Visibility="Collapsed" />
+                    </StackPanel>
+                </Button>
+
                 <Separator Width="1" Height="16" Margin="4,0" Background="#33FFFFFF" />
 
                 <!-- Settings Button (Directly on Toolbar!) -->

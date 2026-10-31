@@ -40,6 +40,8 @@ namespace CodeByatta.UI
         private CropOverlayWindow? _currentCropOverlay;
         private readonly Dictionary<IntPtr, TopmostBorderOverlayWindow> _activeBorders = new();
         private readonly Dictionary<IntPtr, DarkModeOverlayWindow> _activeDarkOverlays = new();
+        private CinemaFocusOverlayWindow? _cinemaFocusOverlay;
+        public bool IsCinemaFocusActive => _cinemaFocusOverlay != null && _cinemaFocusOverlay.IsVisible;
 
         private static readonly string LogFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup.log");
 
@@ -116,6 +118,9 @@ namespace CodeByatta.UI
                 // Proactively sanitize shell/taskbar windows and enforce taskbar top position
                 ShellSanitizer.SanitizeShellWindows();
                 ShellSanitizer.EnsureTaskbarOnTop();
+
+                // Proactively sanitize any external windows that were left dirty from crashes or previous installations
+                SanitizeAllOrphanedExternalWindows();
 
                 Log("Initializing Toolbar");
                 InitializeToolbar();
@@ -358,7 +363,41 @@ namespace CodeByatta.UI
                     }
                     _toolbarView?.ShowWithActionFeedback(managed, "DarkMode");
                     break;
+                case HotkeyAction.ToggleCinemaFocus:
+                    ToggleCinemaFocus();
+                    break;
             }
+        }
+
+        public void ToggleCinemaFocus(IntPtr? hwnd = null)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (_cinemaFocusOverlay != null)
+                {
+                    try { _cinemaFocusOverlay.Close(); } catch { }
+                    _cinemaFocusOverlay = null;
+                    if (_config.ShowNotificationOnHotkey)
+                    {
+                        HotkeyNotificationHudWindow.ShowHud("Cinema Focus", "OFF", "cinemafocus", false);
+                    }
+                    _toolbarView?.UpdateVisualState();
+                    return;
+                }
+
+                IntPtr target = hwnd ?? User32.GetForegroundWindow();
+                if (target == IntPtr.Zero || IsOwnProcessOrWindow(target) || ShellSanitizer.IsShellOrTaskbarWindow(target)) return;
+
+                _cinemaFocusOverlay = new CinemaFocusOverlayWindow(_config.CinemaFocusDimLevel);
+                _cinemaFocusOverlay.AttachBehindWindow(target);
+                _cinemaFocusOverlay.Show();
+
+                if (_config.ShowNotificationOnHotkey)
+                {
+                    HotkeyNotificationHudWindow.ShowHud("Cinema Focus", "ON", "cinemafocus", true);
+                }
+                _toolbarView?.UpdateVisualState();
+            });
         }
 
         private void ToggleTopmostWithBorder(IntPtr hwnd)
@@ -529,13 +568,19 @@ namespace CodeByatta.UI
                     ShellSanitizer.EnsureTaskbarOnTop();
                 }
 
+                if (window == null || IsOwnProcessOrWindow(window.Hwnd) || ShellSanitizer.IsShellOrTaskbarWindow(window.Hwnd) || (CurrentPipTargetHwnd != IntPtr.Zero && window.Hwnd == CurrentPipTargetHwnd))
+                {
+                    _toolbarView?.Hide();
+                    return; // Strictly hide toolbar on own windows, taskbar/desktop, or active PiP target
+                }
+
+                if (_cinemaFocusOverlay != null && _cinemaFocusOverlay.IsVisible)
+                {
+                    _cinemaFocusOverlay.AttachBehindWindow(window.Hwnd);
+                }
+
                 if (_config.ShowTitleBarToolbar && _toolbarView != null)
                 {
-                    if (window != null && (IsOwnProcessOrWindow(window.Hwnd) || ShellSanitizer.IsShellOrTaskbarWindow(window.Hwnd) || (CurrentPipTargetHwnd != IntPtr.Zero && window.Hwnd == CurrentPipTargetHwnd)))
-                    {
-                        return; // Do not attach toolbar to our own settings/pip/overlay windows or taskbar/shell windows or active PiP target
-                    }
-
                     // If cursor is currently over or interacting with ANY active Click-Through window,
                     // do not abruptly detach the toolbar to an underlying background window!
                     if (User32.GetCursorPos(out var pt))
@@ -748,6 +793,11 @@ namespace CodeByatta.UI
                     _toolbarView.ApplyConfigStyles();
                 }
 
+                if (_messageHwndSource != null)
+                {
+                    _hotkeyService.Initialize(_messageHwndSource.Handle, _config);
+                }
+
                 SyncBorderOverlays();
             });
         }
@@ -861,7 +911,65 @@ namespace CodeByatta.UI
             }
             catch { }
 
+            try
+            {
+                if (_cinemaFocusOverlay != null)
+                {
+                    try { _cinemaFocusOverlay.Close(); } catch { }
+                    _cinemaFocusOverlay = null;
+                }
+            }
+            catch { }
+
+            // Proactively purge any leftover orphaned transparent or layered styles on external windows
+            SanitizeAllOrphanedExternalWindows();
+
             Log("All external windows restored successfully.");
+        }
+
+        public static void SanitizeAllOrphanedExternalWindows()
+        {
+            try
+            {
+                User32.EnumWindows((hwnd, param) =>
+                {
+                    try
+                    {
+                        if (!User32.IsWindow(hwnd) || !User32.IsWindowVisible(hwnd)) return true;
+                        if (ShellSanitizer.IsShellOrTaskbarOrSelf(hwnd)) return true;
+
+                        IntPtr exStyle = User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
+                        long style = (long)exStyle;
+
+                        bool hasTransparent = (style & User32.WS_EX_TRANSPARENT) != 0;
+                        bool hasLayered = (style & User32.WS_EX_LAYERED) != 0;
+
+                        if (hasTransparent || hasLayered)
+                        {
+                            bool isGhosted = false;
+                            if (hasLayered && User32.GetLayeredWindowAttributes(hwnd, out _, out byte alpha, out uint flags))
+                            {
+                                if ((flags & User32.LWA_ALPHA) != 0 && alpha <= 5)
+                                {
+                                    isGhosted = true; // Abandoned ghost window with 0-2% opacity
+                                }
+                            }
+
+                            if (hasTransparent || isGhosted)
+                            {
+                                long newStyle = style & ~(User32.WS_EX_TRANSPARENT | User32.WS_EX_LAYERED);
+                                User32.SetWindowLongPtr(hwnd, User32.GWL_EXSTYLE, (IntPtr)newStyle);
+                                User32.SetLayeredWindowAttributes(hwnd, 0, 255, User32.LWA_ALPHA);
+                                User32.SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
+                                    User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOZORDER | User32.SWP_FRAMECHANGED);
+                            }
+                        }
+                    }
+                    catch { }
+                    return true;
+                }, IntPtr.Zero);
+            }
+            catch { }
         }
 
         protected override void OnExit(ExitEventArgs e)

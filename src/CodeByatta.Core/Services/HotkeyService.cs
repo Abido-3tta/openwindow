@@ -11,7 +11,8 @@ namespace CodeByatta.Core.Services
         ToggleOpacity = 1002,
         ToggleClickThrough = 1003,
         TogglePip = 1004,
-        ToggleDarkMode = 1005
+        ToggleDarkMode = 1005,
+        ToggleCinemaFocus = 1006
     }
 
     public class HotkeyService : IDisposable
@@ -31,6 +32,31 @@ namespace CodeByatta.Core.Services
             Register(HotkeyAction.ToggleClickThrough, config.Modifier, config.ClickThroughKey);
             Register(HotkeyAction.TogglePip, config.Modifier, config.PipKey);
             Register(HotkeyAction.ToggleDarkMode, config.Modifier, config.DarkModeKey);
+            Register(HotkeyAction.ToggleCinemaFocus, config.Modifier, config.CinemaFocusKey);
+        }
+
+        public void Initialize(IntPtr hWnd, AppConfig config)
+        {
+            _hWnd = hWnd;
+            UnregisterAll();
+
+            if (config.ShowSetTopButton)
+                Register(HotkeyAction.ToggleTopmost, config.Hotkeys.Modifier, config.Hotkeys.TopmostKey);
+
+            if (config.ShowOpacityButton)
+                Register(HotkeyAction.ToggleOpacity, config.Hotkeys.Modifier, config.Hotkeys.OpacityKey);
+
+            if (config.ShowClickThroughButton)
+                Register(HotkeyAction.ToggleClickThrough, config.Hotkeys.Modifier, config.Hotkeys.ClickThroughKey);
+
+            if (config.ShowPipButton)
+                Register(HotkeyAction.TogglePip, config.Hotkeys.Modifier, config.Hotkeys.PipKey);
+
+            if (config.ShowDarkModeButton)
+                Register(HotkeyAction.ToggleDarkMode, config.Hotkeys.Modifier, config.Hotkeys.DarkModeKey);
+
+            if (config.ShowCinemaFocusButton)
+                Register(HotkeyAction.ToggleCinemaFocus, config.Hotkeys.Modifier, config.Hotkeys.CinemaFocusKey);
         }
 
         private void Register(HotkeyAction action, uint modifier, uint key)

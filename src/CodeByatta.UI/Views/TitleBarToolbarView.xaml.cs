@@ -119,9 +119,12 @@ namespace CodeByatta.UI.Views
 
             BtnTopmost.Visibility = _config.ShowSetTopButton ? Visibility.Visible : Visibility.Collapsed;
             BtnOpacity.Visibility = _config.ShowOpacityButton ? Visibility.Visible : Visibility.Collapsed;
+            BtnHoverOpacity.Visibility = _config.ShowHoverOpacityButton ? Visibility.Visible : Visibility.Collapsed;
+            BtnClickThrough.Visibility = _config.ShowClickThroughButton ? Visibility.Visible : Visibility.Collapsed;
             BtnPip.Visibility = _config.ShowPipButton ? Visibility.Visible : Visibility.Collapsed;
             BtnCrop.Visibility = _config.ShowCropButton ? Visibility.Visible : Visibility.Collapsed;
             BtnDarkMode.Visibility = _config.ShowDarkModeButton ? Visibility.Visible : Visibility.Collapsed;
+            BtnCinemaFocus.Visibility = _config.ShowCinemaFocusButton ? Visibility.Visible : Visibility.Collapsed;
             AutoHideEnabled = _config.AutoHideToolbar;
         }
 
@@ -734,6 +737,7 @@ namespace CodeByatta.UI.Views
             byte currentAlpha = _opacityService.GetConfiguredOpacity(_targetWindow.Hwnd);
             if (currentAlpha == 255) currentAlpha = _targetWindow.Opacity;
             int percent = (int)Math.Round((currentAlpha / 255.0) * 100);
+            if (currentAlpha <= 5) percent = 0;
             TxtOpacityPercent.Text = $"{percent}%";
             TxtOpacityPercent.Foreground = percent < 100 ? new SolidColorBrush(MediaColor.FromRgb(0x4C, 0xC2, 0xFF)) : MediaBrushes.White;
 
@@ -756,6 +760,14 @@ namespace CodeByatta.UI.Views
             bool isDark = _targetWindow != null && _darkModeService.IsDarkModeActiveForWindow(_targetWindow.Hwnd);
             DotDarkMode.Visibility = isDark ? Visibility.Visible : Visibility.Collapsed;
             BtnDarkMode.Background = isDark ? new SolidColorBrush(MediaColor.FromArgb(0x55, 0xFF, 0xD6, 0x0A)) : new SolidColorBrush(MediaColor.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
+
+            // Cinema Focus state
+            if (System.Windows.Application.Current is App appInst)
+            {
+                bool isCinema = appInst.IsCinemaFocusActive;
+                DotCinemaFocus.Visibility = isCinema ? Visibility.Visible : Visibility.Collapsed;
+                BtnCinemaFocus.Background = isCinema ? new SolidColorBrush(MediaColor.FromArgb(0x66, 0xBF, 0x5A, 0xF2)) : new SolidColorBrush(MediaColor.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
+            }
 
             // Hover Opacity Reveal state (strictly isolated per-window)
             bool isHoverOpacityOn = false;
@@ -874,7 +886,7 @@ namespace CodeByatta.UI.Views
             if (_targetWindow == null) return;
             _autoHideTimer.Stop();
 
-            // Cycle through opacities: 100% -> 80% -> 60% -> 40% -> 20% -> 10% -> 100%
+            // Cycle through opacities: 100% -> 80% -> 60% -> 40% -> 20% -> 0% -> 100%
             byte current = _opacityService.GetConfiguredOpacity(_targetWindow.Hwnd);
             if (current == 255) current = _targetWindow.Opacity;
             byte next;
@@ -882,7 +894,7 @@ namespace CodeByatta.UI.Views
             else if (current >= 180) next = 153;  // 60%
             else if (current >= 130) next = 102;  // 40%
             else if (current >= 75) next = 51;    // 20%
-            else if (current >= 35) next = 25;    // 10% (Ghost Mode)
+            else if (current >= 20) next = 5;     // 0% (alpha 5 - clean minimum visible/ghost)
             else next = 255;                      // 100%
 
             _targetWindow.Opacity = next;
@@ -894,6 +906,18 @@ namespace CodeByatta.UI.Views
             // Display interactive horizontal slider popup right underneath
             PopupOpacitySlider.IsOpen = true;
             _autoHideTimer.Stop();
+        }
+
+        private void BtnCinemaFocus_Click(object sender, RoutedEventArgs e)
+        {
+            if (_targetWindow == null) return;
+            _autoHideTimer.Stop();
+            if (System.Windows.Application.Current is App app)
+            {
+                app.ToggleCinemaFocus(_targetWindow.Hwnd);
+                UpdateVisualState();
+                SaveCurrentWindowPreferenceState();
+            }
         }
 
         private bool _isUpdatingSliderInternally;

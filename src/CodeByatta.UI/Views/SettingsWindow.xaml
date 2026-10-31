@@ -519,10 +519,58 @@
 
                         <Grid Margin="0,4">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Hover Reveal" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolHoverOpacity" OnContent="On" OffContent="Off" IsOn="True" />
+                            <TextBlock Grid.Column="2" Text="Mouse Hover" Foreground="#888888" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Click-Through" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolClickThrough" OnContent="On" OffContent="Off" IsOn="True" />
+                            <TextBlock Grid.Column="2" Text="Alt + C" Foreground="#888888" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Cinema Focus" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolCinemaFocus" OnContent="On" OffContent="Off" IsOn="True" />
+                            <TextBlock Grid.Column="2" Text="Alt + F" Foreground="#888888" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="Glass" VerticalAlignment="Center" FontSize="13" />
                             <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolGlass" OnContent="On" OffContent="Off" IsOn="False" />
                             <TextBlock Grid.Column="2" Text="None" Foreground="#888888" VerticalAlignment="Center" />
                         </Grid>
+
+                        <Separator Margin="0,16" Background="#26FFFFFF" />
+
+                        <!-- PiP Enhancements -->
+                        <TextBlock Text="PiP Enhancements" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Magnetic Corner Snapping" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="TogglePipSnapping" OnContent="On" OffContent="Off" IsOn="True" />
+                            <TextBlock Grid.Column="2" Text="Snaps to screen corners with margin" Foreground="#888888" VerticalAlignment="Center" />
+                        </Grid>
+                        <Grid Margin="0,4">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Mouse Wheel Zoom/Resize" VerticalAlignment="Center" FontSize="13" />
+                            <ui:ToggleSwitch Grid.Column="1" x:Name="TogglePipWheelZoom" OnContent="On" OffContent="Off" IsOn="True" />
+                            <TextBlock Grid.Column="2" Text="Scroll wheel on header to resize" Foreground="#888888" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Separator Margin="0,16" Background="#26FFFFFF" />
+
+                        <!-- Cinema Focus Dimming Level -->
+                        <TextBlock Text="Cinema Focus Dim Level" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,4" />
+                        <TextBlock Text="Darkness level applied to background windows when Cinema Focus is active." Foreground="#888888" FontSize="12" Margin="0,0,0,8" />
+                        <StackPanel Orientation="Horizontal" Margin="0,4">
+                            <Slider x:Name="SliderDimLevel" Minimum="20" Maximum="90" Value="65" Width="220" TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="SliderDimLevel_ValueChanged" />
+                            <TextBlock x:Name="TxtDimLevel" Text="65%" Margin="14,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#4CC2FF" />
+                        </StackPanel>
 
                         <Separator Margin="0,16" Background="#26FFFFFF" />
 

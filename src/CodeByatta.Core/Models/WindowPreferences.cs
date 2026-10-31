@@ -21,6 +21,7 @@ namespace CodeByatta.Core.Models
         public bool DisableOpacityOnMouseOver { get; set; } = true;
         public bool IsClickThrough { get; set; } = false;
         public bool IsDarkMode { get; set; } = false;
+        public bool IsCinemaFocus { get; set; } = false;
 
         public DateTime LastModified { get; set; } = DateTime.UtcNow;
     }
