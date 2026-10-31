@@ -21,8 +21,15 @@ namespace CodeByatta.UI.Views
     {
         private readonly ManagedWindow _targetWindow;
         private readonly PipManagerService _pipManager;
+        private readonly OpacityService? _opacityService;
+        private readonly AppConfig? _config;
         private readonly RECT? _cropRect;
         private readonly bool _hideOriginalWindow;
+        private readonly bool _isTopmost;
+        private readonly string? _borderColor;
+        private readonly double _borderWidth;
+        private readonly double _aspectRatio;
+
         private IntPtr _hThumbnail = IntPtr.Zero;
         private bool _isTransparent = false;
         private bool _isClosing = false;
@@ -32,6 +39,16 @@ namespace CodeByatta.UI.Views
         private bool _originalWindowGhosted = false;
         private long _originalExStyle = 0;
 
+        private const int WM_SIZING = 0x0214;
+        private const int WMSZ_LEFT = 1;
+        private const int WMSZ_RIGHT = 2;
+        private const int WMSZ_TOP = 3;
+        private const int WMSZ_TOPLEFT = 4;
+        private const int WMSZ_TOPRIGHT = 5;
+        private const int WMSZ_BOTTOM = 6;
+        private const int WMSZ_BOTTOMLEFT = 7;
+        private const int WMSZ_BOTTOMRIGHT = 8;
+
         public IntPtr TargetHwnd => _targetWindow.Hwnd;
         public event EventHandler? PipClosed;
 
@@ -40,12 +57,53 @@ namespace CodeByatta.UI.Views
             PipManagerService pipManager,
             RECT? cropRect = null,
             bool hideOriginalWindow = false)
+            : this(targetWindow, pipManager, null, null, cropRect, hideOriginalWindow, false, null, 2.0)
+        {
+        }
+
+        public PipWindow(
+            ManagedWindow targetWindow,
+            PipManagerService pipManager,
+            OpacityService? opacityService,
+            AppConfig? config,
+            RECT? cropRect = null,
+            bool hideOriginalWindow = false,
+            bool isTopmost = false,
+            string? borderColor = null,
+            double borderWidth = 2.0)
         {
             InitializeComponent();
             _targetWindow = targetWindow;
             _pipManager = pipManager;
+            _opacityService = opacityService;
+            _config = config;
             _cropRect = cropRect;
             _hideOriginalWindow = hideOriginalWindow;
+            _isTopmost = isTopmost;
+            _borderColor = borderColor;
+            _borderWidth = borderWidth;
+
+            // Calculate source aspect ratio
+            int sourceW = 0, sourceH = 0;
+            if (_cropRect.HasValue && _cropRect.Value.Width > 0 && _cropRect.Value.Height > 0)
+            {
+                sourceW = _cropRect.Value.Width;
+                sourceH = _cropRect.Value.Height;
+            }
+            else if (_targetWindow.GetBounds(out var tb) && tb.Width > 0 && tb.Height > 0)
+            {
+                sourceW = tb.Width;
+                sourceH = tb.Height;
+            }
+
+            _aspectRatio = (sourceW > 0 && sourceH > 0) ? ((double)sourceW / sourceH) : (16.0 / 9.0);
+
+            // Compute proportional initial size maintaining source aspect ratio
+            double initW = 420;
+            double clientH = initW / _aspectRatio;
+            double totalH = clientH + 34; // 34px header height
+            Width = initW;
+            Height = Math.Clamp(totalH, 150, 900);
 
             TxtTitle.Text = string.IsNullOrWhiteSpace(_targetWindow.Title)
                 ? _targetWindow.ProcessName
@@ -56,6 +114,17 @@ namespace CodeByatta.UI.Views
                 CroppedBadge.Visibility = Visibility.Visible;
             }
 
+            if (_isTopmost && !string.IsNullOrEmpty(_borderColor))
+            {
+                try
+                {
+                    var col = (MediaColor)System.Windows.Media.ColorConverter.ConvertFromString(_borderColor);
+                    WindowOuterBorder.BorderBrush = new SolidColorBrush(col);
+                    WindowOuterBorder.BorderThickness = new Thickness(Math.Clamp(_borderWidth, 1.5, 4.0));
+                }
+                catch { }
+            }
+
             SourceInitialized += PipWindow_SourceInitialized;
             Closed += PipWindow_Closed;
         }
@@ -63,6 +132,9 @@ namespace CodeByatta.UI.Views
         private void PipWindow_SourceInitialized(object? sender, EventArgs e)
         {
             UpdateThumbnail();
+
+            var source = HwndSource.FromHwnd(new WindowInteropHelper(this).Handle);
+            source?.AddHook(WndProc);
 
             if (_hideOriginalWindow && _targetWindow.Hwnd != IntPtr.Zero && User32.IsWindow(_targetWindow.Hwnd))
             {
@@ -75,6 +147,62 @@ namespace CodeByatta.UI.Views
                 User32.SetLayeredWindowAttributes(_targetWindow.Hwnd, 0, 1, User32.LWA_ALPHA);
                 _originalWindowGhosted = true;
             }
+        }
+
+        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (msg == WM_SIZING && _aspectRatio > 0.05)
+            {
+                try
+                {
+                    var dpi = VisualTreeHelper.GetDpi(this);
+                    double headerPx = 34.0 * dpi.DpiScaleY;
+                    RECT rect = System.Runtime.InteropServices.Marshal.PtrToStructure<RECT>(lParam);
+                    int edge = wParam.ToInt32();
+
+                    int currentW = rect.Right - rect.Left;
+                    int currentH = rect.Bottom - rect.Top;
+                    double clientH = Math.Max(20.0, currentH - headerPx);
+
+                    switch (edge)
+                    {
+                        case WMSZ_LEFT:
+                        case WMSZ_RIGHT:
+                        {
+                            double newClientH = currentW / _aspectRatio;
+                            rect.Bottom = rect.Top + (int)Math.Round(newClientH + headerPx);
+                            break;
+                        }
+                        case WMSZ_TOP:
+                        case WMSZ_BOTTOM:
+                        {
+                            double newClientW = clientH * _aspectRatio;
+                            rect.Right = rect.Left + (int)Math.Round(newClientW);
+                            break;
+                        }
+                        case WMSZ_BOTTOMRIGHT:
+                        case WMSZ_BOTTOMLEFT:
+                        {
+                            double newClientH = currentW / _aspectRatio;
+                            rect.Bottom = rect.Top + (int)Math.Round(newClientH + headerPx);
+                            break;
+                        }
+                        case WMSZ_TOPRIGHT:
+                        case WMSZ_TOPLEFT:
+                        {
+                            double newClientH = currentW / _aspectRatio;
+                            rect.Top = rect.Bottom - (int)Math.Round(newClientH + headerPx);
+                            break;
+                        }
+                    }
+
+                    System.Runtime.InteropServices.Marshal.StructureToPtr(rect, lParam, true);
+                    handled = true;
+                    return (IntPtr)1;
+                }
+                catch { }
+            }
+            return IntPtr.Zero;
         }
 
         private void UpdateThumbnail()
@@ -141,7 +269,20 @@ namespace CodeByatta.UI.Views
         private void BtnOpacityToggle_Click(object sender, RoutedEventArgs e)
         {
             _isTransparent = !_isTransparent;
-            Opacity = _isTransparent ? 0.70 : 1.0;
+            if (_isTransparent)
+            {
+                byte savedAlpha = _opacityService?.GetConfiguredOpacity(_targetWindow.Hwnd) ?? 255;
+                if (savedAlpha == 255 && _config != null)
+                {
+                    savedAlpha = (byte)Math.Round(_config.DefaultOpacityPercent * 2.55);
+                }
+                double targetOpacity = Math.Clamp((double)savedAlpha / 255.0, 0.15, 0.90);
+                Opacity = targetOpacity;
+            }
+            else
+            {
+                Opacity = 1.0;
+            }
         }
 
         public void RestoreAndClose()
@@ -234,13 +375,22 @@ namespace CodeByatta.UI.Views
             screenX = targetRect.Left + targetLocalX;
             screenY = targetRect.Top + targetLocalY;
 
-            // Route to specific inner child window or control if applicable (e.g. Chrome RenderWidget, Edit control)
+            // Route to specific inner child window or control if applicable (defensively guarded against screenshot hangs)
             var screenPoint = new User32.POINT(screenX, screenY);
-            IntPtr candidateHwnd = User32.WindowFromPoint(screenPoint);
+            IntPtr candidateHwnd = IntPtr.Zero;
+            try
+            {
+                candidateHwnd = User32.WindowFromPoint(screenPoint);
+            }
+            catch { }
 
             if (candidateHwnd != IntPtr.Zero && (candidateHwnd == _targetWindow.Hwnd || User32.GetAncestor(candidateHwnd, User32.GA_ROOT) == _targetWindow.Hwnd))
             {
                 targetHwnd = candidateHwnd;
+            }
+            else
+            {
+                targetHwnd = _targetWindow.Hwnd;
             }
 
             var clientPoint = screenPoint;
@@ -257,51 +407,67 @@ namespace CodeByatta.UI.Views
                 return;
             }
 
-            WpfPoint pt = e.GetPosition(ThumbnailHost);
-            if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
+            try
             {
-                uint msg = e.ChangedButton == MouseButton.Right ? (uint)User32.WM_RBUTTONDOWN : (uint)User32.WM_LBUTTONDOWN;
-                IntPtr wParam = e.ChangedButton == MouseButton.Right ? (IntPtr)User32.MK_RBUTTON : (IntPtr)User32.MK_LBUTTON;
-                User32.PostMessage(hwnd, msg, wParam, lParam);
+                WpfPoint pt = e.GetPosition(ThumbnailHost);
+                if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
+                {
+                    uint msg = e.ChangedButton == MouseButton.Right ? (uint)User32.WM_RBUTTONDOWN : (uint)User32.WM_LBUTTONDOWN;
+                    IntPtr wParam = e.ChangedButton == MouseButton.Right ? (IntPtr)User32.MK_RBUTTON : (IntPtr)User32.MK_LBUTTON;
+                    User32.PostMessage(hwnd, msg, wParam, lParam);
+                }
             }
+            catch { }
         }
 
         private void ThumbnailHost_MouseUp(object sender, WpfMouseButtonEventArgs e)
         {
             if (!_isInteractMode) return;
 
-            WpfPoint pt = e.GetPosition(ThumbnailHost);
-            if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
+            try
             {
-                uint msg = e.ChangedButton == MouseButton.Right ? (uint)User32.WM_RBUTTONUP : (uint)User32.WM_LBUTTONUP;
-                User32.PostMessage(hwnd, msg, IntPtr.Zero, lParam);
+                WpfPoint pt = e.GetPosition(ThumbnailHost);
+                if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
+                {
+                    uint msg = e.ChangedButton == MouseButton.Right ? (uint)User32.WM_RBUTTONUP : (uint)User32.WM_LBUTTONUP;
+                    User32.PostMessage(hwnd, msg, IntPtr.Zero, lParam);
+                }
             }
+            catch { }
         }
 
         private void ThumbnailHost_MouseMove(object sender, WpfMouseEventArgs e)
         {
             if (!_isInteractMode) return;
 
-            WpfPoint pt = e.GetPosition(ThumbnailHost);
-            if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
+            try
             {
-                IntPtr wParam = e.LeftButton == MouseButtonState.Pressed ? (IntPtr)User32.MK_LBUTTON : IntPtr.Zero;
-                User32.PostMessage(hwnd, (uint)User32.WM_MOUSEMOVE, wParam, lParam);
+                WpfPoint pt = e.GetPosition(ThumbnailHost);
+                if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
+                {
+                    IntPtr wParam = e.LeftButton == MouseButtonState.Pressed ? (IntPtr)User32.MK_LBUTTON : IntPtr.Zero;
+                    User32.PostMessage(hwnd, (uint)User32.WM_MOUSEMOVE, wParam, lParam);
+                }
             }
+            catch { }
         }
 
         private void ThumbnailHost_MouseWheel(object sender, WpfMouseWheelEventArgs e)
         {
             if (!_isInteractMode) return;
 
-            WpfPoint pt = e.GetPosition(ThumbnailHost);
-            if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out _, out int screenX, out int screenY))
+            try
             {
-                short delta = (short)e.Delta;
-                IntPtr wParam = (IntPtr)((delta << 16) & unchecked((int)0xFFFF0000));
-                IntPtr screenLParam = (IntPtr)(((screenY & 0xFFFF) << 16) | (screenX & 0xFFFF));
-                User32.PostMessage(hwnd, (uint)User32.WM_MOUSEWHEEL, wParam, screenLParam);
+                WpfPoint pt = e.GetPosition(ThumbnailHost);
+                if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out _, out int screenX, out int screenY))
+                {
+                    short delta = (short)e.Delta;
+                    IntPtr wParam = (IntPtr)((delta << 16) & unchecked((int)0xFFFF0000));
+                    IntPtr screenLParam = (IntPtr)(((screenY & 0xFFFF) << 16) | (screenX & 0xFFFF));
+                    User32.PostMessage(hwnd, (uint)User32.WM_MOUSEWHEEL, wParam, screenLParam);
+                }
             }
+            catch { }
             e.Handled = true;
         }
 

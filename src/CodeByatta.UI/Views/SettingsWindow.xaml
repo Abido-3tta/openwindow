@@ -314,12 +314,32 @@
                                                   Fill="#777777" Width="3" Height="12" Margin="1.5,0,0,0" />
                                         </StackPanel>
                                     </Border>
-                                    <!-- Mini Logo -->
-                                    <Path Data="M0,2 A2,2 0 0,1 2,0 L12,0 A2,2 0 0,1 14,2 L14,10 A2,2 0 0,1 12,12 L2,12 A2,2 0 0,1 0,10 Z M2,3 L12,3 M7,6 L12,6 L12,10 L7,10 Z"
-                                          Stroke="#4CC2FF" StrokeThickness="1.2" Fill="Transparent" Width="13" Height="11" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                    <!-- Mini 3D Silver Logo -->
+                                    <Grid Width="15" Height="13" Margin="0,0,7,0" VerticalAlignment="Center">
+                                        <Border Width="12" Height="9" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                                Background="#222836" BorderThickness="0.8" CornerRadius="1.5">
+                                            <Border.BorderBrush>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#5594A3B8" Offset="0" />
+                                                    <GradientStop Color="#22475569" Offset="1" />
+                                                </LinearGradientBrush>
+                                            </Border.BorderBrush>
+                                        </Border>
+                                        <Border Width="12" Height="9" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                Background="#33FFFFFF" BorderThickness="1" CornerRadius="1.5">
+                                            <Border.BorderBrush>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                    <GradientStop Color="#FFFFFFFF" Offset="0" />
+                                                    <GradientStop Color="#A0CBD5E1" Offset="0.5" />
+                                                    <GradientStop Color="#7094A3B8" Offset="1" />
+                                                </LinearGradientBrush>
+                                            </Border.BorderBrush>
+                                            <Border Height="2" VerticalAlignment="Top" Background="#55FFFFFF" CornerRadius="1,1,0,0" />
+                                        </Border>
+                                    </Grid>
                                     <TextBlock Text="OpenWindow" FontSize="11" FontWeight="SemiBold" Foreground="#EEEEEE" VerticalAlignment="Center" Margin="0,0,6,0" />
-                                    <Path Data="M0,1 L4,6 L8,1"
-                                          Stroke="#30D158" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" VerticalAlignment="Center" />
+                                    <Path Data="M0,1.5 L3.5,5 L7,1.5"
+                                          Stroke="#CBD5E1" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Border>
 
@@ -340,9 +360,9 @@
                 </Grid>
             </Border>
 
-            <!-- Dynamic Panels Container -->
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,32,0">
-                <Grid>
+            <!-- Dynamic Panels Container (Right margin ensures 38px buffer preventing scrollbar overlap) -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <Grid Margin="0,0,38,0">
                     <!-- 1. Advanced Features Panel (Screenshot 2) -->
                     <StackPanel x:Name="PanelAdvanced" Visibility="Visible">
                         <TextBlock Text="Advanced Features Settings" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />

@@ -25,7 +25,7 @@ namespace CodeByatta.Core.Services
 
     public class UpdateService
     {
-        private const string GitHubApiUrl = "https://api.github.com/repos/codebyatta/openwindow/releases/latest";
+        private const string GitHubApiUrl = "https://api.github.com/repos/Abido-3tta/openwindow/releases/latest";
         private readonly HttpClient _httpClient;
 
         public UpdateService(HttpClient? httpClient = null)

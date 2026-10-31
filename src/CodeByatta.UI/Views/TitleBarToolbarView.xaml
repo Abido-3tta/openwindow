@@ -13,15 +13,119 @@
         MouseEnter="Window_MouseEnter"
         MouseLeave="Window_MouseLeave">
 
+    <Window.Resources>
+        <!-- Windows 11 Fluent Polished Silver Slider Thumb -->
+        <Style x:Key="FluentSilverSliderThumb" TargetType="{x:Type Thumb}">
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Grid Width="16" Height="16">
+                            <Ellipse Width="16" Height="16" Stroke="#FFFFFF" StrokeThickness="1.5">
+                                <Ellipse.Fill>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#FFFFFF" Offset="0.0" />
+                                        <GradientStop Color="#CBD5E1" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </Ellipse.Fill>
+                                <Ellipse.Effect>
+                                    <DropShadowEffect BlurRadius="6" ShadowDepth="1.5" Opacity="0.5" Color="#000000" />
+                                </Ellipse.Effect>
+                            </Ellipse>
+                            <Ellipse Width="5" Height="5" Fill="#334155" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Windows 11 Fluent Slider Style with Silver / Titanium Track -->
+        <Style x:Key="FluentSilverSlider" TargetType="{x:Type Slider}">
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Slider}">
+                        <Grid VerticalAlignment="Center">
+                            <!-- Background Unfilled Track -->
+                            <Border Height="4" CornerRadius="2" Background="#141720" BorderBrush="#3364748B" BorderThickness="0.8" VerticalAlignment="Center" Margin="4,0" />
+                            <!-- Active Filled Track and Thumb -->
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static Slider.DecreaseLarge}">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate>
+                                                <Border Height="4" CornerRadius="2,0,0,2" VerticalAlignment="Center" Margin="4,0,0,0">
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                            <GradientStop Color="#64748B" Offset="0.0" />
+                                                            <GradientStop Color="#E2E8F0" Offset="1.0" />
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="{x:Static Slider.IncreaseLarge}">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate>
+                                                <Border Background="Transparent" />
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource FluentSilverSliderThumb}" Cursor="Hand" />
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Rounded Pill Preset Button Style -->
+        <Style x:Key="OpacityPresetPillButton" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="#141720" />
+            <Setter Property="Foreground" Value="#CBD5E1" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Padding" Value="0,4" />
+            <Setter Property="Margin" Value="2,0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="#3364748B" BorderThickness="0.8" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#222634" />
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#88CBD5E1" />
+                                <Setter Property="Foreground" Value="#FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#2E3446" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
     <Grid Margin="2">
-        <!-- 1. Collapsed Header Anchor Handle (Proportioned to Window Header Bar) -->
+        <!-- 1. Collapsed Header Anchor Handle: 3D Minimalist Silver / Platinum Aesthetic -->
         <Border x:Name="AnchorHandle"
-                Background="#EE1A1C24"
-                BorderBrush="#6630D158"
-                BorderThickness="1.5"
-                CornerRadius="13"
+                Background="#F00C0D12"
+                BorderThickness="1"
+                CornerRadius="14"
                 MinHeight="28"
-                Padding="8,4,12,4"
+                Padding="8,4,10,4"
                 Cursor="Hand"
                 ToolTip="Click to expand | Drag to reposition | Double-Click to Pin"
                 MouseDown="AnchorHandle_MouseDown"
@@ -30,34 +134,79 @@
                 MouseEnter="AnchorHandle_MouseEnter"
                 MouseLeave="AnchorHandle_MouseLeave"
                 Visibility="Collapsed">
+            <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#77FFFFFF" Offset="0.0" />
+                    <GradientStop Color="#3394A3B8" Offset="0.5" />
+                    <GradientStop Color="#55CBD5E1" Offset="1.0" />
+                </LinearGradientBrush>
+            </Border.BorderBrush>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="12" ShadowDepth="2" Opacity="0.6" Color="#000000" />
+                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.75" Color="#000000" />
             </Border.Effect>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <!-- Mini Move / Drag Grip Handle for Collapsed Anchor -->
                 <Border x:Name="AnchorDragGrip"
                         ToolTip="Drag horizontally left/right along titlebar"
                         Background="Transparent"
-                        Padding="0,0,6,0"
+                        Padding="0,0,7,0"
                         Cursor="SizeWE"
                         MouseDown="AnchorDragGrip_MouseDown">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Path Data="M1,2 A1,1 0 1,1 1,4 A1,1 0 1,1 1,2 M1,7 A1,1 0 1,1 1,9 A1,1 0 1,1 1,7 M1,12 A1,1 0 1,1 1,14 A1,1 0 1,1 1,12"
-                              Fill="#777777" Width="3" Height="13" />
+                              Fill="#64748B" Width="3" Height="13" />
                         <Path Data="M1,2 A1,1 0 1,1 1,4 A1,1 0 1,1 1,2 M1,7 A1,1 0 1,1 1,9 A1,1 0 1,1 1,7 M1,12 A1,1 0 1,1 1,14 A1,1 0 1,1 1,12"
-                              Fill="#777777" Width="3" Height="13" Margin="1.5,0,0,0" />
+                              Fill="#64748B" Width="3" Height="13" Margin="1.5,0,0,0" />
                     </StackPanel>
                 </Border>
 
-                <!-- Mini Logo Vector -->
-                <Path Data="M0,2 A2,2 0 0,1 2,0 L12,0 A2,2 0 0,1 14,2 L14,10 A2,2 0 0,1 12,12 L2,12 A2,2 0 0,1 0,10 Z M2,3 L12,3 M7,6 L12,6 L12,10 L7,10 Z"
-                      Stroke="#4CC2FF" StrokeThickness="1.3" Fill="Transparent" Width="14" Height="12" Margin="0,0,6,0" VerticalAlignment="Center" />
-                <TextBlock Text="OpenWindow" FontSize="11.5" FontWeight="SemiBold" Foreground="#EEEEEE" VerticalAlignment="Center" Margin="0,0,6,0" />
-                <!-- Arrow / Chevron Down Vector (Matching WindowTop Arrow color) -->
+                <!-- 3D Minimalist Silver Layered Window Icon -->
+                <Grid Width="16" Height="14" Margin="0,0,7,0" VerticalAlignment="Center">
+                    <!-- Layer 1: Back Base Window (Dark Titanium with subtle edge) -->
+                    <Border Width="13" Height="10" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                            Background="#222836" BorderThickness="0.8" CornerRadius="2">
+                        <Border.BorderBrush>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#5594A3B8" Offset="0" />
+                                <GradientStop Color="#22475569" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.BorderBrush>
+                    </Border>
+                    <!-- Layer 2: Elevated Front Glass Window (Polished Silver / Platinum 3D Bevel) -->
+                    <Border Width="13" Height="10" HorizontalAlignment="Right" VerticalAlignment="Top"
+                            CornerRadius="2" BorderThickness="1">
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                <GradientStop Color="#33FFFFFF" Offset="0" />
+                                <GradientStop Color="#18CBD5E1" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <Border.BorderBrush>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#FFFFFFFF" Offset="0" />
+                                <GradientStop Color="#A0CBD5E1" Offset="0.4" />
+                                <GradientStop Color="#7094A3B8" Offset="1" />
+                            </LinearGradientBrush>
+                        </Border.BorderBrush>
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="4" ShadowDepth="1.5" Direction="315" Opacity="0.6" Color="#000000" />
+                        </Border.Effect>
+                        <Grid>
+                            <!-- Mini Titlebar Notch on Front Window -->
+                            <Border Height="2.5" VerticalAlignment="Top" Background="#40FFFFFF" CornerRadius="1.5,1.5,0,0" />
+                            <!-- Mini Window Glass Pane Cut -->
+                            <Rectangle Width="3.5" Height="3" Fill="#60FFFFFF" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,1.5,1.5" RadiusX="0.5" RadiusY="0.5" />
+                        </Grid>
+                    </Border>
+                </Grid>
+
+                <TextBlock Text="OpenWindow" FontSize="11.5" FontWeight="SemiBold" Foreground="#F1F5F9" VerticalAlignment="Center" Margin="0,0,7,0" />
+
+                <!-- Silver Minimalist Chevron Down -->
                 <Path x:Name="PathAnchorArrow"
-                      Data="M0,1 L4,6 L8,1"
-                      Stroke="#30D158"
-                      StrokeThickness="2.2"
+                      Data="M0,1.5 L3.5,5 L7,1.5"
+                      Stroke="#CBD5E1"
+                      StrokeThickness="1.8"
                       StrokeStartLineCap="Round"
                       StrokeEndLineCap="Round"
                       VerticalAlignment="Center" />
@@ -66,8 +215,8 @@
 
         <!-- 2. Full Expanded Draggable Toolbar Pill -->
         <Border x:Name="FullToolbarPill"
-                Background="#F5181A20"
-                BorderBrush="#44FFFFFF"
+                Background="#F50C0D12"
+                BorderBrush="#33FFFFFF"
                 BorderThickness="1"
                 CornerRadius="18"
                 Padding="6,3"
@@ -292,14 +441,20 @@
                AllowsTransparency="True"
                StaysOpen="False"
                PopupAnimation="Fade">
-            <Border Background="#F21E2433"
-                    BorderBrush="#44FFFFFF"
+            <Border Background="#F50E1015"
                     BorderThickness="1"
                     CornerRadius="12"
-                    Padding="12,10"
-                    Width="240">
+                    Padding="14,12"
+                    Width="250">
+                <Border.BorderBrush>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#66FFFFFF" Offset="0.0" />
+                        <GradientStop Color="#2294A3B8" Offset="0.5" />
+                        <GradientStop Color="#44CBD5E1" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Border.BorderBrush>
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.5" Color="#000000" />
+                    <DropShadowEffect BlurRadius="18" ShadowDepth="4" Opacity="0.65" Color="#000000" />
                 </Border.Effect>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -308,19 +463,27 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     
-                    <!-- Header with Icon & Percentage -->
-                    <DockPanel Grid.Row="0" Margin="0,0,0,6">
+                    <!-- Header with 3D Silver Icon & Percentage -->
+                    <DockPanel Grid.Row="0" Margin="0,0,0,8">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path Data="M0,4 A2,2 0 0,1 2,2 L10,2 A2,2 0 0,1 12,4 L12,12 A2,2 0 0,1 10,14 L2,14 A2,2 0 0,1 0,12 Z M4,0 A2,2 0 0,1 6,0 L14,0 A2,2 0 0,1 16,2 L16,10 A2,2 0 0,1 14,12"
-                                  Stroke="#4CC2FF" StrokeThickness="1.2" Fill="Transparent" Width="14" Height="13" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,6,0" />
-                            <TextBlock Text="Window Opacity" FontSize="11" FontWeight="SemiBold" Foreground="#E0E2E6" VerticalAlignment="Center" />
+                            <!-- Mini Silver Layered Icon -->
+                            <Grid Width="14" Height="12" Margin="0,0,6,0" VerticalAlignment="Center">
+                                <Border Width="11" Height="8" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                        Background="#222836" BorderThickness="0.8" BorderBrush="#5594A3B8" CornerRadius="1.5" />
+                                <Border Width="11" Height="8" HorizontalAlignment="Right" VerticalAlignment="Top"
+                                        Background="#2AFFFFFF" BorderThickness="0.8" BorderBrush="#CBD5E1" CornerRadius="1.5">
+                                    <Border Height="2" VerticalAlignment="Top" Background="#55FFFFFF" CornerRadius="1,1,0,0" />
+                                </Border>
+                            </Grid>
+                            <TextBlock Text="Window Opacity" FontSize="11" FontWeight="SemiBold" Foreground="#F1F5F9" VerticalAlignment="Center" />
                         </StackPanel>
-                        <TextBlock x:Name="TxtSliderPercentBadge" Text="100%" FontSize="12" FontWeight="Bold" Foreground="#4CC2FF" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        <TextBlock x:Name="TxtSliderPercentBadge" Text="100%" FontSize="11.5" FontWeight="Bold" Foreground="#E2E8F0" HorizontalAlignment="Right" VerticalAlignment="Center" />
                     </DockPanel>
 
-                    <!-- Horizontal Slider (5 to 100%) -->
+                    <!-- Horizontal Slider (5 to 100%) with Fluent Silver Style -->
                     <Slider Grid.Row="1"
                             x:Name="SliderOpacity"
+                            Style="{StaticResource FluentSilverSlider}"
                             Minimum="5"
                             Maximum="100"
                             Value="100"
@@ -330,15 +493,15 @@
                             ValueChanged="SliderOpacity_ValueChanged"
                             Cursor="Hand"
                             Height="24"
-                            Margin="0,2,0,8" />
+                            Margin="0,0,0,10" />
 
                     <!-- Quick Preset Badges -->
-                    <UniformGrid Grid.Row="2" Columns="5" Margin="0,2,0,0">
-                        <Button Content="20%" Click="BtnPresetOpacity_Click" Tag="20" Background="#26FFFFFF" Foreground="#CCCCCC" BorderThickness="0" FontSize="10" Padding="0,4" Margin="1,0" Cursor="Hand" />
-                        <Button Content="40%" Click="BtnPresetOpacity_Click" Tag="40" Background="#26FFFFFF" Foreground="#CCCCCC" BorderThickness="0" FontSize="10" Padding="0,3" Margin="1,0" Cursor="Hand" />
-                        <Button Content="60%" Click="BtnPresetOpacity_Click" Tag="60" Background="#26FFFFFF" Foreground="#CCCCCC" BorderThickness="0" FontSize="10" Padding="0,3" Margin="1,0" Cursor="Hand" />
-                        <Button Content="80%" Click="BtnPresetOpacity_Click" Tag="80" Background="#26FFFFFF" Foreground="#CCCCCC" BorderThickness="0" FontSize="10" Padding="0,3" Margin="1,0" Cursor="Hand" />
-                        <Button Content="100%" Click="BtnPresetOpacity_Click" Tag="100" Background="#26FFFFFF" Foreground="#CCCCCC" BorderThickness="0" FontSize="10" Padding="0,3" Margin="1,0" Cursor="Hand" />
+                    <UniformGrid Grid.Row="2" Columns="5" Margin="0,0,0,0">
+                        <Button Content="20%" Click="BtnPresetOpacity_Click" Tag="20" Style="{StaticResource OpacityPresetPillButton}" />
+                        <Button Content="40%" Click="BtnPresetOpacity_Click" Tag="40" Style="{StaticResource OpacityPresetPillButton}" />
+                        <Button Content="60%" Click="BtnPresetOpacity_Click" Tag="60" Style="{StaticResource OpacityPresetPillButton}" />
+                        <Button Content="80%" Click="BtnPresetOpacity_Click" Tag="80" Style="{StaticResource OpacityPresetPillButton}" />
+                        <Button Content="100%" Click="BtnPresetOpacity_Click" Tag="100" Style="{StaticResource OpacityPresetPillButton}" />
                     </UniformGrid>
                 </Grid>
             </Border>

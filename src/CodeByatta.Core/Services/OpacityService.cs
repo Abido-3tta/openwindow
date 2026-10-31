@@ -11,6 +11,8 @@ namespace CodeByatta.Core.Services
         private readonly ConcurrentDictionary<IntPtr, bool> _temporarilyBoostedWindows = new();
         private readonly ConcurrentDictionary<IntPtr, bool> _activeClickThroughWindows = new();
 
+        public event EventHandler<(IntPtr Hwnd, byte Opacity)>? OpacityChanged;
+
         public IReadOnlyCollection<IntPtr> ActiveClickThroughWindows
         {
             get
@@ -86,6 +88,7 @@ namespace CodeByatta.Core.Services
                 if (ok)
                 {
                     _temporarilyBoostedWindows[hwnd] = true;
+                    OpacityChanged?.Invoke(this, (hwnd, 255));
                 }
                 return ok;
             }
@@ -95,6 +98,10 @@ namespace CodeByatta.Core.Services
 
                 bool ok = User32.SetLayeredWindowAttributes(hwnd, 0, baseAlpha, User32.LWA_ALPHA);
                 _temporarilyBoostedWindows.TryRemove(hwnd, out _);
+                if (ok)
+                {
+                    OpacityChanged?.Invoke(this, (hwnd, baseAlpha));
+                }
                 return ok;
             }
         }
@@ -102,7 +109,7 @@ namespace CodeByatta.Core.Services
         public bool SetOpacity(IntPtr hwnd, byte alpha)
         {
             if (!User32.IsWindow(hwnd)) return false;
-            if (ShellSanitizer.IsShellOrTaskbarWindow(hwnd)) return false;
+            if (ShellSanitizer.IsShellOrTaskbarOrSelf(hwnd)) return false;
 
             IntPtr style = User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
             long newStyle = (long)style;
@@ -121,6 +128,7 @@ namespace CodeByatta.Core.Services
                     User32.SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
                         User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOZORDER | User32.SWP_FRAMECHANGED);
                     _previousOpacities.TryRemove(hwnd, out _);
+                    OpacityChanged?.Invoke(this, (hwnd, 255));
                     return true;
                 }
             }
@@ -141,6 +149,7 @@ namespace CodeByatta.Core.Services
             {
                 _previousOpacities[hwnd] = alpha;
             }
+            OpacityChanged?.Invoke(this, (hwnd, alpha));
             return success;
         }
 
@@ -165,7 +174,7 @@ namespace CodeByatta.Core.Services
         public bool SetClickThrough(IntPtr hwnd, bool enable)
         {
             if (!User32.IsWindow(hwnd)) return false;
-            if (ShellSanitizer.IsShellOrTaskbarWindow(hwnd)) return false;
+            if (ShellSanitizer.IsShellOrTaskbarOrSelf(hwnd)) return false;
 
             IntPtr style = User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
             long newStyle = (long)style;
@@ -226,6 +235,31 @@ namespace CodeByatta.Core.Services
             _temporarilyBoostedWindows.TryRemove(hwnd, out _);
             _activeClickThroughWindows.TryRemove(hwnd, out _);
             return true;
+        }
+
+        public void RestoreAllWindows()
+        {
+            var ctHwnds = new List<IntPtr>(_activeClickThroughWindows.Keys);
+            foreach (var hwnd in ctHwnds)
+            {
+                SetClickThrough(hwnd, false);
+            }
+
+            var opHwnds = new List<IntPtr>(_configuredOpacities.Keys);
+            foreach (var hwnd in opHwnds)
+            {
+                SetOpacity(hwnd, 255);
+            }
+
+            var boostHwnds = new List<IntPtr>(_temporarilyBoostedWindows.Keys);
+            foreach (var hwnd in boostHwnds)
+            {
+                SetTemporaryHoverReveal(hwnd, false);
+            }
+
+            _activeClickThroughWindows.Clear();
+            _configuredOpacities.Clear();
+            _temporarilyBoostedWindows.Clear();
         }
     }
 }

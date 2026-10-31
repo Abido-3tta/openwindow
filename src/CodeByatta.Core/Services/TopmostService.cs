@@ -33,7 +33,7 @@ namespace CodeByatta.Core.Services
                 return false;
             }
 
-            if (enable && ShellSanitizer.IsShellOrTaskbarWindow(hwnd))
+            if (enable && ShellSanitizer.IsShellOrTaskbarOrSelf(hwnd))
             {
                 return false;
             }
@@ -91,6 +91,21 @@ namespace CodeByatta.Core.Services
             {
                 ShellSanitizer.EnsureTaskbarOnTop();
             }
+        }
+
+        public void RestoreAllPinnedWindows()
+        {
+            var hwnds = new List<IntPtr>(_pinnedWindows.Keys);
+            foreach (var hwnd in hwnds)
+            {
+                if (User32.IsWindow(hwnd))
+                {
+                    User32.SetWindowPos(hwnd, User32.HWND_NOTOPMOST, 0, 0, 0, 0,
+                        User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOACTIVATE | User32.SWP_SHOWWINDOW);
+                    TopmostStateChanged?.Invoke(this, (hwnd, false));
+                }
+            }
+            _pinnedWindows.Clear();
         }
     }
 }

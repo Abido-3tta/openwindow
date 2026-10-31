@@ -56,6 +56,20 @@ namespace CodeByatta.UI
             Log("App started");
             try
             {
+                // Standalone cleanup argument handling for uninstaller, installer or emergency restore
+                if (e.Args.Length > 0 && (Array.Exists(e.Args, a => a.Equals("--cleanup-exit", StringComparison.OrdinalIgnoreCase) ||
+                                                                    a.Equals("--restore-all", StringComparison.OrdinalIgnoreCase) ||
+                                                                    a.Equals("-cleanup", StringComparison.OrdinalIgnoreCase))))
+                {
+                    Log("Running standalone cleanup-exit routine");
+                    _topmostService = new TopmostService();
+                    _opacityService = new OpacityService();
+                    _config = AppConfig.Load();
+                    RestoreAllExternalWindows();
+                    Shutdown();
+                    return;
+                }
+
                 const string mutexName = "OpenWindow_SingleInstanceMutex";
                 _instanceMutex = new Mutex(true, mutexName, out bool isNewInstance);
 
@@ -73,11 +87,21 @@ namespace CodeByatta.UI
 
                 base.OnStartup(e);
 
+                AppDomain.CurrentDomain.ProcessExit += (s, ev) => RestoreAllExternalWindows();
+                Microsoft.Win32.SystemEvents.SessionEnding += (s, ev) => RestoreAllExternalWindows();
+
                 Log("Loading config");
                 _config = AppConfig.Load();
                 _topmostService = new TopmostService();
                 _topmostService.TopmostStateChanged += (s, ev) => Dispatcher.Invoke(() => UpdateBorderForWindow(ev.Hwnd, ev.IsTopmost));
                 _opacityService = new OpacityService();
+                _opacityService.OpacityChanged += (s, ev) => Dispatcher.Invoke(() =>
+                {
+                    if (_activeDarkOverlays.TryGetValue(ev.Hwnd, out var overlay))
+                    {
+                        overlay.SetOpacity(ev.Opacity);
+                    }
+                });
                 _darkModeService = new DarkModeService();
                 _darkModeService.DarkModeStateChanged += (s, ev) => Dispatcher.Invoke(() => UpdateDarkModeForWindow(ev.Hwnd, ev.IsDarkMode));
                 _pipManager = new PipManagerService();
@@ -175,6 +199,11 @@ namespace CodeByatta.UI
                 _darkModeService.ToggleDarkMode();
             });
 
+            var restoreItem = new Forms.ToolStripMenuItem("🔄 Restore All Windows to Default", null, (s, e) =>
+            {
+                RestoreAllExternalWindows();
+            });
+
             var settingsItem = new Forms.ToolStripMenuItem("⚙ Settings...", null, (s, e) =>
             {
                 OpenSettings();
@@ -188,6 +217,7 @@ namespace CodeByatta.UI
             menu.Items.Add(pinItem);
             menu.Items.Add(opacityItem);
             menu.Items.Add(darkItem);
+            menu.Items.Add(restoreItem);
             menu.Items.Add(new Forms.ToolStripSeparator());
             menu.Items.Add(settingsItem);
             menu.Items.Add(exitItem);
@@ -446,6 +476,10 @@ namespace CodeByatta.UI
                 {
                     overlay.SetVisible(true);
                 }
+
+                // Synchronize active window opacity to dark overlay
+                byte currentAlpha = _opacityService.GetConfiguredOpacity(hwnd);
+                overlay.SetOpacity(currentAlpha);
             }
             else
             {
@@ -536,9 +570,43 @@ namespace CodeByatta.UI
 
                 if (IsOwnProcessOrWindow(target.Hwnd)) return;
 
-                // Create clean PiP and hide original window
-                _currentPipWindow = new PipWindow(target, _pipManager, cropRect: null, hideOriginalWindow: true);
-                _currentPipWindow.PipClosed += (s, e) => _currentPipWindow = null;
+                // Hide floating toolbar so it does not float orphaned over the ghosted window
+                _toolbarView?.Hide();
+
+                // If target had a full-screen border overlay, hide it during PiP
+                bool isTopmost = _topmostService.IsTopmost(target.Hwnd);
+                if (_activeBorders.TryGetValue(target.Hwnd, out var border))
+                {
+                    border.Hide();
+                }
+
+                // Create clean PiP transferring topmost accent border to PiP window itself
+                _currentPipWindow = new PipWindow(
+                    target,
+                    _pipManager,
+                    _opacityService,
+                    _config,
+                    cropRect: null,
+                    hideOriginalWindow: true,
+                    isTopmost: isTopmost,
+                    borderColor: _config.TopmostBorderColor,
+                    borderWidth: _config.TopmostBorderWidth);
+
+                _currentPipWindow.PipClosed += (s, e) =>
+                {
+                    _currentPipWindow = null;
+                    Dispatcher.Invoke(() =>
+                    {
+                        if (User32.IsWindow(target.Hwnd))
+                        {
+                            if (_topmostService.IsTopmost(target.Hwnd) && _config.HighlightTopmostWithBorder)
+                            {
+                                UpdateBorderForWindow(target.Hwnd, true);
+                            }
+                            _toolbarView?.AttachTo(target, keepVisible: true);
+                        }
+                    });
+                };
                 _currentPipWindow.Show();
             });
         }
@@ -568,8 +636,40 @@ namespace CodeByatta.UI
                 {
                     _currentCropOverlay = null;
                     bool hideOriginal = _config.HideOriginalWindowOnCrop;
-                    _currentPipWindow = new PipWindow(target, _pipManager, cropRect, hideOriginalWindow: hideOriginal);
-                    _currentPipWindow.PipClosed += (s, e) => _currentPipWindow = null;
+                    _toolbarView?.Hide();
+
+                    bool isTopmost = _topmostService.IsTopmost(target.Hwnd);
+                    if (_activeBorders.TryGetValue(target.Hwnd, out var border))
+                    {
+                        border.Hide();
+                    }
+
+                    _currentPipWindow = new PipWindow(
+                        target,
+                        _pipManager,
+                        _opacityService,
+                        _config,
+                        cropRect,
+                        hideOriginalWindow: hideOriginal,
+                        isTopmost: isTopmost,
+                        borderColor: _config.TopmostBorderColor,
+                        borderWidth: _config.TopmostBorderWidth);
+
+                    _currentPipWindow.PipClosed += (s, e) =>
+                    {
+                        _currentPipWindow = null;
+                        Dispatcher.Invoke(() =>
+                        {
+                            if (User32.IsWindow(target.Hwnd))
+                            {
+                                if (_topmostService.IsTopmost(target.Hwnd) && _config.HighlightTopmostWithBorder)
+                                {
+                                    UpdateBorderForWindow(target.Hwnd, true);
+                                }
+                                _toolbarView?.AttachTo(target, keepVisible: true);
+                            }
+                        });
+                    };
                     _currentPipWindow.Show();
                 });
                 _currentCropOverlay.Closed += (s, e) => _currentCropOverlay = null;
@@ -659,6 +759,64 @@ namespace CodeByatta.UI
             }
         }
 
+        public void RestoreAllExternalWindows()
+        {
+            Log("Restoring all external windows to clean default state...");
+            try
+            {
+                _topmostService?.RestoreAllPinnedWindows();
+            }
+            catch (Exception ex) { Log($"Restore topmost warning: {ex.Message}"); }
+
+            try
+            {
+                _opacityService?.RestoreAllWindows();
+            }
+            catch (Exception ex) { Log($"Restore opacity warning: {ex.Message}"); }
+
+            try
+            {
+                foreach (var border in _activeBorders.Values)
+                {
+                    try { border.Close(); } catch { }
+                }
+                _activeBorders.Clear();
+            }
+            catch { }
+
+            try
+            {
+                foreach (var overlay in _activeDarkOverlays.Values)
+                {
+                    try { overlay.Close(); } catch { }
+                }
+                _activeDarkOverlays.Clear();
+            }
+            catch { }
+
+            try
+            {
+                if (_currentCropOverlay != null)
+                {
+                    try { _currentCropOverlay.Close(); } catch { }
+                    _currentCropOverlay = null;
+                }
+            }
+            catch { }
+
+            try
+            {
+                if (_currentPipWindow != null)
+                {
+                    try { _currentPipWindow.RestoreAndClose(); } catch { }
+                    _currentPipWindow = null;
+                }
+            }
+            catch { }
+
+            Log("All external windows restored successfully.");
+        }
+
         protected override void OnExit(ExitEventArgs e)
         {
             Log("App OnExit called");
@@ -670,29 +828,7 @@ namespace CodeByatta.UI
             _darkModeService?.Dispose();
             _messageHwndSource?.Dispose();
 
-            foreach (var border in _activeBorders.Values)
-            {
-                try { border.Close(); } catch { }
-            }
-            _activeBorders.Clear();
-
-            foreach (var overlay in _activeDarkOverlays.Values)
-            {
-                try { overlay.Close(); } catch { }
-            }
-            _activeDarkOverlays.Clear();
-
-            if (_currentCropOverlay != null)
-            {
-                try { _currentCropOverlay.Close(); } catch { }
-                _currentCropOverlay = null;
-            }
-
-            if (_currentPipWindow != null)
-            {
-                try { _currentPipWindow.RestoreAndClose(); } catch { }
-                _currentPipWindow = null;
-            }
+            RestoreAllExternalWindows();
 
             if (_trayIcon != null)
             {

@@ -12,8 +12,9 @@
         Topmost="True"
         ResizeMode="CanResizeWithGrip">
 
-    <Border Background="#1C1C1C"
-            BorderBrush="#40FFFFFF"
+    <Border x:Name="WindowOuterBorder"
+            Background="#0C0D12"
+            BorderBrush="#222634"
             BorderThickness="1"
             CornerRadius="10"
             ClipToBounds="True">
@@ -25,7 +26,7 @@
 
             <!-- Header / Drag Bar -->
             <Grid Grid.Row="0"
-                  Background="#25272F"
+                  Background="#141720"
                   MouseDown="Header_MouseDown"
                   Cursor="SizeAll">
                 <Grid.ColumnDefinitions>
@@ -105,7 +106,7 @@
             <!-- Thumbnail Client Area (DWM Renders Directly Here + User Mouse Clicks Forwarded) -->
             <Border Grid.Row="1"
                     x:Name="ThumbnailHost"
-                    Background="#101216"
+                    Background="#000000"
                     SizeChanged="ThumbnailHost_SizeChanged"
                     MouseDown="ThumbnailHost_MouseDown"
                     MouseUp="ThumbnailHost_MouseUp"

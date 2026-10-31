@@ -15,7 +15,7 @@
     <Description>High-performance native Win32/DWM core engine for OpenWindow multitasking suite.</Description>
     <Copyright>Copyright © 2026 CodeByatta. All rights reserved.</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/codebyatta/openwindow</RepositoryUrl>
+    <RepositoryUrl>https://github.com/Abido-3tta/openwindow</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 

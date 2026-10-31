@@ -78,6 +78,7 @@ namespace CodeByatta.UI.Views
             _autoHideTimer.Tick += (s, e) =>
             {
                 if (_targetWindow != null && _targetWindow.IsClickThrough) return;
+                if (PopupOpacitySlider != null && PopupOpacitySlider.IsOpen) return;
 
                 if (AutoHideEnabled && !_isMouseOverToolbar && _isExpanded)
                 {
@@ -101,12 +102,19 @@ namespace CodeByatta.UI.Views
         {
             try
             {
-                var arrowBrush = (SolidColorBrush)new BrushConverter().ConvertFromString(_config.ArrowColor)!;
-                PathAnchorArrow.Stroke = arrowBrush;
+                if (!string.IsNullOrEmpty(_config.ArrowColor))
+                {
+                    var arrowBrush = (SolidColorBrush)new BrushConverter().ConvertFromString(_config.ArrowColor)!;
+                    PathAnchorArrow.Stroke = arrowBrush;
+                }
+                else
+                {
+                    PathAnchorArrow.Stroke = new SolidColorBrush(MediaColor.FromRgb(0xCB, 0xD5, 0xE1));
+                }
             }
             catch
             {
-                PathAnchorArrow.Stroke = new SolidColorBrush(MediaColor.FromRgb(0x30, 0xD1, 0x58));
+                PathAnchorArrow.Stroke = new SolidColorBrush(MediaColor.FromRgb(0xCB, 0xD5, 0xE1));
             }
 
             BtnTopmost.Visibility = _config.ShowSetTopButton ? Visibility.Visible : Visibility.Collapsed;
@@ -132,10 +140,10 @@ namespace CodeByatta.UI.Views
                 _opacityService.SetTemporaryHoverReveal(_targetWindow.Hwnd, false);
             }
 
-            // Exclude shell, taskbar, system tray overflow, and non-folder explorer popups
+            // Exclude shell, taskbar, system tray overflow, and own process windows
             if (target != null)
             {
-                if (ShellSanitizer.IsShellOrTaskbarWindow(target.Hwnd))
+                if (ShellSanitizer.IsShellOrTaskbarOrSelf(target.Hwnd))
                 {
                     Hide();
                     return;
@@ -292,6 +300,10 @@ namespace CodeByatta.UI.Views
 
         public void Collapse()
         {
+            if (PopupOpacitySlider != null && PopupOpacitySlider.IsOpen)
+            {
+                PopupOpacitySlider.IsOpen = false;
+            }
             _isExpanded = false;
             _hoverElapsedMs = 0;
             FullToolbarPill.Visibility = Visibility.Collapsed;
@@ -364,10 +376,17 @@ namespace CodeByatta.UI.Views
                 return;
             }
 
-            // Z-Order Topmost Overlay Guarantee: ensure toolbar remains topmost over target window
+            // Z-Order Topmost Overlay Guarantee: ensure toolbar remains topmost over target window and never transparent
             IntPtr hwnd = new WindowInteropHelper(this).Handle;
             if (hwnd != IntPtr.Zero)
             {
+                long style = (long)User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
+                if ((style & User32.WS_EX_TRANSPARENT) != 0)
+                {
+                    style &= ~User32.WS_EX_TRANSPARENT;
+                    User32.SetWindowLongPtr(hwnd, User32.GWL_EXSTYLE, (IntPtr)style);
+                }
+
                 User32.SetWindowPos(hwnd, User32.HWND_TOPMOST, 0, 0, 0, 0,
                     User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOACTIVATE);
             }
@@ -433,21 +452,45 @@ namespace CodeByatta.UI.Views
                 isOverPill = cursor.X >= pillLeft - 10 && cursor.X <= pillLeft + pillWidth + 10 &&
                              cursor.Y >= pillTop - 5 && cursor.Y <= pillTop + pillHeight + 5;
 
+                bool isPopupOpen = PopupOpacitySlider != null && PopupOpacitySlider.IsOpen;
+                bool isOverPopup = false;
+                if (isPopupOpen && PopupOpacitySlider!.Child is FrameworkElement popupContent)
+                {
+                    try
+                    {
+                        var ps = PresentationSource.FromVisual(popupContent) as HwndSource;
+                        if (ps != null && ps.Handle != IntPtr.Zero && User32.GetWindowRect(ps.Handle, out RECT popupWinRect))
+                        {
+                            isOverPopup = cursor.X >= popupWinRect.Left - 8 && cursor.X <= popupWinRect.Right + 8 &&
+                                          cursor.Y >= popupWinRect.Top - 8 && cursor.Y <= popupWinRect.Bottom + 8;
+                        }
+                    }
+                    catch { }
+                }
+
                 // OUTSIDE-CLICK AUTO-COLLAPSE:
-                // If user clicks anywhere outside the toolbar pill, immediately collapse back into the titlebar anchor!
+                // If user clicks anywhere outside the toolbar pill (and outside the popup if open), immediately collapse
                 short lButton = User32.GetAsyncKeyState(User32.VK_LBUTTON);
                 short rButton = User32.GetAsyncKeyState(User32.VK_RBUTTON);
-                bool isClickingOutside = ((lButton & 0x8000) != 0 || (rButton & 0x8000) != 0) && !isOverPill && !_isMouseOverToolbar;
+                bool isClickingOutside = ((lButton & 0x8000) != 0 || (rButton & 0x8000) != 0) 
+                                         && !isOverPill && !_isMouseOverToolbar && !isOverPopup;
 
                 if (isClickingOutside)
                 {
-                    _mustLeaveAnchorBeforeHoverExpand = true;
-                    Collapse();
-                    SaveCurrentWindowPreferenceState();
-                    return;
+                    if (isPopupOpen)
+                    {
+                        PopupOpacitySlider!.IsOpen = false;
+                    }
+                    if (AutoHideEnabled)
+                    {
+                        _mustLeaveAnchorBeforeHoverExpand = true;
+                        Collapse();
+                        SaveCurrentWindowPreferenceState();
+                        return;
+                    }
                 }
 
-                if (isOverPill || _isMouseOverToolbar)
+                if (isOverPill || _isMouseOverToolbar || isOverPopup || isPopupOpen)
                 {
                     _autoHideTimer.Stop();
                 }
@@ -461,6 +504,11 @@ namespace CodeByatta.UI.Views
             }
 
             bool isOverToolbar = (FullToolbarPill.IsVisible && isOverPill) || (AnchorHandle.IsVisible && isOverAnchor) || _isMouseOverToolbar;
+
+            if (isOverToolbar && _targetWindow != null && _targetWindow.IsClickThrough)
+            {
+                _opacityService.SetHeaderInteractive(_targetWindow.Hwnd, true);
+            }
 
             // Hover Opacity Reveal: Auto-restore 100% opacity when cursor is over ANY transparent window body (active or background)
             if (_config.DisableOpacityOnMouseOver)
@@ -783,14 +831,17 @@ namespace CodeByatta.UI.Views
         private void BtnOpacity_Click(object sender, RoutedEventArgs e)
         {
             if (_targetWindow == null) return;
+            _autoHideTimer.Stop();
 
-            // Cycle through opacities: 100% -> 80% -> 60% -> 40% -> 100%
+            // Cycle through opacities: 100% -> 80% -> 60% -> 40% -> 20% -> 10% -> 100%
             byte current = _opacityService.GetConfiguredOpacity(_targetWindow.Hwnd);
             if (current == 255) current = _targetWindow.Opacity;
             byte next;
-            if (current >= 240) next = 204;       // 80%
+            if (current >= 230) next = 204;       // 80%
             else if (current >= 180) next = 153;  // 60%
             else if (current >= 130) next = 102;  // 40%
+            else if (current >= 75) next = 51;    // 20%
+            else if (current >= 35) next = 25;    // 10% (Ghost Mode)
             else next = 255;                      // 100%
 
             _targetWindow.Opacity = next;
@@ -801,6 +852,7 @@ namespace CodeByatta.UI.Views
 
             // Display interactive horizontal slider popup right underneath
             PopupOpacitySlider.IsOpen = true;
+            _autoHideTimer.Stop();
         }
 
         private bool _isUpdatingSliderInternally;
@@ -824,10 +876,13 @@ namespace CodeByatta.UI.Views
 
         private void BtnPresetOpacity_Click(object sender, RoutedEventArgs e)
         {
+            _autoHideTimer.Stop();
             if (sender is System.Windows.Controls.Button btn && int.TryParse(btn.Tag?.ToString(), out int val))
             {
                 SliderOpacity.Value = val;
             }
+            // Ensure toolbar stays expanded and visible
+            Expand();
         }
 
         private void BtnOpacity_MouseWheel(object sender, MouseWheelEventArgs e)

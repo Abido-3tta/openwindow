@@ -20,9 +20,81 @@ $SourceDir = if (Test-Path (Join-Path $PSScriptRoot "dist\OpenWindow-v1.1.0-win-
 }
 $ExePath = Join-Path $InstallDir "CodeByatta.UI.exe"
 
+function Invoke-WindowRestoration {
+    Write-Host "Restoring external windows to clean state..." -ForegroundColor Cyan
+    # 1. Stop existing process if running to release all hooks and mutex
+    Get-Process -Name "CodeByatta.UI" -ErrorAction SilentlyContinue | Stop-Process -Force
+    Start-Sleep -Milliseconds 300
+
+    # 2. Native Win32 P/Invoke failsafe to clear leftover topmost/layered attributes across all windows
+    $typeDef = @"
+    using System;
+    using System.Runtime.InteropServices;
+
+    public class WinRestorerFailsafe {
+        [DllImport("user32.dll")]
+        public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+        public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
+        public static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
+        public static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [DllImport("user32.dll")]
+        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+        [DllImport("user32.dll")]
+        public static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);
+
+        [DllImport("user32.dll")]
+        public static extern bool IsWindowVisible(IntPtr hWnd);
+
+        public const int GWL_EXSTYLE = -20;
+        public const long WS_EX_TOPMOST = 0x00000008L;
+        public const long WS_EX_LAYERED = 0x00080000L;
+        public const long WS_EX_TRANSPARENT = 0x00000020L;
+        public static readonly IntPtr HWND_NOTOPMOST = new IntPtr(-2);
+        public const uint SWP_NOMOVE = 0x0002;
+        public const uint SWP_NOSIZE = 0x0001;
+        public const uint SWP_NOACTIVATE = 0x0010;
+        public const uint SWP_FRAMECHANGED = 0x0020;
+        public const uint LWA_ALPHA = 0x00000002;
+
+        public static void RestoreWindows() {
+            EnumWindows((hwnd, param) => {
+                try {
+                    if (!IsWindowVisible(hwnd)) return true;
+                    long exStyle = (long)GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+                    
+                    if ((exStyle & WS_EX_LAYERED) != 0) {
+                        SetLayeredWindowAttributes(hwnd, 0, 255, LWA_ALPHA);
+                        exStyle &= ~WS_EX_TRANSPARENT;
+                        SetWindowLongPtr(hwnd, GWL_EXSTYLE, (IntPtr)exStyle);
+                    }
+
+                    if ((exStyle & WS_EX_TOPMOST) != 0) {
+                        SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+                    }
+                } catch { }
+                return true;
+            }, IntPtr.Zero);
+        }
+    }
+"@
+    try {
+        Add-Type -TypeDefinition $typeDef -ErrorAction SilentlyContinue
+        [WinRestorerFailsafe]::RestoreWindows()
+    } catch { }
+}
+
 if ($Uninstall) {
     Write-Host "Uninstalling $AppName..." -ForegroundColor Yellow
     
+    # Clean up window states before killing
+    Invoke-WindowRestoration
+
     # Terminate running instances
     Get-Process -Name "CodeByatta.UI" -ErrorAction SilentlyContinue | Stop-Process -Force
     Start-Sleep -Seconds 1
@@ -51,7 +123,8 @@ if ($Uninstall) {
 
 Write-Host "Installing $AppName..." -ForegroundColor Cyan
 
-# 1. Stop existing process if running
+# 1. Clean up windows & stop existing process if running
+Invoke-WindowRestoration
 Get-Process -Name "CodeByatta.UI" -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 1
 

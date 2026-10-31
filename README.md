@@ -6,10 +6,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20(x64%20%7C%20x86)-0078D6.svg)](https://www.microsoft.com/windows)
-[![Release](https://img.shields.io/badge/Release-v1.1.0-brightgreen.svg)](https://github.com/codebyatta/openwindow/releases)
+[![Release](https://img.shields.io/badge/Release-v1.1.0-brightgreen.svg)](https://github.com/Abido-3tta/openwindow/releases)
 [![.NET](https://img.shields.io/badge/.NET-8.0%20WPF%20(Self--Contained)-512BD4.svg)](https://dotnet.microsoft.com/)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/codebyatta/openwindow)
-[![Author](https://img.shields.io/badge/Author-CodeByatta-FF79C6.svg)](https://github.com/codebyatta)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/Abido-3tta/openwindow)
+[![Author](https://img.shields.io/badge/Author-Abido--3tta-FF79C6.svg)](https://github.com/Abido-3tta)
 
 *A clean-room, 100% free, unlocked native Windows multitasking utility with zero licensing fees, zero telemetry, and ultra-low CPU overhead.*
 
@@ -108,7 +108,7 @@ Available both as a **standalone zero-dependency native desktop application** (n
 ## 🚀 Download & Installation for End Users
 
 ### Option 1: Standalone Native Desktop Release (Recommended)
-1. Download the latest release ZIP from [Releases](https://github.com/codebyatta/openwindow/releases):
+1. Download the latest release ZIP from [Releases](https://github.com/Abido-3tta/openwindow/releases):
    - **64-bit Windows:** `OpenWindow-v1.1.0-win-x64.zip`
    - **32-bit Windows:** `OpenWindow-v1.1.0-win-x86.zip`
 2. Extract the ZIP anywhere on your PC.
@@ -119,13 +119,13 @@ Available both as a **standalone zero-dependency native desktop application** (n
 ### Option 2: Build From Source (Developers)
 ```powershell
 # Clone repo
-git clone https://github.com/codebyatta/openwindow.git
+git clone https://github.com/Abido-3tta/openwindow.git
 cd openwindow
 
 # Restore & Build Release
 dotnet build OpenWindow.sln -c Release
 
-# Run Unit & Integration Tests (28 tests)
+# Run Unit & Integration Tests (29 tests)
 dotnet test OpenWindow.sln -c Release --no-build
 
 # Package Native ZIP Releases (x64 & x86)

@@ -33,6 +33,23 @@ namespace CodeByatta.Core.Services
             "TextInputHost"
         };
 
+        private static readonly bool IsOpenWindowProcess =
+            Process.GetCurrentProcess().ProcessName.Contains("CodeByatta.UI", StringComparison.OrdinalIgnoreCase) ||
+            Process.GetCurrentProcess().ProcessName.Contains("OpenWindow", StringComparison.OrdinalIgnoreCase);
+
+        public static bool IsOwnProcessWindow(IntPtr hwnd)
+        {
+            if (!IsOpenWindowProcess) return false;
+            if (hwnd == IntPtr.Zero || !User32.IsWindow(hwnd)) return false;
+            User32.GetWindowThreadProcessId(hwnd, out uint pid);
+            return pid == (uint)Environment.ProcessId;
+        }
+
+        public static bool IsShellOrTaskbarOrSelf(IntPtr hwnd)
+        {
+            return IsShellOrTaskbarWindow(hwnd) || IsOwnProcessWindow(hwnd);
+        }
+
         public static bool IsShellOrTaskbarWindow(IntPtr hwnd)
         {
             if (hwnd == IntPtr.Zero || !User32.IsWindow(hwnd)) return true;

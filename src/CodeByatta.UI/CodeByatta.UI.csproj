@@ -32,7 +32,7 @@
     <Description>Modern Fluent UI Windows multitasking suite with Always-on-Top, Live 60fps Picture-in-Picture with interactive mouse control, Smart Opacity, Dark Mode, and per-window memory.</Description>
     <Copyright>Copyright © 2026 CodeByatta. All rights reserved.</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/codebyatta/openwindow</RepositoryUrl>
+    <RepositoryUrl>https://github.com/Abido-3tta/openwindow</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 

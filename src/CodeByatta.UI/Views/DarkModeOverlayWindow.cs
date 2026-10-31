@@ -99,7 +99,32 @@ namespace CodeByatta.UI.Views
 
             // Set initial source rectangle
             MagnificationApi.MagSetWindowSource(HwndMag, bounds);
+
+            // Set initial layered opacity matching target window if translucent
+            if (User32.GetLayeredWindowAttributes(TargetHwnd, out _, out byte targetAlpha, out uint flags) && (flags & User32.LWA_ALPHA) != 0)
+            {
+                User32.SetLayeredWindowAttributes(HwndHost, 0, targetAlpha, User32.LWA_ALPHA);
+            }
+            else
+            {
+                User32.SetLayeredWindowAttributes(HwndHost, 0, 255, User32.LWA_ALPHA);
+            }
+
             IsVisible = true;
+        }
+
+        public void SetOpacity(byte opacity)
+        {
+            if (_disposed || HwndHost == IntPtr.Zero || !User32.IsWindow(HwndHost)) return;
+            User32.SetLayeredWindowAttributes(HwndHost, 0, opacity, User32.LWA_ALPHA);
+            User32.SetWindowPos(HwndHost, IntPtr.Zero, 0, 0, 0, 0,
+                User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOZORDER | User32.SWP_NOACTIVATE | User32.SWP_FRAMECHANGED);
+
+            if (HwndMag != IntPtr.Zero && User32.IsWindow(HwndMag))
+            {
+                MagnificationApi.MagSetWindowSource(HwndMag, _lastBounds);
+                User32.InvalidateRect(HwndMag, IntPtr.Zero, true);
+            }
         }
 
         public void SetVisible(bool visible)
