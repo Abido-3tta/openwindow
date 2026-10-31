@@ -39,6 +39,9 @@
   <ItemGroup>
     <Resource Include="Resources\app_icon.png" />
     <Resource Include="Resources\developer_avatar.png" />
+    <None Include="Resources\developer_avatar.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

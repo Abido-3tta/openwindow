@@ -626,39 +626,23 @@ namespace CodeByatta.UI.Views
         {
             if (targetHwnd == IntPtr.Zero || !User32.IsWindow(targetHwnd)) return;
 
-            uint currentThread = User32.GetCurrentThreadId();
-            uint targetThread = User32.GetWindowThreadProcessId(targetHwnd, out _);
-            bool attached = false;
+            int keyFlags = 0;
+            if ((Keyboard.Modifiers & ModifierKeys.Control) != 0) keyFlags |= User32.MK_CONTROL;
+            if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0) keyFlags |= User32.MK_SHIFT;
 
-            if (currentThread != targetThread && targetThread != 0)
+            IntPtr wParam = unchecked((IntPtr)((delta << 16) | (keyFlags & 0xFFFF)));
+            IntPtr lParam = unchecked((IntPtr)(((screenY & 0xFFFF) << 16) | (screenX & 0xFFFF)));
+
+            bool isHorizontal = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
+            uint msg = isHorizontal ? (uint)User32.WM_MOUSEHWHEEL : (uint)User32.WM_MOUSEWHEEL;
+
+            // 1. Post directly to child control / render host (standard Win32 delivery for Chromium, Terminal, etc.)
+            User32.PostMessage(targetHwnd, msg, wParam, lParam);
+
+            // 2. Also deliver to root top-level window if different
+            if (targetHwnd != _targetWindow.Hwnd && User32.IsWindow(_targetWindow.Hwnd))
             {
-                attached = User32.AttachThreadInput(currentThread, targetThread, true);
-            }
-
-            try
-            {
-                int keyFlags = 0;
-                if ((Keyboard.Modifiers & ModifierKeys.Control) != 0) keyFlags |= User32.MK_CONTROL;
-                if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0) keyFlags |= User32.MK_SHIFT;
-
-                IntPtr wParam = (IntPtr)((delta << 16) | (keyFlags & 0xFFFF));
-                IntPtr lParam = (IntPtr)(((screenY & 0xFFFF) << 16) | (screenX & 0xFFFF));
-
-                // Send synchronously with timeout to allow immediate message handling while thread input is attached
-                User32.SendMessageTimeout(targetHwnd, (uint)User32.WM_MOUSEWHEEL, wParam, lParam, User32.SMTO_ABORTIFHUNG, 50, out _);
-
-                // Also forward to root window if child window didn't consume it
-                if (targetHwnd != _targetWindow.Hwnd && User32.IsWindow(_targetWindow.Hwnd))
-                {
-                    User32.SendMessageTimeout(_targetWindow.Hwnd, (uint)User32.WM_MOUSEWHEEL, wParam, lParam, User32.SMTO_ABORTIFHUNG, 50, out _);
-                }
-            }
-            finally
-            {
-                if (attached)
-                {
-                    User32.AttachThreadInput(currentThread, targetThread, false);
-                }
+                User32.PostMessage(_targetWindow.Hwnd, msg, wParam, lParam);
             }
         }
 
@@ -753,7 +737,11 @@ namespace CodeByatta.UI.Views
                 WpfPoint pt = e.GetPosition(ThumbnailHost);
                 if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
                 {
-                    IntPtr wParam = e.LeftButton == MouseButtonState.Pressed ? (IntPtr)User32.MK_LBUTTON : IntPtr.Zero;
+                    int moveFlags = 0;
+                    if (e.LeftButton == MouseButtonState.Pressed) moveFlags |= User32.MK_LBUTTON;
+                    if (e.RightButton == MouseButtonState.Pressed) moveFlags |= User32.MK_RBUTTON;
+                    if (e.MiddleButton == MouseButtonState.Pressed) moveFlags |= User32.MK_MBUTTON;
+                    IntPtr wParam = (IntPtr)moveFlags;
                     ForwardMouseMessage(hwnd, (uint)User32.WM_MOUSEMOVE, wParam, lParam);
                 }
             }

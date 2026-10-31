@@ -978,7 +978,7 @@
                                     <Grid>
                                         <Ellipse Width="50" Height="50">
                                             <Ellipse.Fill>
-                                                <ImageBrush ImageSource="/Resources/developer_avatar.png" Stretch="UniformToFill" />
+                                                <ImageBrush ImageSource="pack://application:,,,/CodeByatta.UI;component/Resources/developer_avatar.png" Stretch="UniformToFill" />
                                             </Ellipse.Fill>
                                         </Ellipse>
                                     </Grid>
