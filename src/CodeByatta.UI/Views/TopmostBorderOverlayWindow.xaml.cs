@@ -45,6 +45,17 @@ namespace CodeByatta.UI.Views
             UpdateBounds();
         }
 
+        public void BringBorderToTop()
+        {
+            IntPtr hwnd = new WindowInteropHelper(this).Handle;
+            if (hwnd != IntPtr.Zero && User32.IsWindow(hwnd))
+            {
+                User32.SetWindowPos(hwnd, User32.HWND_TOPMOST, 0, 0, 0, 0,
+                    User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOACTIVATE);
+                User32.BringWindowToTop(hwnd);
+            }
+        }
+
         public void UpdateBounds()
         {
             if (!User32.IsWindow(TargetHwnd) || User32.IsIconic(TargetHwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && TargetHwnd == App.CurrentPipTargetHwnd))

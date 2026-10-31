@@ -525,51 +525,69 @@ namespace CodeByatta.UI.Views
                 _opacityService.SetHeaderInteractive(_targetWindow.Hwnd, true);
             }
 
-            // Hover Opacity Reveal: Auto-restore 100% opacity when cursor is over ANY transparent window body (active or background)
-            if (_config.DisableOpacityOnMouseOver)
+            // Hover Opacity Reveal: Auto-restore 100% opacity when cursor is over a transparent window body ONLY IF that window has Hover Reveal enabled
+            var transparentHwnds = _opacityService.ActiveTransparentWindows;
+            IntPtr toolbarHwnd = new WindowInteropHelper(this).Handle;
+
+            foreach (var tHwnd in transparentHwnds)
             {
-                var transparentHwnds = _opacityService.ActiveTransparentWindows;
-                IntPtr toolbarHwnd = new WindowInteropHelper(this).Handle;
+                if (App.CurrentPipTargetHwnd != IntPtr.Zero && tHwnd == App.CurrentPipTargetHwnd) continue;
+                if (!User32.IsWindow(tHwnd) || User32.IsIconic(tHwnd)) continue;
+                if (_opacityService.IsClickThrough(tHwnd)) continue;
 
-                foreach (var tHwnd in transparentHwnds)
+                // Check per-window preference
+                bool hasHoverReveal = false;
+                if (_windowPreferencesByHwnd.TryGetValue(tHwnd, out var tPref))
                 {
-                    if (!User32.IsWindow(tHwnd) || User32.IsIconic(tHwnd)) continue;
-                    if (_opacityService.IsClickThrough(tHwnd)) continue;
-                    if (!User32.GetWindowRect(tHwnd, out RECT tRect)) continue;
-                    if (tRect.Width <= 50 || tRect.Height <= 50 || tRect.Left < -10000) continue;
-
-                    bool isCursorInWindow = cursor.X >= tRect.Left && cursor.X <= tRect.Right &&
-                                            cursor.Y >= tRect.Top && cursor.Y <= tRect.Bottom;
-
-                    bool isOverToolbarForThisWindow = (tHwnd == _targetWindow?.Hwnd) && isOverToolbar;
-
-                    if (isCursorInWindow && !isOverToolbarForThisWindow)
+                    hasHoverReveal = tPref.DisableOpacityOnMouseOver;
+                }
+                else
+                {
+                    User32.GetWindowThreadProcessId(tHwnd, out uint tPid);
+                    if (tPid != 0)
                     {
-                        // Ensure cursor is directly over this window and not on another occluding window on top
-                        IntPtr ptHwnd = User32.WindowFromPoint(cursor);
-                        IntPtr rootHwnd = ptHwnd != IntPtr.Zero ? User32.GetAncestor(ptHwnd, User32.GA_ROOT) : IntPtr.Zero;
-                        if (rootHwnd == IntPtr.Zero) rootHwnd = ptHwnd;
+                        try
+                        {
+                            using var proc = System.Diagnostics.Process.GetProcessById((int)tPid);
+                            var savedPref = _config.GetOrCreateWindowPreference(proc.ProcessName);
+                            hasHoverReveal = savedPref.DisableOpacityOnMouseOver;
+                        }
+                        catch { }
+                    }
+                }
 
-                        bool isDirectlyOver = (rootHwnd == tHwnd) || (rootHwnd == toolbarHwnd);
-                        if (isDirectlyOver)
-                        {
-                            _opacityService.SetTemporaryHoverReveal(tHwnd, true);
-                        }
-                        else
-                        {
-                            _opacityService.SetTemporaryHoverReveal(tHwnd, false);
-                        }
+                if (!hasHoverReveal)
+                {
+                    _opacityService.SetTemporaryHoverReveal(tHwnd, false);
+                    continue;
+                }
+
+                if (!User32.GetWindowRect(tHwnd, out RECT tRect)) continue;
+                if (tRect.Width <= 50 || tRect.Height <= 50 || tRect.Left < -10000) continue;
+
+                bool isCursorInWindow = cursor.X >= tRect.Left && cursor.X <= tRect.Right &&
+                                        cursor.Y >= tRect.Top && cursor.Y <= tRect.Bottom;
+
+                bool isOverToolbarForThisWindow = (tHwnd == _targetWindow?.Hwnd) && isOverToolbar;
+
+                if (isCursorInWindow && !isOverToolbarForThisWindow)
+                {
+                    // Ensure cursor is directly over this window and not on another occluding window on top
+                    IntPtr ptHwnd = User32.WindowFromPoint(cursor);
+                    IntPtr rootHwnd = ptHwnd != IntPtr.Zero ? User32.GetAncestor(ptHwnd, User32.GA_ROOT) : IntPtr.Zero;
+                    if (rootHwnd == IntPtr.Zero) rootHwnd = ptHwnd;
+
+                    bool isDirectlyOver = (rootHwnd == tHwnd) || (rootHwnd == toolbarHwnd);
+                    if (isDirectlyOver)
+                    {
+                        _opacityService.SetTemporaryHoverReveal(tHwnd, true);
                     }
                     else
                     {
                         _opacityService.SetTemporaryHoverReveal(tHwnd, false);
                     }
                 }
-            }
-            else
-            {
-                // Feature is disabled: ensure all transparent windows are at their configured base opacity
-                foreach (var tHwnd in _opacityService.ActiveTransparentWindows)
+                else
                 {
                     _opacityService.SetTemporaryHoverReveal(tHwnd, false);
                 }
@@ -739,8 +757,12 @@ namespace CodeByatta.UI.Views
             DotDarkMode.Visibility = isDark ? Visibility.Visible : Visibility.Collapsed;
             BtnDarkMode.Background = isDark ? new SolidColorBrush(MediaColor.FromArgb(0x55, 0xFF, 0xD6, 0x0A)) : new SolidColorBrush(MediaColor.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
 
-            // Hover Opacity Reveal state
-            bool isHoverOpacityOn = _config.DisableOpacityOnMouseOver;
+            // Hover Opacity Reveal state (strictly isolated per-window)
+            bool isHoverOpacityOn = false;
+            if (_targetWindow != null && _windowPreferencesByHwnd.TryGetValue(_targetWindow.Hwnd, out var currentPref))
+            {
+                isHoverOpacityOn = currentPref.DisableOpacityOnMouseOver;
+            }
             DotHoverOpacity.Visibility = isHoverOpacityOn ? Visibility.Visible : Visibility.Collapsed;
             BtnHoverOpacity.Background = isHoverOpacityOn ? new SolidColorBrush(MediaColor.FromArgb(0x55, 0x30, 0xD1, 0x58)) : new SolidColorBrush(MediaColor.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
         }
@@ -761,6 +783,10 @@ namespace CodeByatta.UI.Views
             pref.SideOffset = 0;
             pref.HaveOffset = true;
             pref.IsDarkMode = _darkModeService.IsDarkModeActiveForWindow(_targetWindow.Hwnd);
+            if (_windowPreferencesByHwnd.TryGetValue(_targetWindow.Hwnd, out var livePref))
+            {
+                pref.DisableOpacityOnMouseOver = livePref.DisableOpacityOnMouseOver;
+            }
             pref.LastModified = DateTime.UtcNow;
 
             _windowPreferencesByHwnd[_targetWindow.Hwnd] = pref;
@@ -921,19 +947,24 @@ namespace CodeByatta.UI.Views
 
         private void BtnHoverOpacity_Click(object sender, RoutedEventArgs e)
         {
-            _config.DisableOpacityOnMouseOver = !_config.DisableOpacityOnMouseOver;
-            _config.Save();
+            if (_targetWindow == null) return;
 
-            // If turned off, restore all active transparent windows to their base opacity
-            if (!_config.DisableOpacityOnMouseOver)
+            if (!_windowPreferencesByHwnd.TryGetValue(_targetWindow.Hwnd, out var pref))
             {
-                foreach (var tHwnd in _opacityService.ActiveTransparentWindows)
-                {
-                    _opacityService.SetTemporaryHoverReveal(tHwnd, false);
-                }
+                pref = _config.GetOrCreateWindowPreference(_targetWindow.ProcessName);
+                _windowPreferencesByHwnd[_targetWindow.Hwnd] = pref;
+            }
+
+            pref.DisableOpacityOnMouseOver = !pref.DisableOpacityOnMouseOver;
+
+            // If turned off for this specific window, immediately restore it to its base opacity
+            if (!pref.DisableOpacityOnMouseOver)
+            {
+                _opacityService.SetTemporaryHoverReveal(_targetWindow.Hwnd, false);
             }
 
             UpdateVisualState();
+            SaveCurrentWindowPreferenceState();
         }
 
         private void BtnClickThrough_Click(object sender, RoutedEventArgs e)

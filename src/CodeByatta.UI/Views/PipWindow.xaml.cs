@@ -33,7 +33,6 @@ namespace CodeByatta.UI.Views
         private readonly bool _prePipClickThrough;
 
         private IntPtr _hThumbnail = IntPtr.Zero;
-        private bool _isTransparent = false;
         private bool _isClosing = false;
         private bool _isInteractMode = true;
         private bool _isAdjustingAspect = false;
@@ -303,25 +302,6 @@ namespace CodeByatta.UI.Views
                 BtnInteract.Background = new SolidColorBrush(MediaColor.FromArgb(0x26, 0x88, 0x88, 0x88));
                 BtnInteract.BorderBrush = new SolidColorBrush(MediaColor.FromArgb(0x40, 0x88, 0x88, 0x88));
                 ThumbnailHost.Cursor = Cursors.SizeAll;
-            }
-        }
-
-        private void BtnOpacityToggle_Click(object sender, RoutedEventArgs e)
-        {
-            _isTransparent = !_isTransparent;
-            if (_isTransparent)
-            {
-                byte savedAlpha = _opacityService?.GetConfiguredOpacity(_targetWindow.Hwnd) ?? 255;
-                if (savedAlpha == 255 && _config != null)
-                {
-                    savedAlpha = (byte)Math.Round(_config.DefaultOpacityPercent * 2.55);
-                }
-                double targetOpacity = Math.Clamp((double)savedAlpha / 255.0, 0.15, 0.90);
-                Opacity = targetOpacity;
-            }
-            else
-            {
-                Opacity = 1.0;
             }
         }
 

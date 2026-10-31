@@ -79,17 +79,6 @@
                         <TextBlock Text="↩️ Return" FontSize="11" Foreground="#4CC2FF" FontWeight="SemiBold" />
                     </Button>
 
-                    <!-- Opacity Toggle -->
-                    <Button x:Name="BtnOpacityToggle"
-                            ToolTip="Toggle PiP Window Transparency"
-                            Click="BtnOpacityToggle_Click"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Padding="6,3"
-                            Cursor="Hand">
-                        <TextBlock Text="🪟" FontSize="11" Foreground="#CCCCCC" />
-                    </Button>
-
                     <!-- Close -->
                     <Button x:Name="BtnClose"
                             ToolTip="Close PiP and restore window"

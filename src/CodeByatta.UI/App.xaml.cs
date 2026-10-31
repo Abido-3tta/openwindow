@@ -501,6 +501,34 @@ namespace CodeByatta.UI
         {
             Dispatcher.Invoke(() =>
             {
+                // Multi-topmost Z-order synchronization:
+                // When multiple windows are pinned Always on Top, activating any pinned window
+                // brings it and its border overlay to the top of the topmost stack, and orders other overlays behind it!
+                if (window != null && _topmostService.IsTopmost(window.Hwnd))
+                {
+                    User32.SetWindowPos(window.Hwnd, User32.HWND_TOPMOST, 0, 0, 0, 0,
+                        User32.SWP_NOMOVE | User32.SWP_NOSIZE);
+                    User32.BringWindowToTop(window.Hwnd);
+
+                    if (_activeBorders.TryGetValue(window.Hwnd, out var activeBorder))
+                    {
+                        activeBorder.BringBorderToTop();
+                    }
+
+                    foreach (var kvp in _activeBorders)
+                    {
+                        if (kvp.Key == window.Hwnd) continue;
+                        IntPtr otherBorderHwnd = new WindowInteropHelper(kvp.Value).Handle;
+                        if (otherBorderHwnd != IntPtr.Zero && User32.IsWindow(otherBorderHwnd))
+                        {
+                            User32.SetWindowPos(otherBorderHwnd, window.Hwnd, 0, 0, 0, 0,
+                                User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOACTIVATE);
+                        }
+                    }
+
+                    ShellSanitizer.EnsureTaskbarOnTop();
+                }
+
                 if (_config.ShowTitleBarToolbar && _toolbarView != null)
                 {
                     if (window != null && (IsOwnProcessOrWindow(window.Hwnd) || ShellSanitizer.IsShellOrTaskbarWindow(window.Hwnd) || (CurrentPipTargetHwnd != IntPtr.Zero && window.Hwnd == CurrentPipTargetHwnd)))
