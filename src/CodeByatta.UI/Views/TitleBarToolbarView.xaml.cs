@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Effects;
 using System.Windows.Threading;
 using CodeByatta.Core.Interop;
 using CodeByatta.Core.Models;
@@ -150,16 +151,6 @@ namespace CodeByatta.UI.Views
                     PopupOpacityBorder.BorderBrush = new SolidColorBrush(MediaColor.FromArgb(0xFF, 0x26, 0x28, 0x32));
                 }
             }
-
-            try
-            {
-                IntPtr hwnd = new WindowInteropHelper(this).Handle;
-                if (hwnd != IntPtr.Zero)
-                {
-                    DwmApi.ApplyAcrylicBackdrop(hwnd, isGlass);
-                }
-            }
-            catch { }
         }
 
         private void TitleBarToolbarView_SourceInitialized(object? sender, EventArgs e)
@@ -168,10 +159,6 @@ namespace CodeByatta.UI.Views
             IntPtr exStyle = User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
             long newStyle = (long)exStyle | User32.WS_EX_NOACTIVATE | User32.WS_EX_TOOLWINDOW;
             User32.SetWindowLongPtr(hwnd, User32.GWL_EXSTYLE, (IntPtr)newStyle);
-            if (_config.ShowGlassButton)
-            {
-                DwmApi.ApplyAcrylicBackdrop(hwnd, true);
-            }
         }
 
         public void AttachTo(ManagedWindow? target, bool keepVisible = false)
@@ -726,6 +713,8 @@ namespace CodeByatta.UI.Views
             double toolbarCenter = clampedX + (currentWidth / 2.0);
             _currentRatio = Math.Clamp((toolbarCenter - dipLeft) / Math.Max(1.0, dipWidth), 0.05, 0.95);
 
+            if (_targetWindow == null || string.IsNullOrEmpty(_targetWindow.ProcessName)) return;
+
             // Save in active HWND cache
             if (!_windowPreferencesByHwnd.TryGetValue(_targetWindow.Hwnd, out var pref))
             {
@@ -758,10 +747,27 @@ namespace CodeByatta.UI.Views
             if (_targetWindow == null) return;
             _targetWindow.RefreshInfo();
 
-            // Pin state
+            // Pin state: Red when active, clean muted contour when inactive
             bool isTop = _targetWindow.IsTopmost;
-            DotTopmost.Visibility = isTop ? Visibility.Visible : Visibility.Collapsed;
-            BtnTopmost.Background = isTop ? new SolidColorBrush(MediaColor.FromArgb(0x55, 0xFF, 0x3B, 0x30)) : MediaBrushes.Transparent;
+            DotTopmost.Visibility = Visibility.Collapsed;
+            if (isTop)
+            {
+                PathTopmostPin.Fill = new SolidColorBrush(MediaColor.FromRgb(0xFF, 0x3B, 0x30));
+                BtnTopmost.Background = new SolidColorBrush(MediaColor.FromArgb(0x35, 0xFF, 0x3B, 0x30));
+                PathTopmostPin.Effect = new DropShadowEffect
+                {
+                    Color = MediaColor.FromRgb(0xFF, 0x3B, 0x30),
+                    BlurRadius = 8,
+                    ShadowDepth = 0,
+                    Opacity = 0.85
+                };
+            }
+            else
+            {
+                PathTopmostPin.Fill = new SolidColorBrush(MediaColor.FromRgb(0x8E, 0x8E, 0x93));
+                BtnTopmost.Background = MediaBrushes.Transparent;
+                PathTopmostPin.Effect = null;
+            }
 
             // Opacity percentage state
             byte currentAlpha = _opacityService.GetConfiguredOpacity(_targetWindow.Hwnd);
@@ -812,7 +818,7 @@ namespace CodeByatta.UI.Views
 
         private void SaveCurrentWindowPreferenceState()
         {
-            if (_targetWindow == null || ShellSanitizer.IsShellOrTaskbarWindow(_targetWindow.Hwnd) || App.IsPipTargetWindow(_targetWindow.Hwnd)) return;
+            if (_targetWindow == null || string.IsNullOrEmpty(_targetWindow.ProcessName) || ShellSanitizer.IsShellOrTaskbarWindow(_targetWindow.Hwnd) || App.IsPipTargetWindow(_targetWindow.Hwnd)) return;
 
             // Update live per-window state strictly isolated to this HWND
             if (!_windowPreferencesByHwnd.TryGetValue(_targetWindow.Hwnd, out var pref))

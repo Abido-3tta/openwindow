@@ -145,11 +145,9 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="2">
-        <!-- 1. Collapsed Header Anchor Handle: Obsidian Black Aesthetic -->
+    <Grid Margin="6">
+        <!-- 1. Collapsed Header Anchor Handle: 3D Frosted Obsidian Glass Aesthetic -->
         <Border x:Name="AnchorHandle"
-                Background="#F80A0B0E"
-                BorderBrush="#252730"
                 BorderThickness="1"
                 CornerRadius="14"
                 MinHeight="28"
@@ -162,9 +160,20 @@
                 MouseEnter="AnchorHandle_MouseEnter"
                 MouseLeave="AnchorHandle_MouseLeave"
                 Visibility="Collapsed">
-
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#F010121A" Offset="0.0" />
+                    <GradientStop Color="#F808090C" Offset="1.0" />
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#45FFFFFF" Offset="0.0" />
+                    <GradientStop Color="#18CBD5E1" Offset="1.0" />
+                </LinearGradientBrush>
+            </Border.BorderBrush>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.75" Color="#000000" />
+                <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.65" Color="#000000" />
             </Border.Effect>
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <!-- Mini Move / Drag Grip Handle for Collapsed Anchor -->
@@ -235,13 +244,11 @@
             </StackPanel>
         </Border>
 
-        <!-- 2. Full Expanded Draggable Toolbar Pill: Obsidian Black Aesthetic -->
+        <!-- 2. Full Expanded Draggable Toolbar Pill: 3D Frosted Obsidian Glass Aesthetic -->
         <Border x:Name="FullToolbarPill"
-                Background="#F80A0B0E"
-                BorderBrush="#252730"
                 BorderThickness="1"
-                CornerRadius="14"
-                Padding="5,3"
+                CornerRadius="18"
+                Padding="6,3"
                 MouseEnter="FullToolbarPill_MouseEnter"
                 MouseLeave="FullToolbarPill_MouseLeave"
                 MouseDown="FullToolbarPill_MouseDown"
@@ -249,8 +256,20 @@
                 MouseUp="FullToolbarPill_MouseUp"
                 Cursor="SizeWE"
                 Visibility="Visible">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#F20D0E13" Offset="0.0" />
+                    <GradientStop Color="#FA08090C" Offset="1.0" />
+                </LinearGradientBrush>
+            </Border.Background>
+            <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#40FFFFFF" Offset="0.0" />
+                    <GradientStop Color="#15CBD5E1" Offset="1.0" />
+                </LinearGradientBrush>
+            </Border.BorderBrush>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="18" ShadowDepth="3" Opacity="0.8" Color="#000000" />
+                <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.70" Color="#000000" />
             </Border.Effect>
 
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -274,16 +293,14 @@
                         Style="{StaticResource ToolbarPillButton}"
                         ToolTip="Always-on-Top (Alt+Z) - Outlines window in red"
                         Click="BtnTopmost_Click">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <!-- Pin Vector Path -->
-                        <Path Data="M9,2 L7,4 L7,8 L4,11 L4,12 L8,12 L8,16 L9,17 L10,16 L10,12 L14,12 L14,11 L11,8 L11,4 L9,2 Z"
-                              Fill="White" Width="14" Height="15" Stretch="Uniform" />
+                    <Grid VerticalAlignment="Center" Margin="2,0">
+                        <!-- Pin Vector Path: Red when active, muted slate/grey when inactive -->
+                        <Path x:Name="PathTopmostPin"
+                              Data="M9,2 L7,4 L7,8 L4,11 L4,12 L8,12 L8,16 L9,17 L10,16 L10,12 L14,12 L14,11 L11,8 L11,4 L9,2 Z"
+                              Fill="#8E8E93" Width="14" Height="15" Stretch="Uniform" />
                         <Ellipse x:Name="DotTopmost"
-                                 Width="6" Height="6"
-                                 Fill="#FF3B30"
-                                 Margin="5,0,0,0"
                                  Visibility="Collapsed" />
-                    </StackPanel>
+                    </Grid>
                 </Button>
 
                 <!-- Opacity Button / Percentage Display -->

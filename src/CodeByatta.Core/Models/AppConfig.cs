@@ -27,6 +27,10 @@ namespace CodeByatta.Core.Models
         public DateTime? LastUpdateCheckTime { get; set; } = null;
         public string IgnoredUpdateVersion { get; set; } = string.Empty;
 
+        // Crash Telemetry & Developer Webhook
+        public string TelemetryWebhookUrl { get; set; } = string.Empty;
+        public bool EnableTelemetryLogging { get; set; } = true;
+
         // Per-Window Preferences & Location Memory
         public bool AutoRememberWindowPreferences { get; set; } = true;
         public Dictionary<string, WindowPreferences> WindowSettings { get; set; } = new(StringComparer.OrdinalIgnoreCase);

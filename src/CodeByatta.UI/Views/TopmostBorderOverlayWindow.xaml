@@ -4,7 +4,7 @@
         Title="Topmost Border Overlay"
         WindowStyle="None"
         AllowsTransparency="True"
-        Background="Transparent"
+        Background="{x:Null}"
         Topmost="True"
         ShowInTaskbar="False"
         ShowActivated="False"
@@ -14,7 +14,7 @@
     <Border x:Name="OverlayBorder"
             BorderBrush="Red"
             BorderThickness="3"
-            Background="Transparent"
+            Background="{x:Null}"
             CornerRadius="4"
             IsHitTestVisible="False" />
 </Window>

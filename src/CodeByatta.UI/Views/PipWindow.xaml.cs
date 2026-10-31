@@ -589,6 +589,32 @@ namespace CodeByatta.UI.Views
             return true;
         }
 
+        private void ForwardMouseMessage(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam)
+        {
+            if (hwnd == IntPtr.Zero || !User32.IsWindow(hwnd)) return;
+
+            uint currentThread = User32.GetCurrentThreadId();
+            uint targetThread = User32.GetWindowThreadProcessId(hwnd, out _);
+            bool attached = false;
+
+            if (currentThread != targetThread && targetThread != 0)
+            {
+                attached = User32.AttachThreadInput(currentThread, targetThread, true);
+            }
+
+            try
+            {
+                User32.PostMessage(hwnd, msg, wParam, lParam);
+            }
+            finally
+            {
+                if (attached)
+                {
+                    User32.AttachThreadInput(currentThread, targetThread, false);
+                }
+            }
+        }
+
         private void ThumbnailHost_MouseDown(object sender, WpfMouseButtonEventArgs e)
         {
             if (!_isInteractMode)
@@ -599,12 +625,13 @@ namespace CodeByatta.UI.Views
 
             try
             {
+                ThumbnailHost.CaptureMouse();
                 WpfPoint pt = e.GetPosition(ThumbnailHost);
                 if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
                 {
                     uint msg = e.ChangedButton == MouseButton.Right ? (uint)User32.WM_RBUTTONDOWN : (uint)User32.WM_LBUTTONDOWN;
                     IntPtr wParam = e.ChangedButton == MouseButton.Right ? (IntPtr)User32.MK_RBUTTON : (IntPtr)User32.MK_LBUTTON;
-                    User32.PostMessage(hwnd, msg, wParam, lParam);
+                    ForwardMouseMessage(hwnd, msg, wParam, lParam);
                 }
             }
             catch { }
@@ -616,11 +643,16 @@ namespace CodeByatta.UI.Views
 
             try
             {
+                if (ThumbnailHost.IsMouseCaptured)
+                {
+                    ThumbnailHost.ReleaseMouseCapture();
+                }
+
                 WpfPoint pt = e.GetPosition(ThumbnailHost);
                 if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
                 {
                     uint msg = e.ChangedButton == MouseButton.Right ? (uint)User32.WM_RBUTTONUP : (uint)User32.WM_LBUTTONUP;
-                    User32.PostMessage(hwnd, msg, IntPtr.Zero, lParam);
+                    ForwardMouseMessage(hwnd, msg, IntPtr.Zero, lParam);
                 }
             }
             catch { }
@@ -640,7 +672,7 @@ namespace CodeByatta.UI.Views
                 if (TranslatePipToTargetCoordinates(pt, out IntPtr hwnd, out IntPtr lParam, out _, out _))
                 {
                     IntPtr wParam = e.LeftButton == MouseButtonState.Pressed ? (IntPtr)User32.MK_LBUTTON : IntPtr.Zero;
-                    User32.PostMessage(hwnd, (uint)User32.WM_MOUSEMOVE, wParam, lParam);
+                    ForwardMouseMessage(hwnd, (uint)User32.WM_MOUSEMOVE, wParam, lParam);
                 }
             }
             catch { }
@@ -658,7 +690,7 @@ namespace CodeByatta.UI.Views
                     short delta = (short)e.Delta;
                     IntPtr wParam = (IntPtr)((delta << 16) & unchecked((int)0xFFFF0000));
                     IntPtr screenLParam = (IntPtr)(((screenY & 0xFFFF) << 16) | (screenX & 0xFFFF));
-                    User32.PostMessage(hwnd, (uint)User32.WM_MOUSEWHEEL, wParam, screenLParam);
+                    ForwardMouseMessage(hwnd, (uint)User32.WM_MOUSEWHEEL, wParam, screenLParam);
                 }
             }
             catch { }

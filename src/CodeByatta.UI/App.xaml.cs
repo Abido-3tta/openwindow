@@ -19,6 +19,7 @@ namespace CodeByatta.UI
     public partial class App : WpfApp
     {
         private Mutex? _instanceMutex;
+        private bool _ownsMutex;
         private AppConfig _config = null!;
         private TopmostService _topmostService = null!;
         private OpacityService _opacityService = null!;
@@ -86,6 +87,7 @@ namespace CodeByatta.UI
 
                 const string mutexName = "OpenWindow_SingleInstanceMutex";
                 _instanceMutex = new Mutex(true, mutexName, out bool isNewInstance);
+                _ownsMutex = isNewInstance;
 
                 if (!isNewInstance)
                 {
@@ -104,8 +106,16 @@ namespace CodeByatta.UI
                 AppDomain.CurrentDomain.ProcessExit += (s, ev) => RestoreAllExternalWindows();
                 Microsoft.Win32.SystemEvents.SessionEnding += (s, ev) => RestoreAllExternalWindows();
 
+                DispatcherUnhandledException += (s, ev) =>
+                {
+                    Log($"DispatcherUnhandledException: {ev.Exception.Message}");
+                    CrashReporterService.RecordCrash(ev.Exception, "DispatcherUnhandledException");
+                };
+
                 Log("Loading config");
                 _config = AppConfig.Load();
+                CrashReporterService.Initialize(_config, GetActiveFeaturesDiagnosticState);
+                CheckPendingCrashReports();
                 _topmostService = new TopmostService();
                 _topmostService.TopmostStateChanged += (s, ev) => Dispatcher.Invoke(() => UpdateBorderForWindow(ev.Hwnd, ev.IsTopmost));
                 _opacityService = new OpacityService();
@@ -576,8 +586,7 @@ namespace CodeByatta.UI
                 if (window != null && _topmostService.IsTopmost(window.Hwnd))
                 {
                     User32.SetWindowPos(window.Hwnd, User32.HWND_TOPMOST, 0, 0, 0, 0,
-                        User32.SWP_NOMOVE | User32.SWP_NOSIZE);
-                    User32.BringWindowToTop(window.Hwnd);
+                        User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOACTIVATE);
 
                     if (_activeBorders.TryGetValue(window.Hwnd, out var activeBorder))
                     {
@@ -1045,6 +1054,32 @@ namespace CodeByatta.UI
             catch { }
         }
 
+        private void CheckPendingCrashReports()
+        {
+            try
+            {
+                var pending = CrashReporterService.GetPendingReports();
+                if (pending != null && pending.Count > 0)
+                {
+                    var latest = pending[^1];
+                    var dialog = new CrashReportDialog(latest);
+                    dialog.Show();
+                }
+            }
+            catch { }
+        }
+
+        private Dictionary<string, object> GetActiveFeaturesDiagnosticState()
+        {
+            return new Dictionary<string, object>
+            {
+                { "alwaysOnTopCount", _topmostService?.PinnedWindows.Count ?? 0 },
+                { "activeTransparentCount", _opacityService?.ActiveTransparentWindows.Count ?? 0 },
+                { "isToolbarVisible", _toolbarView?.IsVisible ?? false },
+                { "activeBordersCount", _activeBorders.Count }
+            };
+        }
+
         protected override void OnExit(ExitEventArgs e)
         {
             Log("App OnExit called");
@@ -1064,7 +1099,10 @@ namespace CodeByatta.UI
                 _trayIcon.Dispose();
             }
 
-            _instanceMutex?.ReleaseMutex();
+            if (_ownsMutex && _instanceMutex != null)
+            {
+                try { _instanceMutex.ReleaseMutex(); } catch { }
+            }
             _instanceMutex?.Dispose();
 
             base.OnExit(e);

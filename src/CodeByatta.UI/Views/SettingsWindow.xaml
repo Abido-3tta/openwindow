@@ -34,7 +34,7 @@
                         <TextBlock Text="☰" FontSize="16" Foreground="#888888" Margin="0,0,12,0" VerticalAlignment="Center" Cursor="Hand" />
                         <TextBlock Text="OpenWindow" FontSize="18" FontWeight="Bold" Foreground="#4CC2FF" VerticalAlignment="Center" />
                     </StackPanel>
-                    <TextBlock Text="v1.1.0 (Production Release)" FontSize="11" Foreground="#777777" Margin="28,2,0,0" />
+                    <TextBlock Text="v1.1.3 (Production Release)" FontSize="11" Foreground="#777777" Margin="28,2,0,0" />
                 </StackPanel>
 
                 <!-- Navigation List -->
@@ -950,7 +950,7 @@
                         <TextBlock Text="About OpenWindow" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />
                         
                         <TextBlock Text="Version Information" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,4" />
-                        <TextBlock Text="Version: v1.1.0 (Production Release)" Foreground="#888888" Margin="0,0,0,14" />
+                        <TextBlock Text="Version: v1.1.3 (Production Stability &amp; Visual Overhaul)" Foreground="#888888" Margin="0,0,0,14" />
 
                         <DockPanel Margin="0,4,0,12">
                             <TextBlock Text="Automatically check for updates on startup" VerticalAlignment="Center" FontSize="13" />
@@ -961,6 +961,72 @@
                             <Button x:Name="BtnCheckUpdates" Content="Check for Updates Now" Click="BtnCheckUpdates_Click" Padding="14,6" Background="#2A2A2E" Foreground="White" Cursor="Hand" />
                             <TextBlock x:Name="TxtUpdateStatus" Text="" VerticalAlignment="Center" Margin="12,0,0,0" Foreground="#AAAAAA" FontSize="12" />
                         </StackPanel>
+
+                        <!-- Developer Profile Card -->
+                        <Border Background="#1C1E26" BorderBrush="#33FFFFFF" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,16">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Developer Monogram Avatar -->
+                                <Border Grid.Column="0" Width="52" Height="52" CornerRadius="26" Background="#252A38" BorderBrush="#4CC2FF" BorderThickness="1.5" Margin="0,0,16,0" VerticalAlignment="Center">
+                                    <TextBlock Text="CB" FontSize="18" FontWeight="Bold" Foreground="#4CC2FF" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="Abdelrhman" FontSize="15" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,0,6,0" />
+                                        <Border Background="#224CC2FF" CornerRadius="4" Padding="6,1" VerticalAlignment="Center">
+                                            <TextBlock Text="CodeByatta" FontSize="11" FontWeight="SemiBold" Foreground="#4CC2FF" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Lead Developer &amp; Windows Systems Architect" FontSize="12" Foreground="#94A3B8" Margin="0,2,0,4" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="✉ " Foreground="#CBD5E1" FontSize="11" VerticalAlignment="Center" />
+                                        <TextBlock Text="codebyatta@gmail.com" FontSize="11.5" Foreground="#CBD5E1" Margin="0,0,14,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="🌐 " Foreground="#4CC2FF" FontSize="11" VerticalAlignment="Center" />
+                                        <TextBlock FontSize="11.5" VerticalAlignment="Center">
+                                            <Hyperlink NavigateUri="https://github.com/Abido-3tta/openwindow" RequestNavigate="Hyperlink_RequestNavigate" Foreground="#4CC2FF">
+                                                github.com/Abido-3tta/openwindow
+                                            </Hyperlink>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Crash Reporting & Developer Telemetry Card -->
+                        <Border Background="#1A1C23" BorderBrush="#33FFFFFF" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,16">
+                            <StackPanel>
+                                <TextBlock Text="Crash Reporting &amp; Developer Telemetry" FontSize="14" FontWeight="SemiBold" Foreground="#FFFFFF" Margin="0,0,0,4" />
+                                <TextBlock Text="When enabled, unexpected exceptions are recorded in AppData and dispatched to your configured Discord, Telegram, or HTTP Webhook URL."
+                                           TextWrapping="Wrap" Foreground="#94A3B8" FontSize="11.5" Margin="0,0,0,10" />
+
+                                <TextBlock Text="Webhook Endpoint URL:" FontSize="12" Foreground="#CBD5E1" Margin="0,0,0,4" />
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="TxtTelemetryWebhook" Grid.Column="0"
+                                             Height="32" Padding="8,4" Background="#121318" Foreground="#FFFFFF"
+                                             BorderBrush="#40FFFFFF" BorderThickness="1" VerticalContentAlignment="Center" FontSize="12" />
+                                    <Button x:Name="BtnTestWebhook" Grid.Column="1"
+                                            Content="⚡ Test Ping" Click="BtnTestWebhook_Click"
+                                            Padding="14,0" Height="32" Background="#282C3A" Foreground="#FFFFFF"
+                                            Margin="8,0,0,0" Cursor="Hand" FontWeight="SemiBold" FontSize="11.5">
+                                        <Button.Resources>
+                                            <Style TargetType="Border">
+                                                <Setter Property="CornerRadius" Value="4" />
+                                            </Style>
+                                        </Button.Resources>
+                                    </Button>
+                                </Grid>
+                                <TextBlock x:Name="TxtWebhookStatus" Text="" FontSize="11.5" Foreground="#AAAAAA" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
 
                         <TextBlock Text="OpenWindow enables you to manage your windows practically and efficiently with several excellent features."
                                    TextWrapping="Wrap" Margin="0,0,0,10" Foreground="#BBBBBB" />

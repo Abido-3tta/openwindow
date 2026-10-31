@@ -176,7 +176,7 @@ namespace CodeByatta.Core.Services
             CurrentWindow = managed;
             ForegroundWindowChanged?.Invoke(this, CurrentWindow);
 
-            if (CurrentWindow.GetBounds(out RECT bounds))
+            if (managed.GetBounds(out RECT bounds))
             {
                 WindowBoundsChanged?.Invoke(this, bounds);
             }

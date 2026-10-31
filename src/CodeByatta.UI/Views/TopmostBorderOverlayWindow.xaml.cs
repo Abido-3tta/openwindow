@@ -58,7 +58,6 @@ namespace CodeByatta.UI.Views
             {
                 User32.SetWindowPos(hwnd, User32.HWND_TOPMOST, 0, 0, 0, 0,
                     User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOACTIVATE);
-                User32.BringWindowToTop(hwnd);
             }
         }
 

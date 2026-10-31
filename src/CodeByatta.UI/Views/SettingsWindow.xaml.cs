@@ -179,6 +179,7 @@ namespace CodeByatta.UI.Views
 
             // 6. About & Updates
             ToggleAutoUpdates.IsOn = _config.AutoCheckForUpdates;
+            TxtTelemetryWebhook.Text = _config.TelemetryWebhookUrl;
         }
 
         private void RefreshWindowProfilesList()
@@ -418,7 +419,7 @@ namespace CodeByatta.UI.Views
             try
             {
                 var updateService = new UpdateService();
-                var info = await updateService.CheckForUpdatesAsync(new Version(1, 1, 0));
+                var info = await updateService.CheckForUpdatesAsync(new Version(1, 1, 3));
 
                 if (info != null && info.IsNewer)
                 {
@@ -454,6 +455,43 @@ namespace CodeByatta.UI.Views
             {
                 BtnCheckUpdates.IsEnabled = true;
             }
+        }
+
+        private async void BtnTestWebhook_Click(object sender, RoutedEventArgs e)
+        {
+            string url = TxtTelemetryWebhook.Text?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                TxtWebhookStatus.Text = "Please enter a valid webhook URL first.";
+                TxtWebhookStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(0xFF, 0x45, 0x3A));
+                return;
+            }
+
+            BtnTestWebhook.IsEnabled = false;
+            TxtWebhookStatus.Text = "Sending test telemetry ping...";
+            TxtWebhookStatus.Foreground = new SolidColorBrush(MediaColor.FromRgb(0x4C, 0xC2, 0xFF));
+
+            var (success, msg) = await CrashReporterService.SendTestPingAsync(url);
+            TxtWebhookStatus.Text = msg;
+            TxtWebhookStatus.Foreground = success
+                ? new SolidColorBrush(MediaColor.FromRgb(0x30, 0xD1, 0x58))
+                : new SolidColorBrush(MediaColor.FromRgb(0xFF, 0x45, 0x3A));
+
+            BtnTestWebhook.IsEnabled = true;
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = e.Uri.AbsoluteUri,
+                    UseShellExecute = true
+                });
+                e.Handled = true;
+            }
+            catch { }
         }
 
         private void BtnAddExclusion_Click(object sender, RoutedEventArgs e)
@@ -670,6 +708,7 @@ namespace CodeByatta.UI.Views
 
                 // 5. Save About & Updates
                 _config.AutoCheckForUpdates = ToggleAutoUpdates.IsOn;
+                _config.TelemetryWebhookUrl = TxtTelemetryWebhook.Text?.Trim() ?? string.Empty;
 
                 _config.Save();
                 _isSaved = true;

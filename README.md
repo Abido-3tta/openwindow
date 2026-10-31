@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%2F%2011%20(x64%20%7C%20x86)-0078D6.svg)](https://www.microsoft.com/windows)
-[![Release](https://img.shields.io/badge/Release-v1.1.0-brightgreen.svg)](https://github.com/Abido-3tta/openwindow/releases)
+[![Release](https://img.shields.io/badge/Release-v1.1.3-brightgreen.svg)](https://github.com/Abido-3tta/openwindow/releases)
 [![.NET](https://img.shields.io/badge/.NET-8.0%20WPF%20(Self--Contained)-512BD4.svg)](https://dotnet.microsoft.com/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/Abido-3tta/openwindow)
 [![Author](https://img.shields.io/badge/Author-Abido--3tta-FF79C6.svg)](https://github.com/Abido-3tta)
@@ -109,8 +109,8 @@ Available both as a **standalone zero-dependency native desktop application** (n
 
 ### Option 1: Standalone Native Desktop Release (Recommended)
 1. Download the latest release ZIP from [Releases](https://github.com/Abido-3tta/openwindow/releases):
-   - **64-bit Windows:** `OpenWindow-v1.1.0-win-x64.zip`
-   - **32-bit Windows:** `OpenWindow-v1.1.0-win-x86.zip`
+   - **64-bit Windows:** `OpenWindow-v1.1.3-win-x64.zip`
+   - **32-bit Windows:** `OpenWindow-v1.1.3-win-x86.zip`
 2. Extract the ZIP anywhere on your PC.
 3. Right-click `install.ps1` and select **Run with PowerShell** (or run `CodeByatta.UI.exe` directly as a portable app).
    - The installer creates Start Menu and Desktop shortcuts and adds OpenWindow to Windows Startup.
@@ -129,7 +129,7 @@ dotnet build OpenWindow.sln -c Release
 dotnet test OpenWindow.sln -c Release --no-build
 
 # Package Native ZIP Releases (x64 & x86)
-.\package-release.ps1 -Version "1.1.0"
+.\package-release.ps1 -Version "1.1.3"
 ```
 
 ---
