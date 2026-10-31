@@ -367,6 +367,24 @@
                     <StackPanel x:Name="PanelAdvanced" Visibility="Visible">
                         <TextBlock Text="Advanced Features Settings" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />
 
+                        <!-- Quick Jump Banner to ToolBar Settings -->
+                        <Border Background="#1A30D158" BorderBrush="#4030D158" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
+                            <DockPanel>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="🖥️ Looking to Enable or Disable Toolbar Features?" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF" />
+                                    <TextBlock Text="Choose which buttons appear on window titlebars (Pin, Opacity, PiP, Crop, Dark Mode, etc.)." Foreground="#AAAAAA" FontSize="11" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <Button Content="Configure ToolBar Features ➔"
+                                        Click="BtnGoToToolbarTab_Click"
+                                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                                        Background="#30D158" Foreground="#000000" FontWeight="Bold" FontSize="11" Padding="12,6" Cursor="Hand" BorderThickness="0">
+                                    <Button.Resources>
+                                        <Style TargetType="Border"><Setter Property="CornerRadius" Value="6" /></Style>
+                                    </Button.Resources>
+                                </Button>
+                            </DockPanel>
+                        </Border>
+
                         <!-- Startup Setting -->
                         <DockPanel Margin="0,6">
                             <StackPanel>
@@ -473,77 +491,180 @@
 
                     <!-- 2. ToolBar Settings Panel (Screenshot 5) -->
                     <StackPanel x:Name="PanelToolbar" Visibility="Collapsed">
-                        <TextBlock Text="ToolBar Settings" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />
+                        <TextBlock Text="ToolBar Feature Toggles" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,6" />
+                        <TextBlock Text="Choose which tools and buttons appear on the titlebar of open windows. Turn off any feature you don't need."
+                                   Foreground="#A0A0A0" FontSize="12" Margin="0,0,0,16" TextWrapping="Wrap" />
 
-                        <Grid Margin="0,4">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="Set-Top" VerticalAlignment="Center" FontSize="13" />
-                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolSetTop" OnContent="On" OffContent="Off" IsOn="True" />
-                            <TextBlock Grid.Column="2" Text="Alt + Z" Foreground="#888888" VerticalAlignment="Center" />
-                        </Grid>
+                        <!-- Feature Toggles List with Descriptions and Hotkeys -->
+                        <!-- 1. Always on Top -->
+                        <Border Background="#16181F" BorderBrush="#25FFFFFF" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,3">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📌 Always-on-Top (Pin Window)" FontWeight="SemiBold" FontSize="13" Foreground="White" />
+                                        <Border Background="#26FF3B30" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Alt + Z" Foreground="#FF3B30" FontSize="10.5" FontWeight="Bold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Keep target window pinned above all other windows with a glowing red accent border." Foreground="#888888" FontSize="11" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolSetTop" OnContent="On" OffContent="Off" IsOn="True" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
 
-                        <Grid Margin="0,4">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="Anchor" VerticalAlignment="Center" FontSize="13" />
-                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolAnchor" OnContent="On" OffContent="Off" IsOn="True" />
-                            <TextBlock Grid.Column="2" Text="None" Foreground="#888888" VerticalAlignment="Center" />
-                        </Grid>
+                        <!-- 2. Opacity / Transparency -->
+                        <Border Background="#16181F" BorderBrush="#25FFFFFF" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,3">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🪟 Transparency &amp; Opacity" FontWeight="SemiBold" FontSize="13" Foreground="White" />
+                                        <Border Background="#264CC2FF" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Alt + A" Foreground="#4CC2FF" FontSize="10.5" FontWeight="Bold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Adjust window opacity percentage (100% to 0%) via click cycle or live slider." Foreground="#888888" FontSize="11" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolOpacity" OnContent="On" OffContent="Off" IsOn="True" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
 
-                        <Grid Margin="0,4">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="PiP" VerticalAlignment="Center" FontSize="13" />
-                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolPip" OnContent="On" OffContent="Off" IsOn="True" />
-                            <TextBlock Grid.Column="2" Text="Alt + Q" Foreground="#888888" VerticalAlignment="Center" />
-                        </Grid>
+                        <!-- 3. Hover Opacity Reveal -->
+                        <Border Background="#16181F" BorderBrush="#25FFFFFF" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,3">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="👁️ Hover Opacity Reveal" FontWeight="SemiBold" FontSize="13" Foreground="White" />
+                                        <Border Background="#2630D158" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Mouse Hover" Foreground="#30D158" FontSize="10.5" FontWeight="Bold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Automatically reveals 100% full opacity whenever the mouse cursor moves over the window." Foreground="#888888" FontSize="11" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolHoverOpacity" OnContent="On" OffContent="Off" IsOn="True" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
 
-                        <Grid Margin="0,4">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="Crop" VerticalAlignment="Center" FontSize="13" />
-                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolCrop" OnContent="On" OffContent="Off" IsOn="True" />
-                            <TextBlock Grid.Column="2" Text="None" Foreground="#888888" VerticalAlignment="Center" />
-                        </Grid>
+                        <!-- 4. Click-Through Mode -->
+                        <Border Background="#16181F" BorderBrush="#25FFFFFF" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,3">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🖱️ Click-Through Mode" FontWeight="SemiBold" FontSize="13" Foreground="White" />
+                                        <Border Background="#2630D158" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Alt + C" Foreground="#30D158" FontSize="10.5" FontWeight="Bold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Allow mouse clicks to pass through the window directly to underlying apps." Foreground="#888888" FontSize="11" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolClickThrough" OnContent="On" OffContent="Off" IsOn="True" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
 
-                        <Grid Margin="0,4">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="Set-Dark" VerticalAlignment="Center" FontSize="13" />
-                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolDark" OnContent="On" OffContent="Off" IsOn="True" />
-                            <TextBlock Grid.Column="2" Text="Alt + D" Foreground="#888888" VerticalAlignment="Center" />
-                        </Grid>
+                        <!-- 5. Picture-in-Picture -->
+                        <Border Background="#16181F" BorderBrush="#25FFFFFF" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,3">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🖼️ Picture-in-Picture (PiP)" FontWeight="SemiBold" FontSize="13" Foreground="White" />
+                                        <Border Background="#260078D7" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Alt + Q" Foreground="#4CC2FF" FontSize="10.5" FontWeight="Bold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Shrinks window into a live stream miniature with mouse interaction and corner snapping." Foreground="#888888" FontSize="11" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolPip" OnContent="On" OffContent="Off" IsOn="True" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
 
-                        <Grid Margin="0,4">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="Opacity" VerticalAlignment="Center" FontSize="13" />
-                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolOpacity" OnContent="On" OffContent="Off" IsOn="True" />
-                            <TextBlock Grid.Column="2" Text="Alt + A" Foreground="#888888" VerticalAlignment="Center" />
-                        </Grid>
+                        <!-- 6. Crop to PiP -->
+                        <Border Background="#16181F" BorderBrush="#25FFFFFF" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,3">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="✂️ Crop to PiP" FontWeight="SemiBold" FontSize="13" Foreground="White" />
+                                        <Border Background="#26FFFFFF" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Region Select" Foreground="#CCCCCC" FontSize="10.5" FontWeight="Bold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Select and stream a specific rectangular region of the window into PiP." Foreground="#888888" FontSize="11" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolCrop" OnContent="On" OffContent="Off" IsOn="True" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
 
-                        <Grid Margin="0,4">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="Hover Reveal" VerticalAlignment="Center" FontSize="13" />
-                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolHoverOpacity" OnContent="On" OffContent="Off" IsOn="True" />
-                            <TextBlock Grid.Column="2" Text="Mouse Hover" Foreground="#888888" VerticalAlignment="Center" />
-                        </Grid>
+                        <!-- 7. Inverted Dark Mode -->
+                        <Border Background="#16181F" BorderBrush="#25FFFFFF" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,3">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🌙 Inverted Dark Mode" FontWeight="SemiBold" FontSize="13" Foreground="White" />
+                                        <Border Background="#26FFD60A" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Alt + D" Foreground="#FFD60A" FontSize="10.5" FontWeight="Bold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Inverts bright window colors into eye-friendly dark mode using hardware GPU shader." Foreground="#888888" FontSize="11" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolDark" OnContent="On" OffContent="Off" IsOn="True" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
 
-                        <Grid Margin="0,4">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="Click-Through" VerticalAlignment="Center" FontSize="13" />
-                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolClickThrough" OnContent="On" OffContent="Off" IsOn="True" />
-                            <TextBlock Grid.Column="2" Text="Alt + C" Foreground="#888888" VerticalAlignment="Center" />
-                        </Grid>
+                        <!-- 8. Cinema Focus -->
+                        <Border Background="#16181F" BorderBrush="#25FFFFFF" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,3">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🎬 Cinema Focus (Dim Background)" FontWeight="SemiBold" FontSize="13" Foreground="White" />
+                                        <Border Background="#26BF5AF2" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Alt + F" Foreground="#BF5AF2" FontSize="10.5" FontWeight="Bold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Dims desktop wallpaper and background apps so you can focus completely on the active window." Foreground="#888888" FontSize="11" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolCinemaFocus" OnContent="On" OffContent="Off" IsOn="True" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
 
-                        <Grid Margin="0,4">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="Cinema Focus" VerticalAlignment="Center" FontSize="13" />
-                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolCinemaFocus" OnContent="On" OffContent="Off" IsOn="True" />
-                            <TextBlock Grid.Column="2" Text="Alt + F" Foreground="#888888" VerticalAlignment="Center" />
-                        </Grid>
+                        <!-- 9. Collapsed Anchor Handle -->
+                        <Border Background="#16181F" BorderBrush="#25FFFFFF" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,3">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⚓ Collapsed Anchor Handle" FontWeight="SemiBold" FontSize="13" Foreground="White" />
+                                        <Border Background="#26FFFFFF" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Header Handle" Foreground="#CCCCCC" FontSize="10.5" FontWeight="Bold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Display the compact 3D silver anchor pill on the window titlebar when toolbar is collapsed." Foreground="#888888" FontSize="11" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolAnchor" OnContent="On" OffContent="Off" IsOn="True" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
 
-                        <Grid Margin="0,4">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="140" /><ColumnDefinition Width="100" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="Glass" VerticalAlignment="Center" FontSize="13" />
-                            <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolGlass" OnContent="On" OffContent="Off" IsOn="False" />
-                            <TextBlock Grid.Column="2" Text="None" Foreground="#888888" VerticalAlignment="Center" />
-                        </Grid>
+                        <!-- 10. Aero Glass Effect -->
+                        <Border Background="#16181F" BorderBrush="#25FFFFFF" BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,3">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🪞 Aero Glass Blur Effect" FontWeight="SemiBold" FontSize="13" Foreground="White" />
+                                        <Border Background="#26FFFFFF" CornerRadius="4" Padding="5,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock Text="Acrylic Blur" Foreground="#CCCCCC" FontSize="10.5" FontWeight="Bold" />
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="Enables modern frosted glass acrylic blur styling for toolbar elements." Foreground="#888888" FontSize="11" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <ui:ToggleSwitch Grid.Column="1" x:Name="ToggleToolGlass" OnContent="On" OffContent="Off" IsOn="False" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
 
                         <Separator Margin="0,16" Background="#26FFFFFF" />
 

@@ -20,7 +20,16 @@ namespace CodeByatta.Core.Models
 
         public ManagedWindow(IntPtr hwnd)
         {
-            Hwnd = hwnd;
+            if (hwnd != IntPtr.Zero && User32.IsWindow(hwnd))
+            {
+                IntPtr root = User32.GetAncestor(hwnd, User32.GA_ROOT);
+                Hwnd = (root != IntPtr.Zero && User32.IsWindow(root)) ? root : hwnd;
+            }
+            else
+            {
+                Hwnd = hwnd;
+            }
+
             RefreshInfo();
         }
 
@@ -34,8 +43,14 @@ namespace CodeByatta.Core.Models
                 return;
             }
 
+            // Non-blocking caption extraction: Prevents UI hangs when Snipping Tool or suspended processes take foreground
             var sb = new StringBuilder(512);
-            User32.GetWindowText(Hwnd, sb, sb.Capacity);
+            int read = User32.InternalGetWindowText(Hwnd, sb, sb.Capacity);
+            if (read <= 0)
+            {
+                User32.SendMessageTimeout(Hwnd, (uint)User32.WM_GETTEXT, (IntPtr)sb.Capacity, sb,
+                    User32.SMTO_ABORTIFHUNG | User32.SMTO_NORMAL, 50, out _);
+            }
             Title = sb.ToString();
 
             var classSb = new StringBuilder(256);

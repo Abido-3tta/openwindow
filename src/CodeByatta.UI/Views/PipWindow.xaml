@@ -10,12 +10,12 @@
         AllowsTransparency="True"
         Background="Transparent"
         Topmost="True"
-        ResizeMode="CanResizeWithGrip">
+        ResizeMode="CanResize">
 
     <Border x:Name="WindowOuterBorder"
-            Background="#0C0D12"
-            BorderBrush="#222634"
-            BorderThickness="1"
+            Background="#0A0B0E"
+            BorderBrush="#24262E"
+            BorderThickness="1.5"
             CornerRadius="10"
             ClipToBounds="True">
         <Grid>
@@ -26,7 +26,7 @@
 
             <!-- Header / Drag Bar -->
             <Grid Grid.Row="0"
-                  Background="#141720"
+                  Background="#121316"
                   MouseDown="Header_MouseDown"
                   MouseWheel="Header_MouseWheel"
                   Cursor="SizeAll">

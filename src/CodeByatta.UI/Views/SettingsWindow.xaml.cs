@@ -40,7 +40,7 @@ namespace CodeByatta.UI.Views
         private const string RunRegistryKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
         private const string AppRegistryName = "OpenWindow";
 
-        public SettingsWindow(AppConfig config)
+        public SettingsWindow(AppConfig config, string initialTab = "Toolbar")
         {
             InitializeComponent();
             _config = config;
@@ -56,6 +56,29 @@ namespace CodeByatta.UI.Views
             catch { }
 
             LoadSettings();
+            SelectTab(initialTab);
+        }
+
+        public void SelectTab(string tabTag)
+        {
+            if (NavList == null) return;
+            foreach (var item in NavList.Items)
+            {
+                if (item is ListBoxItem lbi && string.Equals(lbi.Tag?.ToString(), tabTag, StringComparison.OrdinalIgnoreCase))
+                {
+                    NavList.SelectedItem = lbi;
+                    return;
+                }
+            }
+            if (NavList.Items.Count > 1)
+            {
+                NavList.SelectedIndex = 1; // Default to Toolbar Settings
+            }
+        }
+
+        private void BtnGoToToolbarTab_Click(object sender, RoutedEventArgs e)
+        {
+            SelectTab("Toolbar");
         }
 
         protected override void OnSourceInitialized(EventArgs e)

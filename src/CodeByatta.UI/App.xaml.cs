@@ -180,7 +180,7 @@ namespace CodeByatta.UI
                 _darkModeService,
                 TogglePip,
                 OpenCropWindow,
-                OpenSettings,
+                () => OpenSettings("Toolbar"),
                 _config);
         }
 
@@ -289,6 +289,7 @@ namespace CodeByatta.UI
                 {
                     _currentPipWindow.RestoreAndClose();
                     _currentPipWindow = null;
+                    CurrentPipTargetHwnd = IntPtr.Zero;
                     return;
                 }
             }
@@ -663,9 +664,14 @@ namespace CodeByatta.UI
 
                 // If target had a full-screen border overlay, hide it during PiP
                 bool isTopmost = _topmostService.IsTopmost(target.Hwnd);
-                if (_activeBorders.TryGetValue(target.Hwnd, out var border))
+                IntPtr targetRoot = User32.GetAncestor(target.Hwnd, User32.GA_ROOT);
+                foreach (var kvp in _activeBorders)
                 {
-                    border.Hide();
+                    IntPtr borderRoot = User32.GetAncestor(kvp.Key, User32.GA_ROOT);
+                    if (kvp.Key == target.Hwnd || (targetRoot != IntPtr.Zero && (borderRoot == targetRoot || kvp.Key == targetRoot)))
+                    {
+                        kvp.Value.Hide();
+                    }
                 }
 
                 // Create clean PiP transferring topmost accent border to PiP window itself
@@ -730,9 +736,14 @@ namespace CodeByatta.UI
                     CurrentPipTargetHwnd = target.Hwnd;
 
                     bool isTopmost = _topmostService.IsTopmost(target.Hwnd);
-                    if (_activeBorders.TryGetValue(target.Hwnd, out var border))
+                    IntPtr targetRoot = User32.GetAncestor(target.Hwnd, User32.GA_ROOT);
+                    foreach (var kvp in _activeBorders)
                     {
-                        border.Hide();
+                        IntPtr borderRoot = User32.GetAncestor(kvp.Key, User32.GA_ROOT);
+                        if (kvp.Key == target.Hwnd || (targetRoot != IntPtr.Zero && (borderRoot == targetRoot || kvp.Key == targetRoot)))
+                        {
+                            kvp.Value.Hide();
+                        }
                     }
 
                     _currentPipWindow = new PipWindow(
@@ -769,12 +780,13 @@ namespace CodeByatta.UI
             });
         }
 
-        private void OpenSettings()
+        private void OpenSettings(string initialTab = "Toolbar")
         {
             Dispatcher.Invoke(() =>
             {
                 if (_activeSettingsWindow != null && _activeSettingsWindow.IsLoaded)
                 {
+                    _activeSettingsWindow.SelectTab(initialTab);
                     _activeSettingsWindow.Activate();
                     IntPtr h = new WindowInteropHelper(_activeSettingsWindow).Handle;
                     User32.SetWindowPos(h, User32.HWND_TOPMOST, 0, 0, 0, 0, User32.SWP_NOMOVE | User32.SWP_NOSIZE);
@@ -783,7 +795,7 @@ namespace CodeByatta.UI
                     return;
                 }
 
-                _activeSettingsWindow = new SettingsWindow(_config);
+                _activeSettingsWindow = new SettingsWindow(_config, initialTab);
                 _activeSettingsWindow.Closed += (s, e) => _activeSettingsWindow = null;
                 _activeSettingsWindow.ShowDialog();
                 _activeSettingsWindow = null;

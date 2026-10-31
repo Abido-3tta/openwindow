@@ -47,6 +47,14 @@ namespace CodeByatta.UI.Views
 
         public void BringBorderToTop()
         {
+            IntPtr targetRoot = User32.GetAncestor(TargetHwnd, User32.GA_ROOT);
+            IntPtr pipRoot = App.CurrentPipTargetHwnd != IntPtr.Zero ? User32.GetAncestor(App.CurrentPipTargetHwnd, User32.GA_ROOT) : IntPtr.Zero;
+            if (pipRoot != IntPtr.Zero && (TargetHwnd == App.CurrentPipTargetHwnd || (targetRoot != IntPtr.Zero && targetRoot == pipRoot)))
+            {
+                Hide();
+                return;
+            }
+
             IntPtr hwnd = new WindowInteropHelper(this).Handle;
             if (hwnd != IntPtr.Zero && User32.IsWindow(hwnd))
             {
@@ -58,7 +66,10 @@ namespace CodeByatta.UI.Views
 
         public void UpdateBounds()
         {
-            if (!User32.IsWindow(TargetHwnd) || User32.IsIconic(TargetHwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && TargetHwnd == App.CurrentPipTargetHwnd))
+            IntPtr targetRoot = User32.GetAncestor(TargetHwnd, User32.GA_ROOT);
+            IntPtr pipRoot = App.CurrentPipTargetHwnd != IntPtr.Zero ? User32.GetAncestor(App.CurrentPipTargetHwnd, User32.GA_ROOT) : IntPtr.Zero;
+
+            if (!User32.IsWindow(TargetHwnd) || User32.IsIconic(TargetHwnd) || (pipRoot != IntPtr.Zero && (TargetHwnd == App.CurrentPipTargetHwnd || (targetRoot != IntPtr.Zero && targetRoot == pipRoot))))
             {
                 Hide();
                 return;

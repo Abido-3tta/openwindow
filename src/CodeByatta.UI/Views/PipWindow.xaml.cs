@@ -186,9 +186,44 @@ namespace CodeByatta.UI.Views
             }
         }
 
+        private long _lastMouseMoveTick = 0;
+
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            if (msg == WM_SIZING && _aspectRatio > 0.05)
+            if (msg == User32.WM_NCHITTEST)
+            {
+                try
+                {
+                    var dpi = VisualTreeHelper.GetDpi(this);
+                    int screenX = unchecked((short)(lParam.ToInt32() & 0xFFFF));
+                    int screenY = unchecked((short)((lParam.ToInt32() >> 16) & 0xFFFF));
+
+                    double winLeft = Left * dpi.DpiScaleX;
+                    double winTop = Top * dpi.DpiScaleY;
+                    double winRight = winLeft + (ActualWidth * dpi.DpiScaleX);
+                    double winBottom = winTop + (ActualHeight * dpi.DpiScaleY);
+
+                    const int borderThickness = 9;
+
+                    bool isLeft = screenX >= winLeft && screenX <= winLeft + borderThickness;
+                    bool isRight = screenX >= winRight - borderThickness && screenX <= winRight;
+                    bool isTop = screenY >= winTop && screenY <= winTop + borderThickness;
+                    bool isBottom = screenY >= winBottom - borderThickness && screenY <= winBottom;
+
+                    if (isTop && isLeft) { handled = true; return (IntPtr)User32.HTTOPLEFT; }
+                    if (isTop && isRight) { handled = true; return (IntPtr)User32.HTTOPRIGHT; }
+                    if (isBottom && isLeft) { handled = true; return (IntPtr)User32.HTBOTTOMLEFT; }
+                    if (isBottom && isRight) { handled = true; return (IntPtr)User32.HTBOTTOMRIGHT; }
+                    if (isLeft) { handled = true; return (IntPtr)User32.HTLEFT; }
+                    if (isRight) { handled = true; return (IntPtr)User32.HTRIGHT; }
+                    if (isTop) { handled = true; return (IntPtr)User32.HTTOP; }
+                    if (isBottom) { handled = true; return (IntPtr)User32.HTBOTTOM; }
+                }
+                catch { }
+
+                return IntPtr.Zero;
+            }
+            else if (msg == User32.WM_SIZING && _aspectRatio > 0.05)
             {
                 try
                 {
@@ -203,29 +238,37 @@ namespace CodeByatta.UI.Views
 
                     switch (edge)
                     {
-                        case WMSZ_LEFT:
-                        case WMSZ_RIGHT:
+                        case User32.HTLEFT:
+                        case User32.HTRIGHT:
+                        case 1: // WMSZ_LEFT
+                        case 2: // WMSZ_RIGHT
                         {
                             double newClientH = currentW / _aspectRatio;
                             rect.Bottom = rect.Top + (int)Math.Round(newClientH + headerPx);
                             break;
                         }
-                        case WMSZ_TOP:
-                        case WMSZ_BOTTOM:
+                        case User32.HTTOP:
+                        case User32.HTBOTTOM:
+                        case 3: // WMSZ_TOP
+                        case 6: // WMSZ_BOTTOM
                         {
                             double newClientW = clientH * _aspectRatio;
                             rect.Right = rect.Left + (int)Math.Round(newClientW);
                             break;
                         }
-                        case WMSZ_BOTTOMRIGHT:
-                        case WMSZ_BOTTOMLEFT:
+                        case User32.HTBOTTOMRIGHT:
+                        case User32.HTBOTTOMLEFT:
+                        case 7: // WMSZ_BOTTOMLEFT
+                        case 8: // WMSZ_BOTTOMRIGHT
                         {
                             double newClientH = currentW / _aspectRatio;
                             rect.Bottom = rect.Top + (int)Math.Round(newClientH + headerPx);
                             break;
                         }
-                        case WMSZ_TOPRIGHT:
-                        case WMSZ_TOPLEFT:
+                        case User32.HTTOPRIGHT:
+                        case User32.HTTOPLEFT:
+                        case 4: // WMSZ_TOPLEFT
+                        case 5: // WMSZ_TOPRIGHT
                         {
                             double newClientH = currentW / _aspectRatio;
                             rect.Top = rect.Bottom - (int)Math.Round(newClientH + headerPx);
@@ -290,7 +333,7 @@ namespace CodeByatta.UI.Views
             double targetWidth = Math.Clamp(ActualWidth + step, MinWidth, SystemParameters.PrimaryScreenWidth * 0.85);
 
             Width = targetWidth;
-            // OnRenderSizeChanged automatically computes proportional Height matching aspect ratio!
+            Height = Math.Clamp((targetWidth / _aspectRatio) + 34.0, MinHeight, SystemParameters.PrimaryScreenHeight * 0.9);
             SnapToNearestCornerIfClose();
             e.Handled = true;
         }
@@ -571,6 +614,10 @@ namespace CodeByatta.UI.Views
         private void ThumbnailHost_MouseMove(object sender, WpfMouseEventArgs e)
         {
             if (!_isInteractMode) return;
+
+            long now = Environment.TickCount64;
+            if (now - _lastMouseMoveTick < 16) return;
+            _lastMouseMoveTick = now;
 
             try
             {

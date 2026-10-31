@@ -73,18 +73,19 @@ namespace CodeByatta.UI.Views
 
             _autoHideTimer = new DispatcherTimer
             {
-                Interval = TimeSpan.FromSeconds(2.0)
+                Interval = TimeSpan.FromMilliseconds(350)
             };
             _autoHideTimer.Tick += (s, e) =>
             {
+                _autoHideTimer.Stop();
                 if (_targetWindow != null && _targetWindow.IsClickThrough) return;
                 if (PopupOpacitySlider != null && PopupOpacitySlider.IsOpen) return;
 
                 if (AutoHideEnabled && !_isMouseOverToolbar && _isExpanded)
                 {
                     Collapse();
+                    SaveCurrentWindowPreferenceState();
                 }
-                _autoHideTimer.Stop();
             };
 
             // Precision proximity timer: runs at 50ms intervals
@@ -192,38 +193,43 @@ namespace CodeByatta.UI.Views
                 _targetWindow.Opacity = configuredOp;
             }
 
-            // 1. Retrieve or initialize WindowPreferences for this window/tab
+            // 1. Retrieve or initialize isolated WindowPreferences strictly per-HWND
             WindowPreferences pref;
             if (!_windowPreferencesByHwnd.TryGetValue(_targetWindow.Hwnd, out pref!))
             {
-                pref = _config.GetOrCreateWindowPreference(_targetWindow.ProcessName);
+                pref = new WindowPreferences
+                {
+                    ProcessName = _targetWindow.ProcessName,
+                    OpacityLevel = _targetWindow.Opacity,
+                    IsTopmost = _targetWindow.IsTopmost,
+                    IsClickThrough = _targetWindow.IsClickThrough,
+                    DisableOpacityOnMouseOver = false,
+                    IsDarkMode = _darkModeService.IsDarkModeActiveForWindow(_targetWindow.Hwnd),
+                    IsCollapsed = true,
+                    ArrowCenterRatio = 0.5,
+                    HaveArrowCenterRatio = true
+                };
+
+                // Restore toolbar positioning if remembered
+                if (_config.AutoRememberWindowPreferences)
+                {
+                    var saved = _config.GetOrCreateWindowPreference(_targetWindow.ProcessName);
+                    if (saved != null)
+                    {
+                        pref.ArrowCenterRatio = saved.ArrowCenterRatio;
+                        pref.HaveArrowCenterRatio = saved.HaveArrowCenterRatio;
+                        pref.SideOffset = saved.SideOffset;
+                        pref.HaveOffset = saved.HaveOffset;
+                        pref.IsCollapsed = saved.IsCollapsed;
+                    }
+                }
+
                 _windowPreferencesByHwnd[_targetWindow.Hwnd] = pref;
             }
 
             // Restore exact relative horizontal ratio & vertical offset
             _currentRatio = pref.HaveArrowCenterRatio ? pref.ArrowCenterRatio : 0.5;
             _currentVerticalOffset = pref.HaveOffset ? pref.SideOffset : 0.0;
-
-            // 2. Auto-restore remembered window preferences (if enabled)
-            if (_config.AutoRememberWindowPreferences)
-            {
-                if (pref.IsTopmost && !_targetWindow.IsTopmost)
-                {
-                    _topmostService.ToggleTopmost(_targetWindow.Hwnd);
-                }
-                if (pref.OpacityLevel < 255 && _targetWindow.Opacity == 255)
-                {
-                    _opacityService.SetOpacity(_targetWindow.Hwnd, pref.OpacityLevel);
-                }
-                if (pref.IsClickThrough && !_targetWindow.IsClickThrough)
-                {
-                    _opacityService.ToggleClickThrough(_targetWindow.Hwnd);
-                }
-                if (pref.IsDarkMode && !_darkModeService.IsDarkModeActiveForWindow(_targetWindow.Hwnd))
-                {
-                    _darkModeService.EnableDarkModeForWindow(_targetWindow.Hwnd);
-                }
-            }
 
             if (_targetWindow.GetBounds(out _lastBounds))
             {
@@ -514,8 +520,9 @@ namespace CodeByatta.UI.Views
                 }
                 else if (AutoHideEnabled && (_targetWindow == null || !_targetWindow.IsClickThrough))
                 {
-                    if (!_autoHideTimer.IsEnabled)
+                    if (!_autoHideTimer.IsEnabled && _isExpanded)
                     {
+                        _autoHideTimer.Interval = TimeSpan.FromMilliseconds(350);
                         _autoHideTimer.Start();
                     }
                 }
@@ -538,25 +545,11 @@ namespace CodeByatta.UI.Views
                 if (!User32.IsWindow(tHwnd) || User32.IsIconic(tHwnd)) continue;
                 if (_opacityService.IsClickThrough(tHwnd)) continue;
 
-                // Check per-window preference
+                // Check per-window preference (strictly isolated, never bleeding across processes or tabs)
                 bool hasHoverReveal = false;
                 if (_windowPreferencesByHwnd.TryGetValue(tHwnd, out var tPref))
                 {
                     hasHoverReveal = tPref.DisableOpacityOnMouseOver;
-                }
-                else
-                {
-                    User32.GetWindowThreadProcessId(tHwnd, out uint tPid);
-                    if (tPid != 0)
-                    {
-                        try
-                        {
-                            using var proc = System.Diagnostics.Process.GetProcessById((int)tPid);
-                            var savedPref = _config.GetOrCreateWindowPreference(proc.ProcessName);
-                            hasHoverReveal = savedPref.DisableOpacityOnMouseOver;
-                        }
-                        catch { }
-                    }
                 }
 
                 if (!hasHoverReveal)
@@ -699,7 +692,7 @@ namespace CodeByatta.UI.Views
             // Save in active HWND cache
             if (!_windowPreferencesByHwnd.TryGetValue(_targetWindow.Hwnd, out var pref))
             {
-                pref = _config.GetOrCreateWindowPreference(_targetWindow.ProcessName);
+                pref = new WindowPreferences { ProcessName = _targetWindow.ProcessName };
                 _windowPreferencesByHwnd[_targetWindow.Hwnd] = pref;
             }
 
@@ -731,7 +724,7 @@ namespace CodeByatta.UI.Views
             // Pin state
             bool isTop = _targetWindow.IsTopmost;
             DotTopmost.Visibility = isTop ? Visibility.Visible : Visibility.Collapsed;
-            BtnTopmost.Background = isTop ? new SolidColorBrush(MediaColor.FromArgb(0x55, 0xFF, 0x3B, 0x30)) : new SolidColorBrush(MediaColor.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
+            BtnTopmost.Background = isTop ? new SolidColorBrush(MediaColor.FromArgb(0x55, 0xFF, 0x3B, 0x30)) : MediaBrushes.Transparent;
 
             // Opacity percentage state
             byte currentAlpha = _opacityService.GetConfiguredOpacity(_targetWindow.Hwnd);
@@ -740,6 +733,7 @@ namespace CodeByatta.UI.Views
             if (currentAlpha <= 5) percent = 0;
             TxtOpacityPercent.Text = $"{percent}%";
             TxtOpacityPercent.Foreground = percent < 100 ? new SolidColorBrush(MediaColor.FromRgb(0x4C, 0xC2, 0xFF)) : MediaBrushes.White;
+            BtnOpacity.Background = percent < 100 ? new SolidColorBrush(MediaColor.FromArgb(0x44, 0x4C, 0xC2, 0xFF)) : MediaBrushes.Transparent;
 
             if (!SliderOpacity.IsMouseCaptureWithin && !_isUpdatingSliderInternally)
             {
@@ -754,19 +748,19 @@ namespace CodeByatta.UI.Views
             DotClickThrough.Visibility = isClickThrough ? Visibility.Visible : Visibility.Collapsed;
             TxtClickThroughStatus.Visibility = isClickThrough ? Visibility.Visible : Visibility.Collapsed;
             TxtClickThroughStatus.Text = isClickThrough ? "ON" : "";
-            BtnClickThrough.Background = isClickThrough ? new SolidColorBrush(MediaColor.FromArgb(0x88, 0x30, 0xD1, 0x58)) : new SolidColorBrush(MediaColor.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
+            BtnClickThrough.Background = isClickThrough ? new SolidColorBrush(MediaColor.FromArgb(0x55, 0x30, 0xD1, 0x58)) : MediaBrushes.Transparent;
 
             // Dark Mode state
             bool isDark = _targetWindow != null && _darkModeService.IsDarkModeActiveForWindow(_targetWindow.Hwnd);
             DotDarkMode.Visibility = isDark ? Visibility.Visible : Visibility.Collapsed;
-            BtnDarkMode.Background = isDark ? new SolidColorBrush(MediaColor.FromArgb(0x55, 0xFF, 0xD6, 0x0A)) : new SolidColorBrush(MediaColor.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
+            BtnDarkMode.Background = isDark ? new SolidColorBrush(MediaColor.FromArgb(0x55, 0xFF, 0xD6, 0x0A)) : MediaBrushes.Transparent;
 
             // Cinema Focus state
             if (System.Windows.Application.Current is App appInst)
             {
                 bool isCinema = appInst.IsCinemaFocusActive;
                 DotCinemaFocus.Visibility = isCinema ? Visibility.Visible : Visibility.Collapsed;
-                BtnCinemaFocus.Background = isCinema ? new SolidColorBrush(MediaColor.FromArgb(0x66, 0xBF, 0x5A, 0xF2)) : new SolidColorBrush(MediaColor.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
+                BtnCinemaFocus.Background = isCinema ? new SolidColorBrush(MediaColor.FromArgb(0x55, 0xBF, 0x5A, 0xF2)) : MediaBrushes.Transparent;
             }
 
             // Hover Opacity Reveal state (strictly isolated per-window)
@@ -776,14 +770,21 @@ namespace CodeByatta.UI.Views
                 isHoverOpacityOn = currentPref.DisableOpacityOnMouseOver;
             }
             DotHoverOpacity.Visibility = isHoverOpacityOn ? Visibility.Visible : Visibility.Collapsed;
-            BtnHoverOpacity.Background = isHoverOpacityOn ? new SolidColorBrush(MediaColor.FromArgb(0x55, 0x30, 0xD1, 0x58)) : new SolidColorBrush(MediaColor.FromArgb(0x26, 0xFF, 0xFF, 0xFF));
+            BtnHoverOpacity.Background = isHoverOpacityOn ? new SolidColorBrush(MediaColor.FromArgb(0x55, 0x30, 0xD1, 0x58)) : MediaBrushes.Transparent;
         }
 
         private void SaveCurrentWindowPreferenceState()
         {
             if (_targetWindow == null || ShellSanitizer.IsShellOrTaskbarWindow(_targetWindow.Hwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && _targetWindow.Hwnd == App.CurrentPipTargetHwnd)) return;
 
-            var pref = _config.GetOrCreateWindowPreference(_targetWindow.ProcessName);
+            // Update live per-window state strictly isolated to this HWND
+            if (!_windowPreferencesByHwnd.TryGetValue(_targetWindow.Hwnd, out var pref))
+            {
+                pref = new WindowPreferences();
+                _windowPreferencesByHwnd[_targetWindow.Hwnd] = pref;
+            }
+
+            pref.ProcessName = _targetWindow.ProcessName;
             pref.IsTopmost = _targetWindow.IsTopmost;
             byte op = _opacityService.GetConfiguredOpacity(_targetWindow.Hwnd);
             if (op == 255) op = _targetWindow.Opacity;
@@ -795,13 +796,16 @@ namespace CodeByatta.UI.Views
             pref.SideOffset = 0;
             pref.HaveOffset = true;
             pref.IsDarkMode = _darkModeService.IsDarkModeActiveForWindow(_targetWindow.Hwnd);
-            if (_windowPreferencesByHwnd.TryGetValue(_targetWindow.Hwnd, out var livePref))
-            {
-                pref.DisableOpacityOnMouseOver = livePref.DisableOpacityOnMouseOver;
-            }
             pref.LastModified = DateTime.UtcNow;
 
-            _windowPreferencesByHwnd[_targetWindow.Hwnd] = pref;
+            // Save layout/toolbar positioning to config without polluting other windows
+            var savedPref = _config.GetOrCreateWindowPreference(_targetWindow.ProcessName);
+            savedPref.ArrowCenterRatio = _currentRatio;
+            savedPref.HaveArrowCenterRatio = true;
+            savedPref.SideOffset = 0;
+            savedPref.HaveOffset = true;
+            savedPref.IsCollapsed = !_isExpanded;
+            savedPref.LastModified = DateTime.UtcNow;
             _config.Save();
         }
 
@@ -975,7 +979,7 @@ namespace CodeByatta.UI.Views
 
             if (!_windowPreferencesByHwnd.TryGetValue(_targetWindow.Hwnd, out var pref))
             {
-                pref = _config.GetOrCreateWindowPreference(_targetWindow.ProcessName);
+                pref = new WindowPreferences { ProcessName = _targetWindow.ProcessName };
                 _windowPreferencesByHwnd[_targetWindow.Hwnd] = pref;
             }
 
@@ -998,27 +1002,15 @@ namespace CodeByatta.UI.Views
             bool enabling = !_targetWindow.IsClickThrough;
             if (enabling)
             {
-                // In WindowTop, Click-Through automatically enables Topmost if disabled
-                if (!_targetWindow.IsTopmost)
-                {
-                    _topmostService.ToggleTopmost(_targetWindow.Hwnd);
-                }
-
-                // Click-Through automatically enables Opacity (e.g. 80%) if currently 100%
-                if (_targetWindow.Opacity >= 240)
-                {
-                    byte targetAlpha = (byte)(_config.DefaultOpacityPercent * 2.55);
-                    _targetWindow.Opacity = targetAlpha;
-                    _opacityService.SetOpacity(_targetWindow.Hwnd, targetAlpha);
-                }
-
                 _opacityService.SetClickThrough(_targetWindow.Hwnd, true);
+                _targetWindow.IsClickThrough = true;
                 Expand();
                 _autoHideTimer.Stop();
             }
             else
             {
                 _opacityService.SetClickThrough(_targetWindow.Hwnd, false);
+                _targetWindow.IsClickThrough = false;
                 User32.SetForegroundWindow(_targetWindow.Hwnd);
                 if (AutoHideEnabled)
                 {
@@ -1201,6 +1193,28 @@ namespace CodeByatta.UI.Views
             if (AutoHideEnabled && (_targetWindow == null || !_targetWindow.IsClickThrough))
             {
                 _autoHideTimer.Stop();
+                _autoHideTimer.Interval = TimeSpan.FromMilliseconds(350);
+                _autoHideTimer.Start();
+            }
+        }
+
+        private void FullToolbarPill_MouseEnter(object sender, WpfMouseEventArgs e)
+        {
+            _isMouseOverToolbar = true;
+            _autoHideTimer.Stop();
+        }
+
+        private void FullToolbarPill_MouseLeave(object sender, WpfMouseEventArgs e)
+        {
+            _isMouseOverToolbar = false;
+            if (PopupOpacitySlider != null && PopupOpacitySlider.IsOpen)
+            {
+                return;
+            }
+            if (AutoHideEnabled && (_targetWindow == null || !_targetWindow.IsClickThrough))
+            {
+                _autoHideTimer.Stop();
+                _autoHideTimer.Interval = TimeSpan.FromMilliseconds(350);
                 _autoHideTimer.Start();
             }
         }

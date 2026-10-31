@@ -80,6 +80,29 @@ namespace CodeByatta.Core.Interop
         }
 
         public const int WM_HOTKEY = 0x0312;
+        public const int WM_GETTEXT = 0x000D;
+        public const int WM_GETTEXTLENGTH = 0x000E;
+        public const int WM_NCHITTEST = 0x0084;
+        public const int WM_SIZING = 0x0214;
+
+        public const int HTTRANSPARENT = -1;
+        public const int HTNOWHERE = 0;
+        public const int HTCLIENT = 1;
+        public const int HTCAPTION = 2;
+        public const int HTSYSMENU = 3;
+        public const int HTLEFT = 10;
+        public const int HTRIGHT = 11;
+        public const int HTTOP = 12;
+        public const int HTTOPLEFT = 13;
+        public const int HTTOPRIGHT = 14;
+        public const int HTBOTTOM = 15;
+        public const int HTBOTTOMLEFT = 16;
+        public const int HTBOTTOMRIGHT = 17;
+
+        public const uint SMTO_NORMAL = 0x0000;
+        public const uint SMTO_BLOCK = 0x0001;
+        public const uint SMTO_ABORTIFHUNG = 0x0002;
+        public const uint SMTO_NOTIMEOUTIFNOTHUNG = 0x0008;
         public const int WM_MOUSEMOVE = 0x0200;
         public const int WM_LBUTTONDOWN = 0x0201;
         public const int WM_LBUTTONUP = 0x0202;
@@ -202,6 +225,19 @@ namespace CodeByatta.Core.Interop
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern int InternalGetWindowText(IntPtr hWnd, [Out] StringBuilder lpString, int nMaxCount);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern IntPtr SendMessageTimeout(
+            IntPtr hWnd,
+            uint msg,
+            IntPtr wParam,
+            [Out] StringBuilder lParam,
+            uint fuFlags,
+            uint uTimeout,
+            out IntPtr lpdwResult);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern int GetWindowTextLength(IntPtr hWnd);
