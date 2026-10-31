@@ -2,6 +2,7 @@
 
 > **Author:** Abdelrhman Atta (CodeByatta) — `codebyatta@gmail.com`  
 > **Repository:** [github.com/Abido-3tta/openwindow](https://github.com/Abido-3tta/openwindow)  
+> **Live Website:** [abido-3tta.github.io/openwindow](https://abido-3tta.github.io/openwindow/)  
 > **Current Version:** `v1.1.3` (Production Hardened & Fully Verified)  
 > **Date:** October 31, 2026
 

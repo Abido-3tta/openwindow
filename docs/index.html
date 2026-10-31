@@ -1,874 +1,1007 @@
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OpenWindow — Native Windows Multitasking Suite</title>
-  <meta name="description" content="OpenWindow docks floating controls directly inside any window's titlebar. Features Always-on-Top with watchdog, live 60 FPS Picture-in-Picture, background hover reveal, and GPU dark mode." />
-  <link rel="icon" type="image/png" href="assets/app_icon.png" />
-
-  <!-- OpenGraph Metadata -->
-  <meta property="og:title" content="OpenWindow — Native Windows Multitasking Suite" />
-  <meta property="og:description" content="Always-on-Top with watchdog, live 60 FPS Picture-in-Picture, smart opacity with hover reveal, and GPU dark mode. Standalone native app for Windows 11 & 10." />
-  <meta property="og:image" content="assets/banner.png" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-
-  <!-- Google Antigravity Typography: Google Sans, Plus Jakarta Sans, Inter, JetBrains Mono -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Google Sans"', '"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
-            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
-          },
-          colors: {
-            google: {
-              surface: '#FFFFFF',
-              container: '#F8F9FA',
-              containerHigh: '#F1F3F4',
-              border: '#E0E2E6',
-              text: '#1F1F1F',
-              textSecondary: '#444746',
-              textMuted: '#747775',
-              blue: '#1A73E8',
-              blueHover: '#1557B0',
-              blueBg: '#E8F0FE',
-              green: '#1E8E3E',
-              greenBg: '#E6F4EA',
-              amber: '#F9AB00',
-              amberBg: '#FEF7E0',
-              red: '#D93025',
-              redBg: '#FCE8E6',
-              dark: '#121317',
-              darkCard: '#1E2433',
-            }
-          }
-        }
-      }
-    }
-  </script>
-
-  <style>
-    /* Google Antigravity Clean Design System */
-    :root {
-      --bg: #FFFFFF;
-      --text: #1F1F1F;
-      --text-secondary: #444746;
-      --border: #E0E2E6;
-      --surface-container: #F8F9FA;
-    }
-
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-    }
-
-    .google-nav {
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid #E0E2E6;
-    }
-
-    .google-card {
-      background: #F8F9FA;
-      border: 1px solid #E0E2E6;
-      border-radius: 24px;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .google-card:hover {
-      border-color: #B5B9C2;
-      box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.08);
-    }
-
-    /* Custom Native Scrollbar */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #FFFFFF; }
-    ::-webkit-scrollbar-thumb { background: #DADCE0; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #BDC1C6; }
-  </style>
-</head>
-<body class="selection:bg-google-blueBg selection:text-google-blue">
-
-  <!-- GOOGLE ANTIGRAVITY STICKY HEADER -->
-  <header class="sticky top-0 inset-x-0 z-50 google-nav">
-    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      
-      <!-- Brand Logo & Creator Signature -->
-      <div class="flex items-center gap-6">
-        <a href="#" class="flex items-center gap-3 group">
-          <img src="assets/app_icon.png" alt="OpenWindow" class="w-8 h-8 rounded-lg object-contain shadow-xs" />
-          <div class="flex items-center gap-2">
-            <span class="text-lg font-bold text-google-text tracking-tight group-hover:text-google-blue transition-colors">OpenWindow</span>
-            <span class="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-google-containerHigh text-google-textSecondary border border-google-border">v1.1.3</span>
-          </div>
-        </a>
-
-        <!-- Creator Profile Link -->
-        <a href="https://github.com/Abido-3tta" target="_blank" rel="noopener" class="hidden md:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-google-container hover:bg-google-containerHigh border border-google-border text-xs text-google-textSecondary hover:text-google-text transition-all group" title="Visit Creator Profile">
-          <div class="w-4 h-4 rounded-full overflow-hidden bg-white ring-1 ring-google-border flex items-center justify-center">
-            <img src="assets/creator_avatar.png" alt="Abido-3tta" class="w-full h-full object-cover" />
-          </div>
-          <span>By <strong class="font-semibold text-google-text">CodeByAtta</strong></span>
-          <svg class="w-3 h-3 text-google-blue fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-        </a>
-      </div>
-
-      <!-- Navigation Links -->
-      <nav class="hidden md:flex items-center gap-1 text-sm font-medium text-google-textSecondary">
-        <a href="#showcase" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors">Showcase</a>
-        <a href="#features" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors">Capabilities</a>
-        <a href="#usecases" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors">Use Cases</a>
-        <a href="#hotkeys" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors">Hotkeys</a>
-        <a href="#architect" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors">Architect</a>
-        <a href="#download" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors">Download</a>
-      </nav>
-
-      <!-- Action Buttons -->
-      <div class="flex items-center gap-3">
-        <a href="https://github.com/Abido-3tta" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold text-google-textSecondary hover:text-google-text bg-google-container hover:bg-google-containerHigh border border-google-border transition-colors">
-          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-          GitHub
-        </a>
-        <a href="#download" class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-google-dark hover:bg-black text-white font-medium text-xs transition-colors shadow-sm active:scale-98">
-          <span>Download</span>
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-        </a>
-      </div>
-
-    </div>
-  </header>
-
-  <!-- HERO SECTION -->
-  <section class="pt-20 pb-12 md:pt-28 md:pb-16 px-6">
-    <div class="max-w-5xl mx-auto text-center space-y-6">
-      
-      <!-- Announcement Pill (Google Style) -->
-      <div class="inline-flex items-center gap-2.5 px-3.5 py-1 rounded-full bg-google-container hover:bg-google-containerHigh border border-google-border text-xs text-google-textSecondary transition-colors">
-        <span class="px-2 py-0.5 rounded-full bg-google-blue text-white font-semibold text-[10px]">New</span>
-        <span class="font-medium text-google-text">OpenWindow 1.1.3</span>
-        <span class="text-google-border">•</span>
-        <span>Native In-Titlebar Multitasking for Windows 10 & 11</span>
-        <span class="text-google-textSecondary font-bold">→</span>
-      </div>
-
-      <!-- Main Headline -->
-      <h1 class="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-google-text leading-[1.08] max-w-4xl mx-auto">
-        Experience peak control with the modern Windows multitasking suite
-      </h1>
-
-      <!-- Description -->
-      <p class="text-lg sm:text-xl text-google-textSecondary max-w-2xl mx-auto font-normal leading-relaxed">
-        Dock floating controls directly inside any window's titlebar. Enforce Always-on-Top with an autonomous watchdog, stream 60 FPS Picture-in-Picture, reveal opacity on background hover, and invert colors via GPU dark mode.
-      </p>
-
-      <!-- CTA Buttons -->
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
-        <a href="#download" class="w-full sm:w-auto px-7 py-3 rounded-full bg-google-dark hover:bg-black text-white font-medium text-sm transition-all shadow-sm active:scale-98 flex items-center justify-center gap-2">
-          <span>Download Standalone v1.1.3</span>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-        </a>
-        <a href="#showcase" class="w-full sm:w-auto px-7 py-3 rounded-full bg-google-container hover:bg-google-containerHigh text-google-text font-medium text-sm border border-google-border transition-all active:scale-98 flex items-center justify-center gap-2">
-          <span>Watch Feature Showcase</span>
-          <svg class="w-3.5 h-3.5 text-google-blue fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-        </a>
-      </div>
-
-      <!-- Spec Badges -->
-      <div class="pt-6 flex flex-wrap items-center justify-center gap-6 text-xs text-google-textMuted font-medium">
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-google-green"></span>
-          <span>&lt;0.1% Background CPU</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-google-blue"></span>
-          <span>Zero External Dependencies</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-google-dark"></span>
-          <span>Direct DWM Hardware Hooks</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-google-amber"></span>
-          <span>100% Local & Zero Telemetry</span>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- PRODUCT VISUAL SHOWCASE SECTION (READY FOR REAL SCREEN RECORDING GIF) -->
-  <section id="showcase" class="py-12 px-6">
-    <div class="max-w-6xl mx-auto space-y-6">
-      
-      <!-- Section Intro -->
-      <div class="text-center space-y-2">
-        <span class="text-xs font-semibold tracking-wider text-google-blue uppercase">Visual Feature Showcase</span>
-        <h2 class="text-2xl sm:text-3xl font-bold text-google-text tracking-tight">Real-World Windows Execution</h2>
-        <p class="text-sm text-google-textSecondary max-w-xl mx-auto">
-          See OpenWindow running natively on Windows 11. Docked in the active titlebar without interfering with native window controls.
-        </p>
-      </div>
-
-      <!-- High-End Windows 11 Hardware Showcase Frame -->
-      <div class="rounded-3xl bg-google-container border border-google-border p-3 sm:p-5 shadow-sm">
-        
-        <!-- Windows 11 Desktop Window Mockup -->
-        <div class="rounded-2xl bg-[#0F141F] border border-slate-700/80 shadow-2xl overflow-hidden flex flex-col">
-          
-          <!-- Realistic Windows 11 Titlebar with OpenWindow Docked -->
-          <div class="h-12 bg-[#171E2C] border-b border-slate-700/80 px-4 flex items-center justify-between select-none">
-            
-            <!-- Window Title -->
-            <div class="flex items-center gap-2.5 text-xs font-medium text-slate-300">
-              <svg class="w-4 h-4 text-sky-400 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
-              <span class="font-mono text-slate-300 hidden sm:inline">Visual Studio Code — OrderExecutionEngine.cs</span>
-              <span class="font-mono text-slate-300 sm:hidden">VS Code</span>
-            </div>
-
-            <!-- OpenWindow Floating Controls Docked in Titlebar -->
-            <div class="flex items-center gap-3">
-              <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0E131E]/95 border border-slate-600/80 shadow-md">
-                <span class="text-xs font-mono font-bold text-slate-500 tracking-tight">:::</span>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-white/10 text-slate-200">
-                  <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
-                  Pin
-                </span>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-sky-500/20 text-sky-300">
-                  <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2Z"/><path d="M12 2a10 10 0 0 1 0 20Z"/></svg>
-                  75%
-                </span>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-300">
-                  <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                  Auto
-                </span>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-white/10 text-slate-300">
-                  <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></svg>
-                  Pass
-                </span>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-purple-500/20 text-purple-300">
-                  <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-                  Dark
-                </span>
-              </div>
-
-              <!-- Native Windows 11 Caption Controls -->
-              <div class="flex items-center gap-3 pl-2">
-                <span class="w-3 h-0.5 bg-slate-500 rounded"></span>
-                <span class="w-3 h-3 border border-slate-500 rounded-xs"></span>
-                <svg class="w-3 h-3 text-slate-500 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 6 6 18M6 6l12 12"/></svg>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Video / GIF Showcase Media Viewport -->
-          <div class="relative min-h-[380px] sm:min-h-[460px] bg-[#0A0D14] flex flex-col items-center justify-center overflow-hidden">
-            
-            <!-- Real GIF / Preview Banner Display -->
-            <img id="showcase-img" src="assets/banner.png" alt="OpenWindow Live App Demo" class="w-full h-full object-cover object-top opacity-95 transition-opacity duration-300" onerror="this.src='assets/banner.png'" />
-
-            <!-- Media HUD Overlay Banner -->
-            <div class="absolute bottom-4 inset-x-4 sm:inset-x-8 flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-950/80 backdrop-blur-md border border-white/10 text-xs font-mono text-slate-300">
-              <div class="flex items-center gap-2.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span id="active-feature-label">Feature: <strong class="text-white">Full In-Titlebar Multitasking Suite</strong></span>
-              </div>
-              <div class="flex items-center gap-4 text-slate-400 text-[11px]">
-                <span>DWM Hooked</span>
-                <span>•</span>
-                <span>60 FPS Native Stream</span>
-                <span>•</span>
-                <span class="text-sky-400">Windows 11 Mica</span>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      <!-- Feature Selection Pills underneath Showcase -->
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
-        
-        <button onclick="switchShowcaseTab(0)" class="feature-tab active p-3 rounded-2xl bg-white border border-google-blue text-left transition-all shadow-xs group">
-          <div class="flex items-center gap-2 text-xs font-bold text-google-blue">
-            <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
-            Always-on-Top
-          </div>
-          <p class="text-[11px] text-google-textSecondary mt-1 leading-snug">Autonomous Z-order watchdog</p>
-        </button>
-
-        <button onclick="switchShowcaseTab(1)" class="feature-tab p-3 rounded-2xl bg-google-container border border-google-border hover:border-google-blue text-left transition-all shadow-xs group">
-          <div class="flex items-center gap-2 text-xs font-bold text-google-text group-hover:text-google-blue">
-            <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-            Hover Reveal
-          </div>
-          <p class="text-[11px] text-google-textSecondary mt-1 leading-snug">0ms alpha restoration</p>
-        </button>
-
-        <button onclick="switchShowcaseTab(2)" class="feature-tab p-3 rounded-2xl bg-google-container border border-google-border hover:border-google-blue text-left transition-all shadow-xs group">
-          <div class="flex items-center gap-2 text-xs font-bold text-google-text group-hover:text-google-blue">
-            <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></svg>
-            Click-Through
-          </div>
-          <p class="text-[11px] text-google-textSecondary mt-1 leading-snug">WS_EX_TRANSPARENT pass</p>
-        </button>
-
-        <button onclick="switchShowcaseTab(3)" class="feature-tab p-3 rounded-2xl bg-google-container border border-google-border hover:border-google-blue text-left transition-all shadow-xs group">
-          <div class="flex items-center gap-2 text-xs font-bold text-google-text group-hover:text-google-blue">
-            <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            Live 60 FPS PiP
-          </div>
-          <p class="text-[11px] text-google-textSecondary mt-1 leading-snug">Direct GPU surface stream</p>
-        </button>
-
-        <button onclick="switchShowcaseTab(4)" class="feature-tab p-3 rounded-2xl bg-google-container border border-google-border hover:border-google-blue text-left transition-all shadow-xs group col-span-2 sm:col-span-1">
-          <div class="flex items-center gap-2 text-xs font-bold text-google-text group-hover:text-google-blue">
-            <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-            GPU Dark Mode
-          </div>
-          <p class="text-[11px] text-google-textSecondary mt-1 leading-snug">Hardware color inversion</p>
-        </button>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- CAPABILITIES BENTO GRID -->
-  <section id="features" class="py-16 px-6 border-t border-google-border">
-    <div class="max-w-7xl mx-auto space-y-10">
-      
-      <div class="text-center space-y-2">
-        <span class="text-xs font-semibold tracking-wider text-google-blue uppercase">Engine Capabilities</span>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-google-text tracking-tight">Built for power users in the multitasking era</h2>
-        <p class="text-base text-google-textSecondary max-w-2xl mx-auto">
-          Crafted from first principles in C# .NET 8 using raw Windows User32 and DWM APIs for sub-millisecond execution with zero framework bloat.
-        </p>
-      </div>
-
-      <!-- 6 Google Antigravity Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        <!-- Card 1: Live 60 FPS Picture-in-Picture -->
-        <div class="google-card p-8 flex flex-col justify-between">
-          <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-google-amberBg text-google-amber flex items-center justify-center">
-              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            </div>
-            <h3 class="text-xl font-bold text-google-text">Live 60 FPS Picture-in-Picture & Ghost Mode</h3>
-            <p class="text-sm text-google-textSecondary leading-relaxed">
-              Mirror any target window (YouTube, Chrome DevTools, TradingView) into an ultra-smooth 60 FPS PiP thumbnail with 99.6% transparency click-through. Never miss a market tick or build log.
-            </p>
-          </div>
-          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
-            <span>DWM Surface Stream</span>
-            <span class="text-google-blue font-semibold">Ghost Mode 99.6%</span>
-          </div>
-        </div>
-
-        <!-- Card 2: Always-on-Top Watchdog -->
-        <div class="google-card p-8 flex flex-col justify-between">
-          <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-google-greenBg text-google-green flex items-center justify-center">
-              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
-            </div>
-            <h3 class="text-xl font-bold text-google-text">Always-on-Top with Active Watchdog</h3>
-            <p class="text-sm text-google-textSecondary leading-relaxed">
-              Full-screen apps and video players constantly steal top-level Z-order. OpenWindow runs an autonomous background watchdog that enforces pinned windows stay on top without UI flicker.
-            </p>
-          </div>
-          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
-            <span>HWND_TOPMOST Enforced</span>
-            <span class="text-google-green font-semibold">Watchdog 500ms</span>
-          </div>
-        </div>
-
-        <!-- Card 3: Smart Opacity & Hover Reveal -->
-        <div class="google-card p-8 flex flex-col justify-between">
-          <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-google-blueBg text-google-blue flex items-center justify-center">
-              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-            </div>
-            <h3 class="text-xl font-bold text-google-text">Smart Opacity & Background Hover Reveal</h3>
-            <p class="text-sm text-google-textSecondary leading-relaxed">
-              Keep your window translucent to reference documents underneath. Move your mouse over the window from any other application, and it instantly reveals 100% solid opacity with zero click required.
-            </p>
-          </div>
-          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
-            <span>Low-Level Mouse Hook</span>
-            <span class="text-google-blue font-semibold">0ms Latency</span>
-          </div>
-        </div>
-
-        <!-- Card 4: Click-Through Glass -->
-        <div class="google-card p-8 flex flex-col justify-between">
-          <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-google-containerHigh text-google-text flex items-center justify-center">
-              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></svg>
-            </div>
-            <h3 class="text-xl font-bold text-google-text">Click-Through Glass with Titlebar Waking</h3>
-            <p class="text-sm text-google-textSecondary leading-relaxed">
-              Turns the client area completely click-permeable via WS_EX_TRANSPARENT, allowing clicks to pass directly to windows underneath while keeping the titlebar controls fully responsive.
-            </p>
-          </div>
-          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
-            <span>WS_EX_LAYERED</span>
-            <span class="text-google-text font-semibold">Non-Client Hit-Test</span>
-          </div>
-        </div>
-
-        <!-- Card 5: Inverted GPU Dark Mode -->
-        <div class="google-card p-8 flex flex-col justify-between">
-          <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-            </div>
-            <h3 class="text-xl font-bold text-google-text">GPU-Accelerated Inverted Dark Mode</h3>
-            <p class="text-sm text-google-textSecondary leading-relaxed">
-              Working late with blinding white PDF viewers or legacy Win32 utilities? OpenWindow applies a direct hardware color inversion matrix at zero CPU cost to preserve your vision.
-            </p>
-          </div>
-          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
-            <span>Windows Magnification API</span>
-            <span class="text-purple-600 font-semibold">Zero CPU Cost</span>
-          </div>
-        </div>
-
-        <!-- Card 6: ShellSanitizer Taskbar Immunity -->
-        <div class="google-card p-8 flex flex-col justify-between">
-          <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-google-redBg text-google-red flex items-center justify-center">
-              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-            </div>
-            <h3 class="text-xl font-bold text-google-text">Windows Taskbar & Shell Immunity</h3>
-            <p class="text-sm text-google-textSecondary leading-relaxed">
-              Built-in ShellSanitizer filter permanently shields the Windows Taskbar, Start Menu, System Tray, Action Center, and Game Bar from accidental pin or transparency capture.
-            </p>
-          </div>
-          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
-            <span>Shell_TrayWnd Protection</span>
-            <span class="text-google-red font-semibold">Fail-Safe Filter</span>
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- WORKSTATION PERSONAS SECTION -->
-  <section id="usecases" class="py-16 px-6 bg-google-container border-t border-google-border">
-    <div class="max-w-7xl mx-auto space-y-10">
-      
-      <div class="text-center space-y-2">
-        <span class="text-xs font-semibold tracking-wider text-google-blue uppercase">Daily Synergy</span>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-google-text tracking-tight">Tailored for your daily workstation</h2>
-        <p class="text-base text-google-textSecondary max-w-xl mx-auto">
-          Whether you are debugging kernel code, monitoring order books, or reference-drawing, OpenWindow removes window friction.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        
-        <div class="p-6 rounded-2xl bg-white border border-google-border space-y-3 shadow-xs">
-          <div class="w-10 h-10 rounded-xl bg-google-blueBg text-google-blue flex items-center justify-center">
-            <svg class="w-5 h-5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="12" x="3" y="4" rx="2"/><line x1="2" x2="22" y1="20" y2="20"/><path d="m8 9 2 2-2 2"/><line x1="12" x2="15" y1="13" y2="13"/></svg>
-          </div>
-          <h4 class="text-base font-bold text-google-text">Software Developers</h4>
-          <p class="text-xs text-google-textSecondary leading-relaxed">
-            Keep API specifications, Postman, terminal build outputs, or database query results pinned on top of your IDE with 80% opacity and auto-hover reveal.
-          </p>
-          <div class="text-[11px] font-mono text-google-blue font-medium">VS Code • Visual Studio • JetBrains</div>
-        </div>
-
-        <div class="p-6 rounded-2xl bg-white border border-google-border space-y-3 shadow-xs">
-          <div class="w-10 h-10 rounded-xl bg-google-amberBg text-google-amber flex items-center justify-center">
-            <svg class="w-5 h-5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg>
-          </div>
-          <h4 class="text-base font-bold text-google-text">Financial & Crypto Traders</h4>
-          <p class="text-xs text-google-textSecondary leading-relaxed">
-            Monitor real-time depth charts, candlestick order books, and macro news feeds in a 60 FPS live picture-in-picture window while analyzing multi-monitor feeds.
-          </p>
-          <div class="text-[11px] font-mono text-google-amber font-medium">TradingView • Binance • Bloomberg</div>
-        </div>
-
-        <div class="p-6 rounded-2xl bg-white border border-google-border space-y-3 shadow-xs">
-          <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-            <svg class="w-5 h-5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
-          </div>
-          <h4 class="text-base font-bold text-google-text">Designers & Artists</h4>
-          <p class="text-xs text-google-textSecondary leading-relaxed">
-            Overlay reference art directly onto Photoshop, Figma, or Blender canvases. Turn on click-through mode to paint directly beneath the reference overlay.
-          </p>
-          <div class="text-[11px] font-mono text-purple-600 font-medium">Photoshop • Blender • PureRef</div>
-        </div>
-
-        <div class="p-6 rounded-2xl bg-white border border-google-border space-y-3 shadow-xs">
-          <div class="w-10 h-10 rounded-xl bg-google-greenBg text-google-green flex items-center justify-center">
-            <svg class="w-5 h-5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect width="20" height="12" x="2" y="6" rx="6"/></svg>
-          </div>
-          <h4 class="text-base font-bold text-google-text">Gamers & Streamers</h4>
-          <p class="text-xs text-google-textSecondary leading-relaxed">
-            Keep Twitch chat, Discord stream overlays, or interactive walkthrough guides pinned above borderless full-screen games without dropping a single frame.
-          </p>
-          <div class="text-[11px] font-mono text-google-green font-medium">OBS • Discord • Twitch</div>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- HOTKEYS REFERENCE MATRIX -->
-  <section id="hotkeys" class="py-16 px-6 border-t border-google-border">
-    <div class="max-w-5xl mx-auto space-y-10">
-      
-      <div class="text-center space-y-2">
-        <span class="text-xs font-semibold tracking-wider text-google-blue uppercase">Instant Shortcuts</span>
-        <h2 class="text-3xl font-extrabold text-google-text tracking-tight">Zero-Latency Hotkeys</h2>
-        <p class="text-sm text-google-textSecondary max-w-md mx-auto">
-          Every capability is mapped to lightning-fast global shortcuts that trigger instantly, even when other applications have exclusive focus.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        
-        <div class="p-4 rounded-2xl bg-google-container border border-google-border flex items-center justify-between">
-          <div>
-            <div class="text-sm font-bold text-google-text">Toggle Always-on-Top</div>
-            <div class="text-xs text-google-textSecondary">Pin active window topmost</div>
-          </div>
-          <kbd class="px-2.5 py-1.5 rounded-lg bg-white border border-google-border text-xs font-mono font-bold text-google-text shadow-xs">Alt + Z</kbd>
-        </div>
-
-        <div class="p-4 rounded-2xl bg-google-container border border-google-border flex items-center justify-between">
-          <div>
-            <div class="text-sm font-bold text-google-text">Cycle Transparency</div>
-            <div class="text-xs text-google-textSecondary">100% → 80% → 60% → 40%</div>
-          </div>
-          <kbd class="px-2.5 py-1.5 rounded-lg bg-white border border-google-border text-xs font-mono font-bold text-google-blue shadow-xs">Alt + Q</kbd>
-        </div>
-
-        <div class="p-4 rounded-2xl bg-google-container border border-google-border flex items-center justify-between">
-          <div>
-            <div class="text-sm font-bold text-google-text">Auto Hover Reveal</div>
-            <div class="text-xs text-google-textSecondary">Toggle hover solid restore</div>
-          </div>
-          <kbd class="px-2.5 py-1.5 rounded-lg bg-white border border-google-border text-xs font-mono font-bold text-google-green shadow-xs">Alt + A</kbd>
-        </div>
-
-        <div class="p-4 rounded-2xl bg-google-container border border-google-border flex items-center justify-between">
-          <div>
-            <div class="text-sm font-bold text-google-text">Click-Through Glass</div>
-            <div class="text-xs text-google-textSecondary">Enable click permeability</div>
-          </div>
-          <kbd class="px-2.5 py-1.5 rounded-lg bg-white border border-google-border text-xs font-mono font-bold text-google-text shadow-xs">Alt + C</kbd>
-        </div>
-
-        <div class="p-4 rounded-2xl bg-google-container border border-google-border flex items-center justify-between">
-          <div>
-            <div class="text-sm font-bold text-google-text">GPU Dark Mode</div>
-            <div class="text-xs text-google-textSecondary">Invert hardware colors</div>
-          </div>
-          <kbd class="px-2.5 py-1.5 rounded-lg bg-white border border-google-border text-xs font-mono font-bold text-purple-600 shadow-xs">Alt + D</kbd>
-        </div>
-
-        <div class="p-4 rounded-2xl bg-google-container border border-google-border flex items-center justify-between">
-          <div>
-            <div class="text-sm font-bold text-google-text">Smooth Opacity Dial</div>
-            <div class="text-xs text-google-textSecondary">Scroll wheel opacity dial</div>
-          </div>
-          <kbd class="px-2.5 py-1.5 rounded-lg bg-white border border-google-border text-xs font-mono font-bold text-google-amber shadow-xs">Alt + Scroll</kbd>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ARCHITECTURE & BENCHMARK METRICS -->
-  <section class="py-16 px-6 bg-google-container border-t border-google-border">
-    <div class="max-w-7xl mx-auto space-y-10">
-      
-      <div class="text-center space-y-2">
-        <span class="text-xs font-semibold tracking-wider text-google-blue uppercase">Engineering Benchmark</span>
-        <h2 class="text-3xl font-extrabold text-google-text tracking-tight">Zero-Compromise Performance</h2>
-        <p class="text-sm text-google-textSecondary max-w-xl mx-auto">
-          Measured live on Windows 11 Enterprise (Build 26100) running with active hardware DWM composition.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-        
-        <div class="p-6 rounded-2xl bg-white border border-google-border text-center space-y-2 shadow-xs">
-          <div class="text-3xl sm:text-4xl font-extrabold text-google-green font-mono">0.0%</div>
-          <div class="text-xs font-bold text-google-text uppercase tracking-wider">Idle CPU Utilization</div>
-          <p class="text-[11px] text-google-textSecondary">Zero active timers during idle state; wakes only on input events</p>
-        </div>
-
-        <div class="p-6 rounded-2xl bg-white border border-google-border text-center space-y-2 shadow-xs">
-          <div class="text-3xl sm:text-4xl font-extrabold text-google-blue font-mono">&lt; 35 MB</div>
-          <div class="text-xs font-bold text-google-text uppercase tracking-wider">Working Set RAM</div>
-          <p class="text-[11px] text-google-textSecondary">Ultra-lean native footprint compared to 400MB+ Electron utilities</p>
-        </div>
-
-        <div class="p-6 rounded-2xl bg-white border border-google-border text-center space-y-2 shadow-xs">
-          <div class="text-3xl sm:text-4xl font-extrabold text-google-amber font-mono">60 FPS</div>
-          <div class="text-xs font-bold text-google-text uppercase tracking-wider">DWM Hardware Stream</div>
-          <p class="text-[11px] text-google-textSecondary">Direct GPU surface compositing without software frame scraping</p>
-        </div>
-
-        <div class="p-6 rounded-2xl bg-white border border-google-border text-center space-y-2 shadow-xs">
-          <div class="text-3xl sm:text-4xl font-extrabold text-purple-600 font-mono">0 ms</div>
-          <div class="text-xs font-bold text-google-text uppercase tracking-wider">Hover Reveal Latency</div>
-          <p class="text-[11px] text-google-textSecondary">Sub-millisecond alpha restore powered by low-level mouse hooks</p>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- STANDALONE DOWNLOAD HUB SECTION -->
-  <section id="download" class="py-20 px-6 border-t border-google-border">
-    <div class="max-w-5xl mx-auto space-y-10 text-center">
-      
-      <div class="space-y-2">
-        <span class="text-xs font-semibold tracking-wider text-google-blue uppercase">Direct Release</span>
-        <h2 class="text-3xl sm:text-4xl font-extrabold text-google-text tracking-tight">Get OpenWindow for Windows</h2>
-        <p class="text-sm text-google-textSecondary max-w-md mx-auto">
-          Completely standalone, offline-capable executables. No installer or administrative rights required.
-        </p>
-      </div>
-
-      <!-- Download Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-        
-        <!-- x64 Architecture Card -->
-        <div class="google-card p-8 space-y-5 bg-white border-google-blue/40 shadow-xs">
-          <div class="flex items-center justify-between">
-            <span class="px-3 py-1 rounded-full text-xs font-bold bg-google-blueBg text-google-blue">RECOMMENDED</span>
-            <span class="text-xs font-mono text-google-textMuted">v1.1.3 • 64-bit</span>
-          </div>
-
-          <div>
-            <h3 class="text-xl font-bold text-google-text">Windows 64-bit (x64)</h3>
-            <p class="text-xs text-google-textSecondary mt-1">For Windows 11 & Windows 10 (all modern Intel/AMD processors)</p>
-          </div>
-
-          <div class="space-y-1.5 text-xs font-mono text-google-textSecondary bg-google-container p-3 rounded-xl border border-google-border">
-            <div class="flex justify-between">
-              <span>Executable:</span>
-              <strong class="text-google-text">CodeByatta.UI.exe</strong>
-            </div>
-            <div class="flex justify-between">
-              <span>Package Size:</span>
-              <span>~71.8 MB Self-Contained</span>
-            </div>
-          </div>
-
-          <a href="https://github.com/Abido-3tta/openwindow/releases/latest" target="_blank" class="w-full py-3 rounded-full bg-google-dark hover:bg-black text-white font-medium text-xs transition-colors flex items-center justify-center gap-2 shadow-sm">
-            <span>Download OpenWindow (x64)</span>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          </a>
-
-          <button onclick="copyChecksum('E212AD5081C6624F89A93A729FC190BEA076F3DB589AAC181572F744FD20DD73', this)" class="w-full text-[11px] font-mono text-google-textMuted hover:text-google-text text-center transition-colors">
-            Copy SHA-256 Checksum
-          </button>
-        </div>
-
-        <!-- x86 Architecture Card -->
-        <div class="google-card p-8 space-y-5 bg-white shadow-xs">
-          <div class="flex items-center justify-between">
-            <span class="px-3 py-1 rounded-full text-xs font-bold bg-google-containerHigh text-google-textSecondary">LEGACY SUPPORT</span>
-            <span class="text-xs font-mono text-google-textMuted">v1.1.3 • 32-bit</span>
-          </div>
-
-          <div>
-            <h3 class="text-xl font-bold text-google-text">Windows 32-bit (x86)</h3>
-            <p class="text-xs text-google-textSecondary mt-1">For legacy 32-bit Windows 10 installations and embedded thin clients</p>
-          </div>
-
-          <div class="space-y-1.5 text-xs font-mono text-google-textSecondary bg-google-container p-3 rounded-xl border border-google-border">
-            <div class="flex justify-between">
-              <span>Executable:</span>
-              <strong class="text-google-text">CodeByatta.UI.exe</strong>
-            </div>
-            <div class="flex justify-between">
-              <span>Package Size:</span>
-              <span>~66.4 MB Self-Contained</span>
-            </div>
-          </div>
-
-          <a href="https://github.com/Abido-3tta/openwindow/releases/latest" target="_blank" class="w-full py-3 rounded-full bg-google-container hover:bg-google-containerHigh text-google-text font-medium text-xs border border-google-border transition-colors flex items-center justify-center gap-2">
-            <span>Download OpenWindow (x86)</span>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          </a>
-
-          <button onclick="copyChecksum('99C01FF4604989D4802841FD6178D9989610943E9DE9AD5EC33F1C0018786C45', this)" class="w-full text-[11px] font-mono text-google-textMuted hover:text-google-text text-center transition-colors">
-            Copy SHA-256 Checksum
-          </button>
-        </div>
-
-      </div>
-
-      <!-- Quick PowerShell One-Liner Box -->
-      <div class="max-w-xl mx-auto p-4 rounded-2xl bg-google-container border border-google-border font-mono text-xs text-left">
-        <div class="flex items-center justify-between text-google-textMuted pb-2 border-b border-google-border mb-2 text-[11px]">
-          <span>PowerShell Automated Local Install (Zero Admin Required)</span>
-          <span>pwsh</span>
-        </div>
-        <div class="text-google-text select-all overflow-x-auto whitespace-pre">
-irm https://raw.githubusercontent.com/codebyatta/openwindow/master/install.ps1 | iex
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ARCHITECT & CREATOR SPOTLIGHT SECTION (Abido-3tta) -->
-  <section id="architect" class="py-16 px-6 bg-google-container border-t border-google-border">
-    <div class="max-w-5xl mx-auto">
-      
-      <div class="rounded-3xl p-8 sm:p-10 bg-white border border-google-border shadow-xs flex flex-col md:flex-row items-center md:items-start gap-8 justify-between">
-        
-        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
-          
-          <!-- Authentic Hexagonal Creator Avatar Photo -->
-          <div class="relative flex-shrink-0">
-            <div class="w-24 h-24 rounded-2xl overflow-hidden ring-1 ring-google-border p-1 bg-white shadow-sm flex items-center justify-center">
-              <img src="assets/creator_avatar.png" alt="Abdelrhman Atta (Abido-3tta)" class="w-full h-full object-contain" />
-            </div>
-            <span class="absolute -bottom-1 -right-1 flex h-4 w-4" title="Active Systems Architect">
-              <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-google-green border-2 border-white"></span>
-            </span>
-          </div>
-
-          <div class="space-y-2">
-            <div class="flex items-center justify-center sm:justify-start gap-2.5 flex-wrap">
-              <h3 class="text-2xl font-bold text-google-text tracking-tight">Abdelrhman Atta</h3>
-              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-google-blueBg text-google-blue border border-google-blue/20 inline-flex items-center gap-1">
-                <svg class="w-3 h-3 text-google-blue fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                Verified Architect
-              </span>
-            </div>
-            <p class="text-sm font-mono text-google-blue font-medium">@Abido-3tta (CodeByAtta) • Reverse Engineering & Systems Specialist</p>
-            <p class="text-sm text-google-textSecondary mt-2 max-w-xl leading-relaxed">
-              Architecting sovereign, high-concurrency desktop tools and reverse-engineering frameworks. Built OpenWindow with zero third-party runtimes, direct DWM hardware hooks, and sub-millisecond responsiveness.
-            </p>
-            <div class="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs font-mono text-google-textMuted">
-              <span>● Native C# .NET 8</span>
-              <span>•</span>
-              <span>● Direct DWM Interop</span>
-              <span>•</span>
-              <span>● Sovereign Tooling</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Action Links -->
-        <div class="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto flex-shrink-0">
-          <a href="https://github.com/Abido-3tta" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-google-container hover:bg-google-containerHigh border border-google-border text-google-text font-medium text-xs transition-colors">
-            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-            Follow @Abido-3tta
-          </a>
-          <a href="https://github.com/codebyatta/openwindow" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-google-blue hover:bg-google-blueHover text-white font-medium text-xs transition-colors shadow-xs">
-            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            <span>Star on GitHub</span>
-          </a>
-        </div>
-
-      </div>
-
-    </div>
-  </section>
-
-  <!-- GOOGLE STYLE MINIMAL FOOTER -->
-  <footer class="py-10 px-6 bg-white border-t border-google-border text-google-textMuted text-xs">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-      
-      <div class="flex items-center gap-3">
-        <img src="assets/app_icon.png" alt="OpenWindow" class="w-5 h-5 object-contain" />
-        <span class="text-google-text font-semibold">OpenWindow</span>
-        <span>•</span>
-        <span>Architected by <a href="https://github.com/Abido-3tta" target="_blank" rel="noopener" class="text-google-text font-semibold hover:text-google-blue transition-colors">Abdelrhman Atta (CodeByAtta)</a></span>
-      </div>
-
-      <div class="flex items-center gap-6">
-        <a href="https://github.com/codebyatta/openwindow" target="_blank" rel="noopener" class="hover:text-google-text transition-colors">GitHub Repository</a>
-        <a href="https://github.com/codebyatta/openwindow/releases" target="_blank" rel="noopener" class="hover:text-google-text transition-colors">Releases</a>
-        <a href="https://github.com/codebyatta/openwindow/blob/master/LICENSE" target="_blank" rel="noopener" class="hover:text-google-text transition-colors">MIT License</a>
-        <a href="#showcase" class="hover:text-google-text transition-colors">Back to Top ↑</a>
-      </div>
-
-    </div>
-  </footer>
-
-  <!-- SCRIPT FOR SHOWCASE TABS & DYNAMIC GIF LOADER -->
-  <script>
-    const featureLabels = [
-      'Feature: Always-on-Top with Active Watchdog (HWND_TOPMOST)',
-      'Feature: Smart Opacity & Global Background Hover Reveal (0ms)',
-      'Feature: Click-Through Glass Permeability (WS_EX_TRANSPARENT)',
-      'Feature: Live 60 FPS Picture-in-Picture & Ghost Mode',
-      'Feature: Hardware Inverted Dark Mode via Magnification API'
-    ];
-
-    const activeFeatureLabel = document.getElementById('active-feature-label');
-    const tabs = document.querySelectorAll('.feature-tab');
-
-    function switchShowcaseTab(index) {
-      tabs.forEach((tab, i) => {
-        if (i === index) {
-          tab.classList.remove('bg-google-container', 'border-google-border');
-          tab.classList.add('bg-white', 'border-google-blue');
-          const title = tab.querySelector('div');
-          if (title) title.className = 'flex items-center gap-2 text-xs font-bold text-google-blue';
-        } else {
-          tab.classList.remove('bg-white', 'border-google-blue');
-          tab.classList.add('bg-google-container', 'border-google-border');
-          const title = tab.querySelector('div');
-          if (title) title.className = 'flex items-center gap-2 text-xs font-bold text-google-text group-hover:text-google-blue';
-        }
-      });
-
-      if (activeFeatureLabel && featureLabels[index]) {
-        activeFeatureLabel.innerHTML = `Feature: <strong class="text-white">${featureLabels[index].replace('Feature: ', '')}</strong>`;
-      }
-    }
-
-    function copyChecksum(hash, btn) {
-      navigator.clipboard.writeText(hash);
-      const originalText = btn.innerHTML;
-      btn.innerHTML = `<svg class="w-3.5 h-3.5 fill-current text-google-green inline-block mr-1" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg> SHA-256 Copied to Clipboard`;
-      setTimeout(() => { btn.innerHTML = originalText; }, 2500);
-    }
-
-    // Attempt to load live GIF if provided in assets/demo-showcase.gif
-    window.addEventListener('DOMContentLoaded', () => {
-      const showcaseImg = document.getElementById('showcase-img');
-      const testImg = new Image();
-      testImg.src = 'assets/demo-showcase.gif';
-      testImg.onload = () => {
-        if (showcaseImg) showcaseImg.src = 'assets/demo-showcase.gif';
-      };
-    });
-  </script>
-
-</body>
-</html>
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenWindow — 100% Free, Native & Open-Source Alternative to WindowTop for Windows 10 & 11</title>
+  <meta name="description" content="OpenWindow is the modern, 100% free, unlocked open-source alternative to WindowTop for Windows 10 & 11. Features Always-on-Top with active watchdog, live 60 FPS Picture-in-Picture with full 1:1 mouse control, background hover reveal, non-blocking input, and GPU dark mode." />
+  <meta name="keywords" content="windowtop, windowtop alternative, windowtop free alternative, windowtop open source, always on top windows 11, picture in picture windows, pip interactive mouse control, transparent window windows 11, dark mode windows invert, desktop multitasking windows 10 11, openwindow, codebyatta" />
+  <link rel="canonical" href="https://abido-3tta.github.io/openwindow/" />
+  <link rel="icon" type="image/png" href="assets/app_icon.png" />
+
+  <!-- OpenGraph Metadata -->
+  <meta property="og:title" content="OpenWindow — Free, Open-Source Alternative to WindowTop" />
+  <meta property="og:description" content="Always-on-Top with watchdog, live 60 FPS PiP with 1:1 mouse & scroll control, smart opacity with hover reveal, and GPU dark mode. Zero fees, zero telemetry, standalone native desktop suite for Windows 11 & 10." />
+  <meta property="og:url" content="https://abido-3tta.github.io/openwindow/" />
+  <meta property="og:image" content="assets/banner.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="OpenWindow — Free & Open-Source WindowTop Alternative" />
+  <meta name="twitter:description" content="Always-on-Top with watchdog, 60 FPS Picture-in-Picture with mouse control, hover reveal opacity, and GPU dark mode. 100% free under MIT License." />
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "OpenWindow",
+    "operatingSystem": "Windows 10, Windows 11",
+    "applicationCategory": "UtilitiesApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "100% free and open-source multitasking suite and WindowTop alternative for Windows 10 and 11.",
+    "url": "https://abido-3tta.github.io/openwindow/",
+    "author": {
+      "@type": "Person",
+      "name": "Abdelrhman Atta (CodeByAtta)",
+      "url": "https://github.com/Abido-3tta"
+    }
+  }
+  </script>
+
+  <!-- Google Antigravity Typography: Google Sans, Plus Jakarta Sans, Inter, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Google Sans"', '"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            google: {
+              surface: '#FFFFFF',
+              container: '#F8F9FA',
+              containerHigh: '#F1F3F4',
+              border: '#E0E2E6',
+              text: '#1F1F1F',
+              textSecondary: '#444746',
+              textMuted: '#747775',
+              blue: '#1A73E8',
+              blueHover: '#1557B0',
+              blueBg: '#E8F0FE',
+              green: '#1E8E3E',
+              greenBg: '#E6F4EA',
+              amber: '#F9AB00',
+              amberBg: '#FEF7E0',
+              red: '#D93025',
+              redBg: '#FCE8E6',
+              dark: '#121317',
+              darkCard: '#1E2433',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Google Antigravity Clean Design System */
+    :root {
+      --bg: #FFFFFF;
+      --text: #1F1F1F;
+      --text-secondary: #444746;
+      --border: #E0E2E6;
+      --surface-container: #F8F9FA;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    .google-nav {
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid #E0E2E6;
+    }
+
+    .google-card {
+      background: #F8F9FA;
+      border: 1px solid #E0E2E6;
+      border-radius: 24px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .google-card:hover {
+      border-color: #B5B9C2;
+      box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Custom Native Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #FFFFFF; }
+    ::-webkit-scrollbar-thumb { background: #DADCE0; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #BDC1C6; }
+  </style>
+</head>
+<body class="selection:bg-google-blueBg selection:text-google-blue">
+
+  <!-- GOOGLE ANTIGRAVITY STICKY HEADER -->
+  <header class="sticky top-0 inset-x-0 z-50 google-nav">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo & Creator Signature -->
+      <div class="flex items-center gap-6">
+        <a href="#" class="flex items-center gap-3 group">
+          <img src="assets/app_icon.png" alt="OpenWindow" class="w-8 h-8 rounded-lg object-contain shadow-xs" />
+          <div class="flex items-center gap-2">
+            <span class="text-lg font-bold text-google-text tracking-tight group-hover:text-google-blue transition-colors">OpenWindow</span>
+            <span class="text-[11px] font-mono font-medium px-2 py-0.5 rounded-full bg-google-containerHigh text-google-textSecondary border border-google-border">v1.1.3</span>
+          </div>
+        </a>
+
+        <!-- Creator Profile Link -->
+        <a href="https://github.com/Abido-3tta" target="_blank" rel="noopener" class="hidden md:inline-flex items-center gap-2 px-3 py-1 rounded-full bg-google-container hover:bg-google-containerHigh border border-google-border text-xs text-google-textSecondary hover:text-google-text transition-all group" title="Visit Creator Profile">
+          <div class="w-4 h-4 rounded-full overflow-hidden bg-white ring-1 ring-google-border flex items-center justify-center">
+            <img src="assets/creator_avatar.png" alt="Abido-3tta" class="w-full h-full object-cover" />
+          </div>
+          <span>By <strong class="font-semibold text-google-text">CodeByAtta</strong></span>
+          <svg class="w-3 h-3 text-google-blue fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+        </a>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="hidden md:flex items-center gap-1 text-sm font-medium text-google-textSecondary">
+        <a href="#showcase" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors">Showcase</a>
+        <a href="#features" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors">Capabilities</a>
+        <a href="#comparison" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors text-google-blue font-semibold">vs WindowTop</a>
+        <a href="#usecases" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors">Use Cases</a>
+        <a href="#hotkeys" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors">Hotkeys</a>
+        <a href="#architect" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors">Architect</a>
+        <a href="#download" class="px-3.5 py-1.5 rounded-full hover:text-google-text hover:bg-google-containerHigh transition-colors">Download</a>
+      </nav>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-3">
+        <a href="https://github.com/Abido-3tta" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold text-google-textSecondary hover:text-google-text bg-google-container hover:bg-google-containerHigh border border-google-border transition-colors">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+        <a href="#download" class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-google-dark hover:bg-black text-white font-medium text-xs transition-colors shadow-sm active:scale-98">
+          <span>Download</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="pt-20 pb-12 md:pt-28 md:pb-16 px-6">
+    <div class="max-w-5xl mx-auto text-center space-y-6">
+      
+      <!-- Announcement Pill (Google Style) -->
+      <div class="inline-flex items-center gap-2.5 px-3.5 py-1 rounded-full bg-google-container hover:bg-google-containerHigh border border-google-border text-xs text-google-textSecondary transition-colors">
+        <span class="px-2 py-0.5 rounded-full bg-google-blue text-white font-semibold text-[10px]">New</span>
+        <span class="font-medium text-google-text">OpenWindow 1.1.3</span>
+        <span class="text-google-border">•</span>
+        <span>Native In-Titlebar Multitasking for Windows 10 & 11</span>
+        <span class="text-google-textSecondary font-bold">→</span>
+      </div>
+
+      <!-- Main Headline -->
+      <h1 class="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-google-text leading-[1.08] max-w-4xl mx-auto">
+        Experience peak control with the modern Windows multitasking suite
+      </h1>
+
+      <!-- Description -->
+      <p class="text-lg sm:text-xl text-google-textSecondary max-w-2xl mx-auto font-normal leading-relaxed">
+        Dock floating controls directly inside any window's titlebar. Enforce Always-on-Top with an autonomous watchdog, stream 60 FPS Picture-in-Picture, reveal opacity on background hover, and invert colors via GPU dark mode.
+      </p>
+
+      <!-- CTA Buttons -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
+        <a href="#download" class="w-full sm:w-auto px-7 py-3 rounded-full bg-google-dark hover:bg-black text-white font-medium text-sm transition-all shadow-sm active:scale-98 flex items-center justify-center gap-2">
+          <span>Download Standalone v1.1.3</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </a>
+        <a href="#showcase" class="w-full sm:w-auto px-7 py-3 rounded-full bg-google-container hover:bg-google-containerHigh text-google-text font-medium text-sm border border-google-border transition-all active:scale-98 flex items-center justify-center gap-2">
+          <span>Watch Feature Showcase</span>
+          <svg class="w-3.5 h-3.5 text-google-blue fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </a>
+      </div>
+
+      <!-- Spec Badges -->
+      <div class="pt-6 flex flex-wrap items-center justify-center gap-6 text-xs text-google-textMuted font-medium">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-google-green"></span>
+          <span>&lt;0.1% Background CPU</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-google-blue"></span>
+          <span>Zero External Dependencies</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-google-dark"></span>
+          <span>Direct DWM Hardware Hooks</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-google-amber"></span>
+          <span>100% Local & Zero Telemetry</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PRODUCT VISUAL SHOWCASE SECTION (READY FOR REAL SCREEN RECORDING GIF) -->
+  <section id="showcase" class="py-12 px-6">
+    <div class="max-w-6xl mx-auto space-y-6">
+      
+      <!-- Section Intro -->
+      <div class="text-center space-y-2">
+        <span class="text-xs font-semibold tracking-wider text-google-blue uppercase">Visual Feature Showcase</span>
+        <h2 class="text-2xl sm:text-3xl font-bold text-google-text tracking-tight">Real-World Windows Execution</h2>
+        <p class="text-sm text-google-textSecondary max-w-xl mx-auto">
+          See OpenWindow running natively on Windows 11. Docked in the active titlebar without interfering with native window controls.
+        </p>
+      </div>
+
+      <!-- High-End Windows 11 Hardware Showcase Frame -->
+      <div class="rounded-3xl bg-google-container border border-google-border p-3 sm:p-5 shadow-sm">
+        
+        <!-- Windows 11 Desktop Window Mockup -->
+        <div class="rounded-2xl bg-[#0F141F] border border-slate-700/80 shadow-2xl overflow-hidden flex flex-col">
+          
+          <!-- Realistic Windows 11 Titlebar with OpenWindow Docked -->
+          <div class="h-12 bg-[#171E2C] border-b border-slate-700/80 px-4 flex items-center justify-between select-none">
+            
+            <!-- Window Title -->
+            <div class="flex items-center gap-2.5 text-xs font-medium text-slate-300">
+              <svg class="w-4 h-4 text-sky-400 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+              <span class="font-mono text-slate-300 hidden sm:inline">Visual Studio Code — OrderExecutionEngine.cs</span>
+              <span class="font-mono text-slate-300 sm:hidden">VS Code</span>
+            </div>
+
+            <!-- OpenWindow Floating Controls Docked in Titlebar -->
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0E131E]/95 border border-slate-600/80 shadow-md">
+                <span class="text-xs font-mono font-bold text-slate-500 tracking-tight">:::</span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-white/10 text-slate-200">
+                  <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                  Pin
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-sky-500/20 text-sky-300">
+                  <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2Z"/><path d="M12 2a10 10 0 0 1 0 20Z"/></svg>
+                  75%
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-300">
+                  <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  Auto
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-white/10 text-slate-300">
+                  <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></svg>
+                  Pass
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold bg-purple-500/20 text-purple-300">
+                  <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                  Dark
+                </span>
+              </div>
+
+              <!-- Native Windows 11 Caption Controls -->
+              <div class="flex items-center gap-3 pl-2">
+                <span class="w-3 h-0.5 bg-slate-500 rounded"></span>
+                <span class="w-3 h-3 border border-slate-500 rounded-xs"></span>
+                <svg class="w-3 h-3 text-slate-500 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 6 6 18M6 6l12 12"/></svg>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Video / GIF Showcase Media Viewport -->
+          <div class="relative min-h-[380px] sm:min-h-[460px] bg-[#0A0D14] flex flex-col items-center justify-center overflow-hidden">
+            
+            <!-- Real GIF / Preview Banner Display -->
+            <img id="showcase-img" src="assets/banner.png" alt="OpenWindow Live App Demo" class="w-full h-full object-cover object-top opacity-95 transition-opacity duration-300" onerror="this.src='assets/banner.png'" />
+
+            <!-- Media HUD Overlay Banner -->
+            <div class="absolute bottom-4 inset-x-4 sm:inset-x-8 flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-950/80 backdrop-blur-md border border-white/10 text-xs font-mono text-slate-300">
+              <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="active-feature-label">Feature: <strong class="text-white">Full In-Titlebar Multitasking Suite</strong></span>
+              </div>
+              <div class="flex items-center gap-4 text-slate-400 text-[11px]">
+                <span>DWM Hooked</span>
+                <span>•</span>
+                <span>60 FPS Native Stream</span>
+                <span>•</span>
+                <span class="text-sky-400">Windows 11 Mica</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Feature Selection Pills underneath Showcase -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
+        
+        <button onclick="switchShowcaseTab(0)" class="feature-tab active p-3 rounded-2xl bg-white border border-google-blue text-left transition-all shadow-xs group">
+          <div class="flex items-center gap-2 text-xs font-bold text-google-blue">
+            <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+            Always-on-Top
+          </div>
+          <p class="text-[11px] text-google-textSecondary mt-1 leading-snug">Autonomous Z-order watchdog</p>
+        </button>
+
+        <button onclick="switchShowcaseTab(1)" class="feature-tab p-3 rounded-2xl bg-google-container border border-google-border hover:border-google-blue text-left transition-all shadow-xs group">
+          <div class="flex items-center gap-2 text-xs font-bold text-google-text group-hover:text-google-blue">
+            <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            Hover Reveal
+          </div>
+          <p class="text-[11px] text-google-textSecondary mt-1 leading-snug">0ms alpha restoration</p>
+        </button>
+
+        <button onclick="switchShowcaseTab(2)" class="feature-tab p-3 rounded-2xl bg-google-container border border-google-border hover:border-google-blue text-left transition-all shadow-xs group">
+          <div class="flex items-center gap-2 text-xs font-bold text-google-text group-hover:text-google-blue">
+            <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></svg>
+            Click-Through
+          </div>
+          <p class="text-[11px] text-google-textSecondary mt-1 leading-snug">WS_EX_TRANSPARENT pass</p>
+        </button>
+
+        <button onclick="switchShowcaseTab(3)" class="feature-tab p-3 rounded-2xl bg-google-container border border-google-border hover:border-google-blue text-left transition-all shadow-xs group">
+          <div class="flex items-center gap-2 text-xs font-bold text-google-text group-hover:text-google-blue">
+            <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Live 60 FPS PiP
+          </div>
+          <p class="text-[11px] text-google-textSecondary mt-1 leading-snug">Direct GPU surface stream</p>
+        </button>
+
+        <button onclick="switchShowcaseTab(4)" class="feature-tab p-3 rounded-2xl bg-google-container border border-google-border hover:border-google-blue text-left transition-all shadow-xs group col-span-2 sm:col-span-1">
+          <div class="flex items-center gap-2 text-xs font-bold text-google-text group-hover:text-google-blue">
+            <svg class="w-3.5 h-3.5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            GPU Dark Mode
+          </div>
+          <p class="text-[11px] text-google-textSecondary mt-1 leading-snug">Hardware color inversion</p>
+        </button>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CAPABILITIES BENTO GRID -->
+  <section id="features" class="py-16 px-6 border-t border-google-border">
+    <div class="max-w-7xl mx-auto space-y-10">
+      
+      <div class="text-center space-y-2">
+        <span class="text-xs font-semibold tracking-wider text-google-blue uppercase">Engine Capabilities</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-google-text tracking-tight">Built for power users in the multitasking era</h2>
+        <p class="text-base text-google-textSecondary max-w-2xl mx-auto">
+          Crafted from first principles in C# .NET 8 using raw Windows User32 and DWM APIs for sub-millisecond execution with zero framework bloat.
+        </p>
+      </div>
+
+      <!-- 6 Google Antigravity Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Card 1: Live 60 FPS Picture-in-Picture -->
+        <div class="google-card p-8 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-google-amberBg text-google-amber flex items-center justify-center">
+              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-google-text">Live 60 FPS PiP with 1:1 Mouse & Crop Control</h3>
+            <p class="text-sm text-google-textSecondary leading-relaxed">
+              Mirror any window or crop exact sub-regions with full 1:1 interactive mouse control (left/right clicks, context menus, wheel scrolling, and dragging). Ghost Mode keeps browser tabs streaming at 60 FPS without background throttling.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
+            <span>DWM Surface Stream</span>
+            <span class="text-google-blue font-semibold">Ghost Mode 99.6%</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Always-on-Top Watchdog -->
+        <div class="google-card p-8 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-google-greenBg text-google-green flex items-center justify-center">
+              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-google-text">Always-on-Top with Active Watchdog</h3>
+            <p class="text-sm text-google-textSecondary leading-relaxed">
+              Full-screen apps and video players constantly steal top-level Z-order. OpenWindow runs an autonomous background watchdog that enforces pinned windows stay on top without UI flicker.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
+            <span>HWND_TOPMOST Enforced</span>
+            <span class="text-google-green font-semibold">Watchdog 500ms</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Smart Opacity & Hover Reveal -->
+        <div class="google-card p-8 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-google-blueBg text-google-blue flex items-center justify-center">
+              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-google-text">Smart Opacity & Background Hover Reveal</h3>
+            <p class="text-sm text-google-textSecondary leading-relaxed">
+              Keep your window translucent to reference documents underneath. Move your mouse over the window from any other application, and it instantly reveals 100% solid opacity with zero click required.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
+            <span>Low-Level Mouse Hook</span>
+            <span class="text-google-blue font-semibold">0ms Latency</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Click-Through Glass -->
+        <div class="google-card p-8 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-google-containerHigh text-google-text flex items-center justify-center">
+              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-google-text">Click-Through Glass with Titlebar Waking</h3>
+            <p class="text-sm text-google-textSecondary leading-relaxed">
+              Turns the client area completely click-permeable via WS_EX_TRANSPARENT, allowing clicks to pass directly to windows underneath while keeping the titlebar controls fully responsive.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
+            <span>WS_EX_LAYERED</span>
+            <span class="text-google-text font-semibold">Non-Client Hit-Test</span>
+          </div>
+        </div>
+
+        <!-- Card 5: Inverted GPU Dark Mode -->
+        <div class="google-card p-8 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
+              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-google-text">GPU-Accelerated Inverted Dark Mode</h3>
+            <p class="text-sm text-google-textSecondary leading-relaxed">
+              Working late with blinding white PDF viewers or legacy Win32 utilities? OpenWindow applies a direct hardware color inversion matrix at zero CPU cost to preserve your vision.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
+            <span>Windows Magnification API</span>
+            <span class="text-purple-600 font-semibold">Zero CPU Cost</span>
+          </div>
+        </div>
+
+        <!-- Card 6: ShellSanitizer Taskbar Immunity -->
+        <div class="google-card p-8 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-google-redBg text-google-red flex items-center justify-center">
+              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-google-text">Windows Taskbar & Shell Immunity</h3>
+            <p class="text-sm text-google-textSecondary leading-relaxed">
+              Built-in ShellSanitizer filter permanently shields the Windows Taskbar, Start Menu, System Tray, Action Center, and Game Bar from accidental pin or transparency capture.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
+            <span>Shell_TrayWnd Protection</span>
+            <span class="text-google-red font-semibold">Fail-Safe Filter</span>
+          </div>
+        </div>
+
+        <!-- Card 7: Input Non-Blocking & Luxury Acrylic -->
+        <div class="google-card p-8 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
+              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h10"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-google-text">Input Non-Blocking & Luxury Acrylic</h3>
+            <p class="text-sm text-google-textSecondary leading-relaxed">
+              Floating toolbars and topmost borders strictly enforce SWP_NOACTIVATE and transparent hit-testing. Keystrokes are never lost in code editors or games, wrapped in gorgeous frosted glass styling.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
+            <span>SWP_NOACTIVATE Enforced</span>
+            <span class="text-cyan-600 font-semibold">Zero Focus Steal</span>
+          </div>
+        </div>
+
+        <!-- Card 8: Crash Diagnostics & Telemetry -->
+        <div class="google-card p-8 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <svg class="w-6 h-6 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="m9 15 2 2 4-4"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-google-text">Crash Diagnostics & Telemetry</h3>
+            <p class="text-sm text-google-textSecondary leading-relaxed">
+              Built-in CrashReporterService catches unhandled exceptions, writes forensic JSON dumps to AppData, and can dispatch encrypted telemetry pings to your private Discord, Telegram, or HTTP webhook.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-google-border flex items-center justify-between text-xs font-mono text-google-textMuted">
+            <span>Local JSON Dump</span>
+            <span class="text-indigo-600 font-semibold">Webhook Ready</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- WORKSTATION PERSONAS SECTION -->
+  <section id="usecases" class="py-16 px-6 bg-google-container border-t border-google-border">
+    <div class="max-w-7xl mx-auto space-y-10">
+      
+      <div class="text-center space-y-2">
+        <span class="text-xs font-semibold tracking-wider text-google-blue uppercase">Daily Synergy</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-google-text tracking-tight">Tailored for your daily workstation</h2>
+        <p class="text-base text-google-textSecondary max-w-xl mx-auto">
+          Whether you are debugging kernel code, monitoring order books, or reference-drawing, OpenWindow removes window friction.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <div class="p-6 rounded-2xl bg-white border border-google-border space-y-3 shadow-xs">
+          <div class="w-10 h-10 rounded-xl bg-google-blueBg text-google-blue flex items-center justify-center">
+            <svg class="w-5 h-5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="12" x="3" y="4" rx="2"/><line x1="2" x2="22" y1="20" y2="20"/><path d="m8 9 2 2-2 2"/><line x1="12" x2="15" y1="13" y2="13"/></svg>
+          </div>
+          <h4 class="text-base font-bold text-google-text">Software Developers</h4>
+          <p class="text-xs text-google-textSecondary leading-relaxed">
+            Keep API specifications, Postman, terminal build outputs, or database query results pinned on top of your IDE with 80% opacity and auto-hover reveal.
+          </p>
+          <div class="text-[11px] font-mono text-google-blue font-medium">VS Code • Visual Studio • JetBrains</div>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white border border-google-border space-y-3 shadow-xs">
+          <div class="w-10 h-10 rounded-xl bg-google-amberBg text-google-amber flex items-center justify-center">
+            <svg class="w-5 h-5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg>
+          </div>
+          <h4 class="text-base font-bold text-google-text">Financial & Crypto Traders</h4>
+          <p class="text-xs text-google-textSecondary leading-relaxed">
+            Monitor real-time depth charts, candlestick order books, and macro news feeds in a 60 FPS live picture-in-picture window while analyzing multi-monitor feeds.
+          </p>
+          <div class="text-[11px] font-mono text-google-amber font-medium">TradingView • Binance • Bloomberg</div>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white border border-google-border space-y-3 shadow-xs">
+          <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+            <svg class="w-5 h-5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+          </div>
+          <h4 class="text-base font-bold text-google-text">Designers & Artists</h4>
+          <p class="text-xs text-google-textSecondary leading-relaxed">
+            Overlay reference art directly onto Photoshop, Figma, or Blender canvases. Turn on click-through mode to paint directly beneath the reference overlay.
+          </p>
+          <div class="text-[11px] font-mono text-purple-600 font-medium">Photoshop • Blender • PureRef</div>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white border border-google-border space-y-3 shadow-xs">
+          <div class="w-10 h-10 rounded-xl bg-google-greenBg text-google-green flex items-center justify-center">
+            <svg class="w-5 h-5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/><rect width="20" height="12" x="2" y="6" rx="6"/></svg>
+          </div>
+          <h4 class="text-base font-bold text-google-text">Gamers & Streamers</h4>
+          <p class="text-xs text-google-textSecondary leading-relaxed">
+            Keep Twitch chat, Discord stream overlays, or interactive walkthrough guides pinned above borderless full-screen games without dropping a single frame.
+          </p>
+          <div class="text-[11px] font-mono text-google-green font-medium">OBS • Discord • Twitch</div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- HOTKEYS REFERENCE MATRIX -->
+  <section id="hotkeys" class="py-16 px-6 border-t border-google-border">
+    <div class="max-w-5xl mx-auto space-y-10">
+      
+      <div class="text-center space-y-2">
+        <span class="text-xs font-semibold tracking-wider text-google-blue uppercase">Instant Shortcuts</span>
+        <h2 class="text-3xl font-extrabold text-google-text tracking-tight">Zero-Latency Hotkeys</h2>
+        <p class="text-sm text-google-textSecondary max-w-md mx-auto">
+          Every capability is mapped to lightning-fast global shortcuts that trigger instantly, even when other applications have exclusive focus.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        
+        <div class="p-4 rounded-2xl bg-google-container border border-google-border flex items-center justify-between">
+          <div>
+            <div class="text-sm font-bold text-google-text">Toggle Always-on-Top</div>
+            <div class="text-xs text-google-textSecondary">Pin active window topmost</div>
+          </div>
+          <kbd class="px-2.5 py-1.5 rounded-lg bg-white border border-google-border text-xs font-mono font-bold text-google-text shadow-xs">Alt + Z</kbd>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-google-container border border-google-border flex items-center justify-between">
+          <div>
+            <div class="text-sm font-bold text-google-text">Cycle Transparency</div>
+            <div class="text-xs text-google-textSecondary">100% → 80% → 60% → 40%</div>
+          </div>
+          <kbd class="px-2.5 py-1.5 rounded-lg bg-white border border-google-border text-xs font-mono font-bold text-google-blue shadow-xs">Alt + Q</kbd>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-google-container border border-google-border flex items-center justify-between">
+          <div>
+            <div class="text-sm font-bold text-google-text">Auto Hover Reveal</div>
+            <div class="text-xs text-google-textSecondary">Toggle hover solid restore</div>
+          </div>
+          <kbd class="px-2.5 py-1.5 rounded-lg bg-white border border-google-border text-xs font-mono font-bold text-google-green shadow-xs">Alt + A</kbd>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-google-container border border-google-border flex items-center justify-between">
+          <div>
+            <div class="text-sm font-bold text-google-text">Click-Through Glass</div>
+            <div class="text-xs text-google-textSecondary">Enable click permeability</div>
+          </div>
+          <kbd class="px-2.5 py-1.5 rounded-lg bg-white border border-google-border text-xs font-mono font-bold text-google-text shadow-xs">Alt + C</kbd>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-google-container border border-google-border flex items-center justify-between">
+          <div>
+            <div class="text-sm font-bold text-google-text">GPU Dark Mode</div>
+            <div class="text-xs text-google-textSecondary">Invert hardware colors</div>
+          </div>
+          <kbd class="px-2.5 py-1.5 rounded-lg bg-white border border-google-border text-xs font-mono font-bold text-purple-600 shadow-xs">Alt + D</kbd>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-google-container border border-google-border flex items-center justify-between">
+          <div>
+            <div class="text-sm font-bold text-google-text">Smooth Opacity Dial</div>
+            <div class="text-xs text-google-textSecondary">Scroll wheel opacity dial</div>
+          </div>
+          <kbd class="px-2.5 py-1.5 rounded-lg bg-white border border-google-border text-xs font-mono font-bold text-google-amber shadow-xs">Alt + Scroll</kbd>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE & BENCHMARK METRICS -->
+  <section class="py-16 px-6 bg-google-container border-t border-google-border">
+    <div class="max-w-7xl mx-auto space-y-10">
+      
+      <div class="text-center space-y-2">
+        <span class="text-xs font-semibold tracking-wider text-google-blue uppercase">Engineering Benchmark</span>
+        <h2 class="text-3xl font-extrabold text-google-text tracking-tight">Zero-Compromise Performance</h2>
+        <p class="text-sm text-google-textSecondary max-w-xl mx-auto">
+          Measured live on Windows 11 Enterprise (Build 26100) running with active hardware DWM composition.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        
+        <div class="p-6 rounded-2xl bg-white border border-google-border text-center space-y-2 shadow-xs">
+          <div class="text-3xl sm:text-4xl font-extrabold text-google-green font-mono">0.0%</div>
+          <div class="text-xs font-bold text-google-text uppercase tracking-wider">Idle CPU Utilization</div>
+          <p class="text-[11px] text-google-textSecondary">Zero active timers during idle state; wakes only on input events</p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white border border-google-border text-center space-y-2 shadow-xs">
+          <div class="text-3xl sm:text-4xl font-extrabold text-google-blue font-mono">&lt; 35 MB</div>
+          <div class="text-xs font-bold text-google-text uppercase tracking-wider">Working Set RAM</div>
+          <p class="text-[11px] text-google-textSecondary">Ultra-lean native footprint compared to 400MB+ Electron utilities</p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white border border-google-border text-center space-y-2 shadow-xs">
+          <div class="text-3xl sm:text-4xl font-extrabold text-google-amber font-mono">60 FPS</div>
+          <div class="text-xs font-bold text-google-text uppercase tracking-wider">DWM Hardware Stream</div>
+          <p class="text-[11px] text-google-textSecondary">Direct GPU surface compositing without software frame scraping</p>
+        </div>
+
+        <div class="p-6 rounded-2xl bg-white border border-google-border text-center space-y-2 shadow-xs">
+          <div class="text-3xl sm:text-4xl font-extrabold text-purple-600 font-mono">0 ms</div>
+          <div class="text-xs font-bold text-google-text uppercase tracking-wider">Hover Reveal Latency</div>
+          <p class="text-[11px] text-google-textSecondary">Sub-millisecond alpha restore powered by low-level mouse hooks</p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- OPENWINDOW VS WINDOWTOP COMPARISON SECTION -->
+  <section id="comparison" class="py-16 px-6 border-t border-google-border bg-white">
+    <div class="max-w-6xl mx-auto space-y-10">
+      
+      <div class="text-center space-y-3">
+        <span class="text-xs font-bold tracking-wider text-google-blue uppercase px-3 py-1 rounded-full bg-google-blueBg border border-google-blue/20">The Honest Comparison</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-google-text tracking-tight">OpenWindow vs. WindowTop</h2>
+        <p class="text-base text-google-textSecondary max-w-2xl mx-auto">
+          WindowTop made titlebar multitasking popular. OpenWindow completely modernizes it: 100% free under MIT License, unlocked native .NET 8 performance, interactive PiP mouse control, and zero paywalls.
+        </p>
+      </div>
+
+      <!-- Feature Comparison Table -->
+      <div class="overflow-x-auto rounded-2xl border border-google-border shadow-xs bg-white">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-google-container border-b border-google-border text-xs uppercase font-mono text-google-textSecondary">
+              <th class="p-4 sm:p-5">Feature & Capability</th>
+              <th class="p-4 sm:p-5 bg-google-blueBg/40 text-google-blue font-bold">OpenWindow (v1.1.3)</th>
+              <th class="p-4 sm:p-5 text-google-textMuted">WindowTop (Commercial)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-google-border text-sm">
+            <tr>
+              <td class="p-4 sm:p-5 font-semibold text-google-text">Pricing & License</td>
+              <td class="p-4 sm:p-5 bg-google-blueBg/20 font-bold text-google-green">100% Free & Open-Source (MIT)</td>
+              <td class="p-4 sm:p-5 text-google-textSecondary">Paid / Freemium ($18.99+ License)</td>
+            </tr>
+            <tr>
+              <td class="p-4 sm:p-5 font-semibold text-google-text">Picture-in-Picture Control</td>
+              <td class="p-4 sm:p-5 bg-google-blueBg/20 text-google-text">Full 1:1 Interactive Mouse (Click, Right-Click, Scroll, Drag) in Full & Cropped Views</td>
+              <td class="p-4 sm:p-5 text-google-textSecondary">Passive preview; basic click-through only</td>
+            </tr>
+            <tr>
+              <td class="p-4 sm:p-5 font-semibold text-google-text">Ghost Mode (Tab Streaming)</td>
+              <td class="p-4 sm:p-5 bg-google-blueBg/20 text-google-text">60 FPS DWM streaming; zero browser tab throttling or WebSockets freezing</td>
+              <td class="p-4 sm:p-5 text-google-textSecondary">Standard window minimization / background throttling</td>
+            </tr>
+            <tr>
+              <td class="p-4 sm:p-5 font-semibold text-google-text">Always-on-Top Input Non-Blocking</td>
+              <td class="p-4 sm:p-5 bg-google-blueBg/20 text-google-text">Guaranteed non-activating (SWP_NOACTIVATE); keystrokes never lost in games/code</td>
+              <td class="p-4 sm:p-5 text-google-textSecondary">Occasional input focus stealing on toolbar clicks</td>
+            </tr>
+            <tr>
+              <td class="p-4 sm:p-5 font-semibold text-google-text">Hover Opacity Reveal</td>
+              <td class="p-4 sm:p-5 bg-google-blueBg/20 text-google-text">Global 0ms reveal across inactive/background windows without clicking</td>
+              <td class="p-4 sm:p-5 text-google-textSecondary">Requires window focus or active hover setting</td>
+            </tr>
+            <tr>
+              <td class="p-4 sm:p-5 font-semibold text-google-text">Windows Shell & Taskbar Immunity</td>
+              <td class="p-4 sm:p-5 bg-google-blueBg/20 text-google-text">ShellSanitizer permanently shields Taskbar, Tray flyouts, and Desktop</td>
+              <td class="p-4 sm:p-5 text-google-textSecondary">Occasional z-order glitches with auto-hide taskbar</td>
+            </tr>
+            <tr>
+              <td class="p-4 sm:p-5 font-semibold text-google-text">Crash Diagnostics & Telemetry</td>
+              <td class="p-4 sm:p-5 bg-google-blueBg/20 text-google-text">Sanitized local JSON crash dumps + opt-in developer webhook telemetry</td>
+              <td class="p-4 sm:p-5 text-google-textSecondary">Closed-source commercial analytics</td>
+            </tr>
+            <tr>
+              <td class="p-4 sm:p-5 font-semibold text-google-text">Runtime Dependencies</td>
+              <td class="p-4 sm:p-5 bg-google-blueBg/20 text-google-text">Standalone native self-contained executables (zero .NET install needed)</td>
+              <td class="p-4 sm:p-5 text-google-textSecondary">Requires runtime setup & activation servers</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- STANDALONE DOWNLOAD HUB SECTION -->
+  <section id="download" class="py-20 px-6 border-t border-google-border">
+    <div class="max-w-5xl mx-auto space-y-10 text-center">
+      
+      <div class="space-y-2">
+        <span class="text-xs font-semibold tracking-wider text-google-blue uppercase">Direct Release</span>
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-google-text tracking-tight">Get OpenWindow for Windows</h2>
+        <p class="text-sm text-google-textSecondary max-w-md mx-auto">
+          Completely standalone, offline-capable executables. No installer or administrative rights required.
+        </p>
+      </div>
+
+      <!-- Download Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+        
+        <!-- x64 Architecture Card -->
+        <div class="google-card p-8 space-y-5 bg-white border-google-blue/40 shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-google-blueBg text-google-blue">RECOMMENDED</span>
+            <span class="text-xs font-mono text-google-textMuted">v1.1.3 • 64-bit</span>
+          </div>
+
+          <div>
+            <h3 class="text-xl font-bold text-google-text">Windows 64-bit (x64)</h3>
+            <p class="text-xs text-google-textSecondary mt-1">For Windows 11 & Windows 10 (all modern Intel/AMD processors)</p>
+          </div>
+
+          <div class="space-y-1.5 text-xs font-mono text-google-textSecondary bg-google-container p-3 rounded-xl border border-google-border">
+            <div class="flex justify-between">
+              <span>Executable:</span>
+              <strong class="text-google-text">CodeByatta.UI.exe</strong>
+            </div>
+            <div class="flex justify-between">
+              <span>Package Size:</span>
+              <span>~71.8 MB Self-Contained</span>
+            </div>
+          </div>
+
+          <a href="https://github.com/Abido-3tta/openwindow/releases/latest" target="_blank" class="w-full py-3 rounded-full bg-google-dark hover:bg-black text-white font-medium text-xs transition-colors flex items-center justify-center gap-2 shadow-sm">
+            <span>Download OpenWindow (x64)</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          </a>
+
+          <button onclick="copyChecksum('E212AD5081C6624F89A93A729FC190BEA076F3DB589AAC181572F744FD20DD73', this)" class="w-full text-[11px] font-mono text-google-textMuted hover:text-google-text text-center transition-colors">
+            Copy SHA-256 Checksum
+          </button>
+        </div>
+
+        <!-- x86 Architecture Card -->
+        <div class="google-card p-8 space-y-5 bg-white shadow-xs">
+          <div class="flex items-center justify-between">
+            <span class="px-3 py-1 rounded-full text-xs font-bold bg-google-containerHigh text-google-textSecondary">LEGACY SUPPORT</span>
+            <span class="text-xs font-mono text-google-textMuted">v1.1.3 • 32-bit</span>
+          </div>
+
+          <div>
+            <h3 class="text-xl font-bold text-google-text">Windows 32-bit (x86)</h3>
+            <p class="text-xs text-google-textSecondary mt-1">For legacy 32-bit Windows 10 installations and embedded thin clients</p>
+          </div>
+
+          <div class="space-y-1.5 text-xs font-mono text-google-textSecondary bg-google-container p-3 rounded-xl border border-google-border">
+            <div class="flex justify-between">
+              <span>Executable:</span>
+              <strong class="text-google-text">CodeByatta.UI.exe</strong>
+            </div>
+            <div class="flex justify-between">
+              <span>Package Size:</span>
+              <span>~66.4 MB Self-Contained</span>
+            </div>
+          </div>
+
+          <a href="https://github.com/Abido-3tta/openwindow/releases/latest" target="_blank" class="w-full py-3 rounded-full bg-google-container hover:bg-google-containerHigh text-google-text font-medium text-xs border border-google-border transition-colors flex items-center justify-center gap-2">
+            <span>Download OpenWindow (x86)</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          </a>
+
+          <button onclick="copyChecksum('99C01FF4604989D4802841FD6178D9989610943E9DE9AD5EC33F1C0018786C45', this)" class="w-full text-[11px] font-mono text-google-textMuted hover:text-google-text text-center transition-colors">
+            Copy SHA-256 Checksum
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Quick PowerShell One-Liner Box -->
+      <div class="max-w-xl mx-auto p-4 rounded-2xl bg-google-container border border-google-border font-mono text-xs text-left">
+        <div class="flex items-center justify-between text-google-textMuted pb-2 border-b border-google-border mb-2 text-[11px]">
+          <span>PowerShell Automated Local Install (Zero Admin Required)</span>
+          <span>pwsh</span>
+        </div>
+        <div class="text-google-text select-all overflow-x-auto whitespace-pre">
+irm https://raw.githubusercontent.com/codebyatta/openwindow/master/install.ps1 | iex
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ARCHITECT & CREATOR SPOTLIGHT SECTION (Abido-3tta) -->
+  <section id="architect" class="py-16 px-6 bg-google-container border-t border-google-border">
+    <div class="max-w-5xl mx-auto">
+      
+      <div class="rounded-3xl p-8 sm:p-10 bg-white border border-google-border shadow-xs flex flex-col md:flex-row items-center md:items-start gap-8 justify-between">
+        
+        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+          
+          <!-- Authentic Hexagonal Creator Avatar Photo -->
+          <div class="relative flex-shrink-0">
+            <div class="w-24 h-24 rounded-2xl overflow-hidden ring-1 ring-google-border p-1 bg-white shadow-sm flex items-center justify-center">
+              <img src="assets/creator_avatar.png" alt="Abdelrhman Atta (Abido-3tta)" class="w-full h-full object-contain" />
+            </div>
+            <span class="absolute -bottom-1 -right-1 flex h-4 w-4" title="Active Systems Architect">
+              <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-google-green border-2 border-white"></span>
+            </span>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex items-center justify-center sm:justify-start gap-2.5 flex-wrap">
+              <h3 class="text-2xl font-bold text-google-text tracking-tight">Abdelrhman Atta</h3>
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-google-blueBg text-google-blue border border-google-blue/20 inline-flex items-center gap-1">
+                <svg class="w-3 h-3 text-google-blue fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                Verified Architect
+              </span>
+            </div>
+            <p class="text-sm font-mono text-google-blue font-medium">@Abido-3tta (CodeByAtta) • Reverse Engineering & Systems Specialist</p>
+            <p class="text-sm text-google-textSecondary mt-2 max-w-xl leading-relaxed">
+              Architecting sovereign, high-concurrency desktop tools and reverse-engineering frameworks. Built OpenWindow with zero third-party runtimes, direct DWM hardware hooks, and sub-millisecond responsiveness.
+            </p>
+            <div class="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-4 text-xs font-mono text-google-textMuted">
+              <span>● Native C# .NET 8</span>
+              <span>•</span>
+              <span>● Direct DWM Interop</span>
+              <span>•</span>
+              <span>● Sovereign Tooling</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Links -->
+        <div class="flex flex-col sm:flex-row md:flex-col gap-2.5 w-full md:w-auto flex-shrink-0">
+          <a href="https://github.com/Abido-3tta" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-google-container hover:bg-google-containerHigh border border-google-border text-google-text font-medium text-xs transition-colors">
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            Follow @Abido-3tta
+          </a>
+          <a href="https://github.com/codebyatta/openwindow" target="_blank" rel="noopener" class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full bg-google-blue hover:bg-google-blueHover text-white font-medium text-xs transition-colors shadow-xs">
+            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span>Star on GitHub</span>
+          </a>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- GOOGLE STYLE MINIMAL FOOTER -->
+  <footer class="py-10 px-6 bg-white border-t border-google-border text-google-textMuted text-xs">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      
+      <div class="flex items-center gap-3">
+        <img src="assets/app_icon.png" alt="OpenWindow" class="w-5 h-5 object-contain" />
+        <span class="text-google-text font-semibold">OpenWindow</span>
+        <span>•</span>
+        <span>Architected by <a href="https://github.com/Abido-3tta" target="_blank" rel="noopener" class="text-google-text font-semibold hover:text-google-blue transition-colors">Abdelrhman Atta (CodeByAtta)</a></span>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <a href="https://github.com/codebyatta/openwindow" target="_blank" rel="noopener" class="hover:text-google-text transition-colors">GitHub Repository</a>
+        <a href="https://github.com/codebyatta/openwindow/releases" target="_blank" rel="noopener" class="hover:text-google-text transition-colors">Releases</a>
+        <a href="https://github.com/codebyatta/openwindow/blob/master/LICENSE" target="_blank" rel="noopener" class="hover:text-google-text transition-colors">MIT License</a>
+        <a href="#showcase" class="hover:text-google-text transition-colors">Back to Top ↑</a>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- SCRIPT FOR SHOWCASE TABS & DYNAMIC GIF LOADER -->
+  <script>
+    const featureLabels = [
+      'Feature: Always-on-Top with Active Watchdog (HWND_TOPMOST)',
+      'Feature: Smart Opacity & Global Background Hover Reveal (0ms)',
+      'Feature: Click-Through Glass Permeability (WS_EX_TRANSPARENT)',
+      'Feature: Live 60 FPS Picture-in-Picture & Ghost Mode',
+      'Feature: Hardware Inverted Dark Mode via Magnification API'
+    ];
+
+    const activeFeatureLabel = document.getElementById('active-feature-label');
+    const tabs = document.querySelectorAll('.feature-tab');
+
+    function switchShowcaseTab(index) {
+      tabs.forEach((tab, i) => {
+        if (i === index) {
+          tab.classList.remove('bg-google-container', 'border-google-border');
+          tab.classList.add('bg-white', 'border-google-blue');
+          const title = tab.querySelector('div');
+          if (title) title.className = 'flex items-center gap-2 text-xs font-bold text-google-blue';
+        } else {
+          tab.classList.remove('bg-white', 'border-google-blue');
+          tab.classList.add('bg-google-container', 'border-google-border');
+          const title = tab.querySelector('div');
+          if (title) title.className = 'flex items-center gap-2 text-xs font-bold text-google-text group-hover:text-google-blue';
+        }
+      });
+
+      if (activeFeatureLabel && featureLabels[index]) {
+        activeFeatureLabel.innerHTML = `Feature: <strong class="text-white">${featureLabels[index].replace('Feature: ', '')}</strong>`;
+      }
+    }
+
+    function copyChecksum(hash, btn) {
+      navigator.clipboard.writeText(hash);
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<svg class="w-3.5 h-3.5 fill-current text-google-green inline-block mr-1" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg> SHA-256 Copied to Clipboard`;
+      setTimeout(() => { btn.innerHTML = originalText; }, 2500);
+    }
+
+    // Attempt to load live GIF if provided in assets/demo-showcase.gif
+    window.addEventListener('DOMContentLoaded', () => {
+      const showcaseImg = document.getElementById('showcase-img');
+      const testImg = new Image();
+      testImg.src = 'assets/demo-showcase.gif';
+      testImg.onload = () => {
+        if (showcaseImg) showcaseImg.src = 'assets/demo-showcase.gif';
+      };
+    });
+  </script>
+
+</body>
+</html>

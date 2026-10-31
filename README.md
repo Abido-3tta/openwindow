@@ -10,6 +10,7 @@
 [![.NET](https://img.shields.io/badge/.NET-8.0%20WPF%20(Self--Contained)-512BD4.svg)](https://dotnet.microsoft.com/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/Abido-3tta/openwindow)
 [![Author](https://img.shields.io/badge/Author-Abido--3tta-FF79C6.svg)](https://github.com/Abido-3tta)
+[![Website](https://img.shields.io/badge/Website-abido--3tta.github.io%2Fopenwindow-4285F4.svg)](https://abido-3tta.github.io/openwindow/)
 
 *A clean-room, 100% free, unlocked native Windows multitasking utility with zero licensing fees, zero telemetry, and ultra-low CPU overhead.*
 
@@ -84,7 +85,23 @@ Available both as a **standalone zero-dependency native desktop application** (n
 
 ---
 
-## ⌨️ Default Hotkeys
+## ⚡ OpenWindow vs. WindowTop (The Modern Alternative)
+
+OpenWindow was designed from the ground up as a modern, completely free and open-source alternative to commercial tools like **WindowTop**:
+
+| Feature / Metric | ⚡ OpenWindow (v1.1.3) | 📦 WindowTop (Commercial) |
+| :--- | :--- | :--- |
+| **Pricing & License** | **100% Free & Open-Source (MIT)** | Paid / Freemium ($18.99+ license) |
+| **PiP Interactive Mouse** | **1:1 Click, Right-Click, Scroll, Drag** | Passive preview or basic click-through |
+| **Sub-Region Cropped PiP** | **1:1 Screen-space mouse control** | Static cropping |
+| **Ghost Mode (Tab Streaming)** | **60 FPS live; zero tab throttling** | Window hiding / background throttling |
+| **Input Focus Non-Blocking** | **SWP_NOACTIVATE guaranteed** | Occasional focus-stealing on click |
+| **Hover Opacity Reveal** | **0ms global reveal on hover** | Requires window focus or manual toggle |
+| **Taskbar & Shell Immunity** | **ShellSanitizer protection** | Occasional taskbar z-order conflicts |
+| **Telemetry & Privacy** | **Zero tracking, zero ads** | Closed-source commercial analytics |
+| **Runtime Footprint** | **< 35 MB RAM, 0.0% idle CPU** | Heavy Electron/C++ legacy overhead |
+
+---
 
 | Action | Hotkey | Description |
 | :--- | :---: | :--- |
