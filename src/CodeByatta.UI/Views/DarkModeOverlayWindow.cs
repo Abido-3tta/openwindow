@@ -78,9 +78,9 @@ namespace CodeByatta.UI.Views
                 return;
             }
 
-            // Also set WS_EX_TRANSPARENT on child so all clicks penetrate
+            // Set WS_EX_TRANSPARENT on child magnifier (ensure child does NOT have WS_EX_LAYERED so parent HwndHost controls alpha)
             IntPtr magEx = User32.GetWindowLongPtr(HwndMag, User32.GWL_EXSTYLE);
-            long newMagEx = (long)magEx | User32.WS_EX_TRANSPARENT | User32.WS_EX_LAYERED;
+            long newMagEx = ((long)magEx | User32.WS_EX_TRANSPARENT) & ~User32.WS_EX_LAYERED;
             User32.SetWindowLongPtr(HwndMag, User32.GWL_EXSTYLE, (IntPtr)newMagEx);
 
             // Configure magnification: 1.0x transform (no zoom)
@@ -116,6 +116,14 @@ namespace CodeByatta.UI.Views
         public void SetOpacity(byte opacity)
         {
             if (_disposed || HwndHost == IntPtr.Zero || !User32.IsWindow(HwndHost)) return;
+
+            IntPtr exStyle = User32.GetWindowLongPtr(HwndHost, User32.GWL_EXSTYLE);
+            long styleLong = (long)exStyle;
+            if ((styleLong & User32.WS_EX_LAYERED) == 0)
+            {
+                User32.SetWindowLongPtr(HwndHost, User32.GWL_EXSTYLE, (IntPtr)(styleLong | User32.WS_EX_LAYERED));
+            }
+
             User32.SetLayeredWindowAttributes(HwndHost, 0, opacity, User32.LWA_ALPHA);
             User32.SetWindowPos(HwndHost, IntPtr.Zero, 0, 0, 0, 0,
                 User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOZORDER | User32.SWP_NOACTIVATE | User32.SWP_FRAMECHANGED);

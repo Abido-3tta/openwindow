@@ -30,7 +30,11 @@ namespace CodeByatta.Core.Services
             "SearchHost",
             "LockApp",
             "StartMenuExperienceHost",
-            "TextInputHost"
+            "TextInputHost",
+            "ScreenClippingHost",
+            "SnippingTool",
+            "Microsoft.ScreenSketch",
+            "SnippingToolApp"
         };
 
         private static readonly bool IsOpenWindowProcess =
@@ -124,8 +128,17 @@ namespace CodeByatta.Core.Services
             }
         }
 
-        public static void EnsureTaskbarOnTop()
+        private static long _lastEnsureTaskbarTick = 0;
+
+        public static void EnsureTaskbarOnTop(bool force = false)
         {
+            long now = Environment.TickCount64;
+            if (!force && (now - _lastEnsureTaskbarTick) < 1500)
+            {
+                return;
+            }
+            _lastEnsureTaskbarTick = now;
+
             IntPtr hTray = User32.FindWindow("Shell_TrayWnd", null);
             if (hTray != IntPtr.Zero && User32.IsWindow(hTray))
             {

@@ -18,7 +18,11 @@ namespace CodeByatta.Core.Services
             "SearchHost",
             "LockApp",
             "StartMenuExperienceHost",
-            "TextInputHost"
+            "TextInputHost",
+            "ScreenClippingHost",
+            "SnippingTool",
+            "Microsoft.ScreenSketch",
+            "SnippingToolApp"
         };
 
         private readonly HashSet<string> _excludedClasses = new(StringComparer.OrdinalIgnoreCase)

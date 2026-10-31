@@ -47,7 +47,7 @@ namespace CodeByatta.UI.Views
 
         public void UpdateBounds()
         {
-            if (!User32.IsWindow(TargetHwnd) || User32.IsIconic(TargetHwnd))
+            if (!User32.IsWindow(TargetHwnd) || User32.IsIconic(TargetHwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && TargetHwnd == App.CurrentPipTargetHwnd))
             {
                 Hide();
                 return;

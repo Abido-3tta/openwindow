@@ -36,6 +36,7 @@ namespace CodeByatta.UI
 
         private SettingsWindow? _activeSettingsWindow;
         private PipWindow? _currentPipWindow;
+        public static IntPtr CurrentPipTargetHwnd { get; private set; } = IntPtr.Zero;
         private CropOverlayWindow? _currentCropOverlay;
         private readonly Dictionary<IntPtr, TopmostBorderOverlayWindow> _activeBorders = new();
         private readonly Dictionary<IntPtr, DarkModeOverlayWindow> _activeDarkOverlays = new();
@@ -411,6 +412,10 @@ namespace CodeByatta.UI
                 {
                     deadHwnds.Add(kvp.Key);
                 }
+                else if (CurrentPipTargetHwnd != IntPtr.Zero && kvp.Key == CurrentPipTargetHwnd)
+                {
+                    kvp.Value.Hide();
+                }
                 else
                 {
                     kvp.Value.ApplyStyle(_config.TopmostBorderColor, _config.TopmostBorderWidth);
@@ -427,9 +432,10 @@ namespace CodeByatta.UI
                 }
             }
 
-            // Ensure all pinned windows have active borders
+            // Ensure all pinned windows have active borders (except the window currently in PiP)
             foreach (var hwnd in _topmostService.PinnedWindows)
             {
+                if (CurrentPipTargetHwnd != IntPtr.Zero && hwnd == CurrentPipTargetHwnd) continue;
                 if (User32.IsWindow(hwnd) && !_activeBorders.ContainsKey(hwnd))
                 {
                     var border = new TopmostBorderOverlayWindow(hwnd, _config.TopmostBorderColor, _config.TopmostBorderWidth);
@@ -497,9 +503,9 @@ namespace CodeByatta.UI
             {
                 if (_config.ShowTitleBarToolbar && _toolbarView != null)
                 {
-                    if (window != null && (IsOwnProcessOrWindow(window.Hwnd) || ShellSanitizer.IsShellOrTaskbarWindow(window.Hwnd)))
+                    if (window != null && (IsOwnProcessOrWindow(window.Hwnd) || ShellSanitizer.IsShellOrTaskbarWindow(window.Hwnd) || (CurrentPipTargetHwnd != IntPtr.Zero && window.Hwnd == CurrentPipTargetHwnd)))
                     {
-                        return; // Do not attach toolbar to our own settings/pip/overlay windows or taskbar/shell windows
+                        return; // Do not attach toolbar to our own settings/pip/overlay windows or taskbar/shell windows or active PiP target
                     }
 
                     // If cursor is currently over or interacting with ANY active Click-Through window,
@@ -508,6 +514,7 @@ namespace CodeByatta.UI
                     {
                         foreach (var ctHwnd in _opacityService.ActiveClickThroughWindows)
                         {
+                            if (ctHwnd == CurrentPipTargetHwnd) continue;
                             if (User32.IsWindow(ctHwnd) && !User32.IsIconic(ctHwnd) && User32.GetWindowRect(ctHwnd, out var ctBounds))
                             {
                                 if (pt.X >= ctBounds.Left && pt.X <= ctBounds.Right &&
@@ -530,6 +537,11 @@ namespace CodeByatta.UI
         {
             Dispatcher.Invoke(() =>
             {
+                if (_trackingService.CurrentWindow != null && CurrentPipTargetHwnd != IntPtr.Zero && _trackingService.CurrentWindow.Hwnd == CurrentPipTargetHwnd)
+                {
+                    return;
+                }
+
                 if (_toolbarView != null && _toolbarView.IsVisible)
                 {
                     if (bounds.Left > -10000 && bounds.Width > 50 && bounds.Height > 50)
@@ -565,10 +577,13 @@ namespace CodeByatta.UI
                 {
                     _currentPipWindow.RestoreAndClose();
                     _currentPipWindow = null;
+                    CurrentPipTargetHwnd = IntPtr.Zero;
                     return;
                 }
 
                 if (IsOwnProcessOrWindow(target.Hwnd)) return;
+
+                CurrentPipTargetHwnd = target.Hwnd;
 
                 // Hide floating toolbar so it does not float orphaned over the ghosted window
                 _toolbarView?.Hide();
@@ -595,6 +610,7 @@ namespace CodeByatta.UI
                 _currentPipWindow.PipClosed += (s, e) =>
                 {
                     _currentPipWindow = null;
+                    CurrentPipTargetHwnd = IntPtr.Zero;
                     Dispatcher.Invoke(() =>
                     {
                         if (User32.IsWindow(target.Hwnd))
@@ -630,6 +646,7 @@ namespace CodeByatta.UI
                 {
                     _currentPipWindow.RestoreAndClose();
                     _currentPipWindow = null;
+                    CurrentPipTargetHwnd = IntPtr.Zero;
                 }
 
                 _currentCropOverlay = new CropOverlayWindow(target, (cropRect) =>
@@ -637,6 +654,7 @@ namespace CodeByatta.UI
                     _currentCropOverlay = null;
                     bool hideOriginal = _config.HideOriginalWindowOnCrop;
                     _toolbarView?.Hide();
+                    CurrentPipTargetHwnd = target.Hwnd;
 
                     bool isTopmost = _topmostService.IsTopmost(target.Hwnd);
                     if (_activeBorders.TryGetValue(target.Hwnd, out var border))
@@ -658,6 +676,7 @@ namespace CodeByatta.UI
                     _currentPipWindow.PipClosed += (s, e) =>
                     {
                         _currentPipWindow = null;
+                        CurrentPipTargetHwnd = IntPtr.Zero;
                         Dispatcher.Invoke(() =>
                         {
                             if (User32.IsWindow(target.Hwnd))

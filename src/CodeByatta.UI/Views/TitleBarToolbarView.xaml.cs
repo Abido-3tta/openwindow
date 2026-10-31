@@ -177,7 +177,7 @@ namespace CodeByatta.UI.Views
             }
 
             _targetWindow = target;
-            if (_targetWindow == null || !User32.IsWindow(_targetWindow.Hwnd) || User32.IsIconic(_targetWindow.Hwnd))
+            if (_targetWindow == null || !User32.IsWindow(_targetWindow.Hwnd) || User32.IsIconic(_targetWindow.Hwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && _targetWindow.Hwnd == App.CurrentPipTargetHwnd))
             {
                 Hide();
                 return;
@@ -325,7 +325,7 @@ namespace CodeByatta.UI.Views
             var ctHwnds = _opacityService.ActiveClickThroughWindows;
             foreach (var ctHwnd in ctHwnds)
             {
-                if (!User32.IsWindow(ctHwnd) || User32.IsIconic(ctHwnd)) continue;
+                if (!User32.IsWindow(ctHwnd) || User32.IsIconic(ctHwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && ctHwnd == App.CurrentPipTargetHwnd)) continue;
                 if (!User32.GetWindowRect(ctHwnd, out RECT ctBounds)) continue;
                 if (ctBounds.Left < -10000 || ctBounds.Width <= 50 || ctBounds.Height <= 50) continue;
 
@@ -371,8 +371,9 @@ namespace CodeByatta.UI.Views
                 }
             }
 
-            if (_targetWindow == null || !User32.IsWindow(_targetWindow.Hwnd) || User32.IsIconic(_targetWindow.Hwnd))
+            if (_targetWindow == null || !User32.IsWindow(_targetWindow.Hwnd) || User32.IsIconic(_targetWindow.Hwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && _targetWindow.Hwnd == App.CurrentPipTargetHwnd))
             {
+                if (IsVisible) Hide();
                 return;
             }
 
@@ -454,18 +455,32 @@ namespace CodeByatta.UI.Views
 
                 bool isPopupOpen = PopupOpacitySlider != null && PopupOpacitySlider.IsOpen;
                 bool isOverPopup = false;
-                if (isPopupOpen && PopupOpacitySlider!.Child is FrameworkElement popupContent)
+                if (isPopupOpen)
                 {
-                    try
+                    if (PopupOpacitySlider!.IsMouseOver)
                     {
-                        var ps = PresentationSource.FromVisual(popupContent) as HwndSource;
-                        if (ps != null && ps.Handle != IntPtr.Zero && User32.GetWindowRect(ps.Handle, out RECT popupWinRect))
+                        isOverPopup = true;
+                    }
+                    else if (PopupOpacitySlider!.Child is FrameworkElement popupContent)
+                    {
+                        if (popupContent.IsMouseOver)
                         {
-                            isOverPopup = cursor.X >= popupWinRect.Left - 8 && cursor.X <= popupWinRect.Right + 8 &&
-                                          cursor.Y >= popupWinRect.Top - 8 && cursor.Y <= popupWinRect.Bottom + 8;
+                            isOverPopup = true;
+                        }
+                        else
+                        {
+                            try
+                            {
+                                var ps = PresentationSource.FromVisual(popupContent) as HwndSource;
+                                if (ps != null && ps.Handle != IntPtr.Zero && User32.GetWindowRect(ps.Handle, out RECT popupWinRect))
+                                {
+                                    isOverPopup = cursor.X >= popupWinRect.Left - 8 && cursor.X <= popupWinRect.Right + 8 &&
+                                                  cursor.Y >= popupWinRect.Top - 8 && cursor.Y <= popupWinRect.Bottom + 8;
+                                }
+                            }
+                            catch { }
                         }
                     }
-                    catch { }
                 }
 
                 // OUTSIDE-CLICK AUTO-COLLAPSE:
@@ -563,7 +578,7 @@ namespace CodeByatta.UI.Views
 
         public void UpdatePosition(RECT bounds, bool? forceExpanded = null)
         {
-            if (_targetWindow == null || User32.IsIconic(_targetWindow.Hwnd))
+            if (_targetWindow == null || User32.IsIconic(_targetWindow.Hwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && _targetWindow.Hwnd == App.CurrentPipTargetHwnd))
             {
                 Hide();
                 return;
@@ -732,7 +747,7 @@ namespace CodeByatta.UI.Views
 
         private void SaveCurrentWindowPreferenceState()
         {
-            if (_targetWindow == null || ShellSanitizer.IsShellOrTaskbarWindow(_targetWindow.Hwnd)) return;
+            if (_targetWindow == null || ShellSanitizer.IsShellOrTaskbarWindow(_targetWindow.Hwnd) || (App.CurrentPipTargetHwnd != IntPtr.Zero && _targetWindow.Hwnd == App.CurrentPipTargetHwnd)) return;
 
             var pref = _config.GetOrCreateWindowPreference(_targetWindow.ProcessName);
             pref.IsTopmost = _targetWindow.IsTopmost;
@@ -883,6 +898,7 @@ namespace CodeByatta.UI.Views
             }
             // Ensure toolbar stays expanded and visible
             Expand();
+            e.Handled = true;
         }
 
         private void BtnOpacity_MouseWheel(object sender, MouseWheelEventArgs e)
@@ -1123,6 +1139,10 @@ namespace CodeByatta.UI.Views
         private void Window_MouseLeave(object sender, WpfMouseEventArgs e)
         {
             _isMouseOverToolbar = false;
+            if (PopupOpacitySlider != null && PopupOpacitySlider.IsOpen)
+            {
+                return; // Do NOT auto-hide while the opacity popup is open
+            }
             if (AutoHideEnabled && (_targetWindow == null || !_targetWindow.IsClickThrough))
             {
                 _autoHideTimer.Stop();

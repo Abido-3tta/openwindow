@@ -29,11 +29,14 @@ namespace CodeByatta.UI.Views
         private readonly string? _borderColor;
         private readonly double _borderWidth;
         private readonly double _aspectRatio;
+        private readonly byte _prePipOpacity;
+        private readonly bool _prePipClickThrough;
 
         private IntPtr _hThumbnail = IntPtr.Zero;
         private bool _isTransparent = false;
         private bool _isClosing = false;
         private bool _isInteractMode = true;
+        private bool _isAdjustingAspect = false;
 
         // Ghost Mode state (keeps DWM live, browsers rendering at 60fps, automation uninhibited)
         private bool _originalWindowGhosted = false;
@@ -82,6 +85,10 @@ namespace CodeByatta.UI.Views
             _isTopmost = isTopmost;
             _borderColor = borderColor;
             _borderWidth = borderWidth;
+
+            // Record authentic pre-PiP state to guarantee 100% clean restoration
+            _prePipOpacity = _opacityService?.GetConfiguredOpacity(_targetWindow.Hwnd) ?? 255;
+            _prePipClickThrough = _opacityService?.IsClickThrough(_targetWindow.Hwnd) ?? false;
 
             // Calculate source aspect ratio
             int sourceW = 0, sourceH = 0;
@@ -149,6 +156,39 @@ namespace CodeByatta.UI.Views
             }
         }
 
+        protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+        {
+            base.OnRenderSizeChanged(sizeInfo);
+            if (_isAdjustingAspect || _aspectRatio <= 0.05) return;
+
+            if (sizeInfo.WidthChanged || sizeInfo.HeightChanged)
+            {
+                _isAdjustingAspect = true;
+                try
+                {
+                    double headerHeight = 34.0;
+                    if (sizeInfo.WidthChanged)
+                    {
+                        double clientW = Math.Max(20.0, ActualWidth - 2);
+                        double clientH = clientW / _aspectRatio;
+                        double targetH = Math.Clamp(clientH + headerHeight, MinHeight, SystemParameters.PrimaryScreenHeight * 0.9);
+                        Height = targetH;
+                    }
+                    else if (sizeInfo.HeightChanged)
+                    {
+                        double clientH = Math.Max(20.0, ActualHeight - headerHeight);
+                        double clientW = clientH * _aspectRatio;
+                        double targetW = Math.Clamp(clientW + 2, MinWidth, SystemParameters.PrimaryScreenWidth * 0.9);
+                        Width = targetW;
+                    }
+                }
+                finally
+                {
+                    _isAdjustingAspect = false;
+                }
+            }
+        }
+
         private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (msg == WM_SIZING && _aspectRatio > 0.05)
@@ -196,7 +236,7 @@ namespace CodeByatta.UI.Views
                         }
                     }
 
-                    System.Runtime.InteropServices.Marshal.StructureToPtr(rect, lParam, true);
+                    System.Runtime.InteropServices.Marshal.StructureToPtr(rect, lParam, false);
                     handled = true;
                     return (IntPtr)1;
                 }
@@ -309,11 +349,58 @@ namespace CodeByatta.UI.Views
 
             if (_originalWindowGhosted)
             {
-                User32.SetWindowLongPtr(_targetWindow.Hwnd, User32.GWL_EXSTYLE, (IntPtr)_originalExStyle);
-                User32.SetLayeredWindowAttributes(_targetWindow.Hwnd, 0, 255, User32.LWA_ALPHA);
+                IntPtr currentEx = User32.GetWindowLongPtr(_targetWindow.Hwnd, User32.GWL_EXSTYLE);
+                long newEx = (long)currentEx;
+
+                // Enforce removal of click-through transparency unless it was genuinely active prior to PiP
+                if (!_prePipClickThrough)
+                {
+                    newEx &= ~User32.WS_EX_TRANSPARENT;
+                }
+
+                // If window should be fully opaque and non-click-through, clear WS_EX_LAYERED
+                if (_prePipOpacity >= 255 && !_prePipClickThrough)
+                {
+                    newEx &= ~User32.WS_EX_LAYERED;
+                }
+                else
+                {
+                    newEx |= User32.WS_EX_LAYERED;
+                }
+
+                User32.SetWindowLongPtr(_targetWindow.Hwnd, User32.GWL_EXSTYLE, (IntPtr)newEx);
+
+                if ((newEx & User32.WS_EX_LAYERED) != 0)
+                {
+                    User32.SetLayeredWindowAttributes(_targetWindow.Hwnd, 0, _prePipOpacity, User32.LWA_ALPHA);
+                }
+
                 User32.SetWindowPos(_targetWindow.Hwnd, IntPtr.Zero, 0, 0, 0, 0,
                     User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOZORDER | User32.SWP_FRAMECHANGED);
                 _originalWindowGhosted = false;
+            }
+
+            // Cleanly restore and synchronize opacity service
+            if (_opacityService != null)
+            {
+                _opacityService.SetClickThrough(_targetWindow.Hwnd, _prePipClickThrough);
+                if (_prePipOpacity < 255)
+                {
+                    _opacityService.SetOpacity(_targetWindow.Hwnd, _prePipOpacity);
+                }
+                else
+                {
+                    _opacityService.SetOpacity(_targetWindow.Hwnd, 255);
+                }
+            }
+
+            // Sanitize window preference in config so ghost mode state is never persisted
+            if (_config != null)
+            {
+                var pref = _config.GetOrCreateWindowPreference(_targetWindow.ProcessName);
+                pref.IsClickThrough = _prePipClickThrough;
+                pref.OpacityLevel = _prePipOpacity;
+                _config.Save();
             }
 
             User32.ShowWindow(_targetWindow.Hwnd, User32.SW_SHOW);
