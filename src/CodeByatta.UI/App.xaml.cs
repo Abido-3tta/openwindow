@@ -34,6 +34,7 @@ namespace CodeByatta.UI
         private DispatcherTimer? _pinEnforcerTimer;
         private DispatcherTimer? _updateCheckTimer;
         private HwndSource? _messageHwndSource;
+        private static uint _wmShowSettingsMsg;
 
         private SettingsWindow? _activeSettingsWindow;
         private PipWindow? _currentPipWindow;
@@ -85,18 +86,19 @@ namespace CodeByatta.UI
                     return;
                 }
 
+                _wmShowSettingsMsg = User32.RegisterWindowMessage("CodeByatta_OpenWindow_ShowSettings");
+
                 const string mutexName = "OpenWindow_SingleInstanceMutex";
                 _instanceMutex = new Mutex(true, mutexName, out bool isNewInstance);
                 _ownsMutex = isNewInstance;
 
                 if (!isNewInstance)
                 {
-                    Log("Another instance already running");
-                    Forms.MessageBox.Show(
-                        "OpenWindow is already running in the system tray.",
-                        "OpenWindow",
-                        Forms.MessageBoxButtons.OK,
-                        Forms.MessageBoxIcon.Information);
+                    Log("Another instance already running. Signaling existing instance to show settings.");
+                    if (_wmShowSettingsMsg != 0)
+                    {
+                        User32.PostMessage(User32.HWND_BROADCAST, _wmShowSettingsMsg, IntPtr.Zero, IntPtr.Zero);
+                    }
                     Shutdown();
                     return;
                 }
@@ -179,6 +181,22 @@ namespace CodeByatta.UI
                 if (_config.AutoCheckForUpdates)
                 {
                     StartPeriodicUpdateChecks();
+                }
+
+                bool isBackgroundStartup = e.Args.Length > 0 && Array.Exists(e.Args, a => 
+                    a.Equals("--silent", StringComparison.OrdinalIgnoreCase) ||
+                    a.Equals("--tray", StringComparison.OrdinalIgnoreCase) ||
+                    a.Equals("--startup", StringComparison.OrdinalIgnoreCase) ||
+                    a.Equals("-silent", StringComparison.OrdinalIgnoreCase) ||
+                    a.Equals("-tray", StringComparison.OrdinalIgnoreCase));
+
+                if (!isBackgroundStartup)
+                {
+                    Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, () =>
+                    {
+                        HotkeyNotificationHudWindow.ShowHud("OpenWindow Active", "Alt+Z: Pin | Alt+A: Opacity | Alt+Q: PiP", "app", true);
+                        OpenSettings("Toolbar");
+                    });
                 }
 
                 Log("App ready and running in background loop");
@@ -287,6 +305,13 @@ namespace CodeByatta.UI
 
         private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
+            if (_wmShowSettingsMsg != 0 && msg == (int)_wmShowSettingsMsg)
+            {
+                Dispatcher.Invoke(() => OpenSettings("Toolbar"));
+                handled = true;
+                return IntPtr.Zero;
+            }
+
             if (_hotkeyService.ProcessMessage(msg, wParam))
             {
                 handled = true;

@@ -619,7 +619,7 @@ namespace CodeByatta.UI.Views
                     {
                         string exePath = Process.GetCurrentProcess().MainModule?.FileName
                             ?? Path.Combine(AppContext.BaseDirectory, "CodeByatta.UI.exe");
-                        key.SetValue(AppRegistryName, $"\"{exePath}\"");
+                        key.SetValue(AppRegistryName, $"\"{exePath}\" --silent");
                     }
                     else
                     {

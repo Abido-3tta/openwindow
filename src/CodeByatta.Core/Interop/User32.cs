@@ -319,6 +319,11 @@ namespace CodeByatta.Core.Interop
         [DllImport("user32.dll")]
         public static extern short GetAsyncKeyState(int vKey);
 
+        public static readonly IntPtr HWND_BROADCAST = new IntPtr(0xffff);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern uint RegisterWindowMessage(string lpString);
+
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);

@@ -50,6 +50,12 @@ namespace CodeByatta.UI.Views
         private double _dragStartLeft;
         private double _anchorDragStartLeft;
 
+        // UI Optimization Cache & Throttling
+        private double _cachedExpandedWidth = 0;
+        private double _cachedCollapsedWidth = 0;
+        private User32.POINT _lastProximityCursor = new User32.POINT(-99999, -99999);
+        private long _lastZOrderAssertTick = 0;
+
         public bool AutoHideEnabled { get; set; } = true;
 
         public TitleBarToolbarView(
@@ -102,6 +108,7 @@ namespace CodeByatta.UI.Views
 
         public void ApplyConfigStyles()
         {
+            InvalidateToolbarMeasurement();
             try
             {
                 if (!string.IsNullOrEmpty(_config.ArrowColor))
@@ -307,16 +314,30 @@ namespace CodeByatta.UI.Views
         {
             if (isExp)
             {
-                FullToolbarPill.Measure(new WpfSize(double.PositiveInfinity, double.PositiveInfinity));
-                double desired = FullToolbarPill.DesiredSize.Width;
-                return desired > 50 ? desired : 420.0;
+                if (_cachedExpandedWidth <= 0)
+                {
+                    FullToolbarPill.Measure(new WpfSize(double.PositiveInfinity, double.PositiveInfinity));
+                    double desired = FullToolbarPill.DesiredSize.Width;
+                    _cachedExpandedWidth = desired > 50 ? desired : 420.0;
+                }
+                return _cachedExpandedWidth;
             }
             else
             {
-                AnchorHandle.Measure(new WpfSize(double.PositiveInfinity, double.PositiveInfinity));
-                double desired = AnchorHandle.DesiredSize.Width;
-                return desired > 30 ? desired : 130.0;
+                if (_cachedCollapsedWidth <= 0)
+                {
+                    AnchorHandle.Measure(new WpfSize(double.PositiveInfinity, double.PositiveInfinity));
+                    double desired = AnchorHandle.DesiredSize.Width;
+                    _cachedCollapsedWidth = desired > 30 ? desired : 130.0;
+                }
+                return _cachedCollapsedWidth;
             }
+        }
+
+        public void InvalidateToolbarMeasurement()
+        {
+            _cachedExpandedWidth = 0;
+            _cachedCollapsedWidth = 0;
         }
 
         public void Expand()
@@ -410,19 +431,24 @@ namespace CodeByatta.UI.Views
                 return;
             }
 
-            // Z-Order Topmost Overlay Guarantee: ensure toolbar remains topmost over target window and never transparent
-            IntPtr hwnd = new WindowInteropHelper(this).Handle;
-            if (hwnd != IntPtr.Zero)
+            // Z-Order Topmost Overlay Guarantee: ensure toolbar remains topmost over target window and never transparent (throttled to 1s)
+            long nowTick = Environment.TickCount64;
+            if (nowTick - _lastZOrderAssertTick >= 1000)
             {
-                long style = (long)User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
-                if ((style & User32.WS_EX_TRANSPARENT) != 0)
+                _lastZOrderAssertTick = nowTick;
+                IntPtr hwnd = new WindowInteropHelper(this).Handle;
+                if (hwnd != IntPtr.Zero)
                 {
-                    style &= ~User32.WS_EX_TRANSPARENT;
-                    User32.SetWindowLongPtr(hwnd, User32.GWL_EXSTYLE, (IntPtr)style);
-                }
+                    long style = (long)User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
+                    if ((style & User32.WS_EX_TRANSPARENT) != 0)
+                    {
+                        style &= ~User32.WS_EX_TRANSPARENT;
+                        User32.SetWindowLongPtr(hwnd, User32.GWL_EXSTYLE, (IntPtr)style);
+                    }
 
-                User32.SetWindowPos(hwnd, User32.HWND_TOPMOST, 0, 0, 0, 0,
-                    User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOACTIVATE);
+                    User32.SetWindowPos(hwnd, User32.HWND_TOPMOST, 0, 0, 0, 0,
+                        User32.SWP_NOMOVE | User32.SWP_NOSIZE | User32.SWP_NOACTIVATE);
+                }
             }
 
             bool isOverAnchor = false;
@@ -635,17 +661,20 @@ namespace CodeByatta.UI.Views
             double dipWidth = bounds.Width / dpi.DpiScaleX;
 
             // Adaptive Compact Mode for narrow windows (< 580 DIPs):
-            if (dipWidth < 580)
+            bool shouldBeCompact = dipWidth < 580;
+            if (shouldBeCompact && BtnSettings.Visibility != Visibility.Collapsed)
             {
                 BtnCrop.Visibility = Visibility.Collapsed;
                 BtnDarkMode.Visibility = Visibility.Collapsed;
                 BtnSettings.Visibility = Visibility.Collapsed;
+                InvalidateToolbarMeasurement();
             }
-            else
+            else if (!shouldBeCompact && BtnSettings.Visibility != Visibility.Visible)
             {
                 BtnCrop.Visibility = _config.ShowCropButton ? Visibility.Visible : Visibility.Collapsed;
                 BtnDarkMode.Visibility = _config.ShowDarkModeButton ? Visibility.Visible : Visibility.Collapsed;
                 BtnSettings.Visibility = Visibility.Visible;
+                InvalidateToolbarMeasurement();
             }
 
             bool exp = forceExpanded ?? _isExpanded;
@@ -904,9 +933,17 @@ namespace CodeByatta.UI.Views
                 Left = newLeft;
                 Top = dipTop + 3.0; // Strictly locked vertically in the titlebar
 
-                // Update ratio live
+                // Update ratio live with magnetic center snapping:
                 double toolbarCenter = newLeft + (width / 2.0);
-                _currentRatio = Math.Clamp((toolbarCenter - dipLeft) / Math.Max(1.0, dipWidth), 0.05, 0.95);
+                double rawRatio = (toolbarCenter - dipLeft) / Math.Max(1.0, dipWidth);
+                if (rawRatio >= 0.46 && rawRatio <= 0.54)
+                {
+                    _currentRatio = 0.5;
+                }
+                else
+                {
+                    _currentRatio = Math.Clamp(rawRatio, 0.05, 0.95);
+                }
             }
         }
 
@@ -1206,7 +1243,15 @@ namespace CodeByatta.UI.Views
                     Top = dipTop + 3.0;
 
                     double toolbarCenter = newLeft + (width / 2.0);
-                    _currentRatio = Math.Clamp((toolbarCenter - dipLeft) / Math.Max(1.0, dipWidth), 0.05, 0.95);
+                    double rawRatio = (toolbarCenter - dipLeft) / Math.Max(1.0, dipWidth);
+                    if (rawRatio >= 0.46 && rawRatio <= 0.54)
+                    {
+                        _currentRatio = 0.5;
+                    }
+                    else
+                    {
+                        _currentRatio = Math.Clamp(rawRatio, 0.05, 0.95);
+                    }
                 }
             }
         }

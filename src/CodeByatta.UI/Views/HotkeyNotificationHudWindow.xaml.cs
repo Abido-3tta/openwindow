@@ -107,6 +107,10 @@ namespace CodeByatta.UI.Views
                     PathIcon.Data = Geometry.Parse("M8,1 A7,7 0 1,0 15,8 A7,7 0 0,0 8,1 M8,3.5 A4.5,4.5 0 1,1 3.5,8 A4.5,4.5 0 0,1 8,3.5");
                     IconBadge.Background = new SolidColorBrush(MediaColor.FromArgb(0x33, 0xFF, 0x9F, 0x0A));
                     break;
+                case "app":
+                    PathIcon.Data = Geometry.Parse("M0,2 A2,2 0 0,1 2,0 L16,0 A2,2 0 0,1 18,2 L18,12 A2,2 0 0,1 16,14 L2,14 A2,2 0 0,1 0,12 Z M2,4 L16,4 M5,2 L5,4");
+                    IconBadge.Background = new SolidColorBrush(MediaColor.FromArgb(0x33, 0x4C, 0xC2, 0xFF));
+                    break;
                 default: // pin
                     PathIcon.Data = Geometry.Parse("M9,2 L7,4 L7,8 L4,11 L4,12 L8,12 L8,16 L9,17 L10,16 L10,12 L14,12 L14,11 L11,8 L11,4 L9,2 Z");
                     IconBadge.Background = new SolidColorBrush(MediaColor.FromArgb(0x33, 0xFF, 0x45, 0x3A));

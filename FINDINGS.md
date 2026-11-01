@@ -192,3 +192,32 @@ Users actively searching for alternatives to WindowTop represent the highest-con
   - `OpenWindow-v1.1.3-win-x86.zip` (63.3 MB)
   - [`checksums.txt`](file:///E:/GitHub-repos/codebyatta-windows-top/dist/checksums.txt) (SHA-256 hashes)
 * All loose temporary folders (`publish/`) have been purged to enforce repository cleanliness.
+
+---
+
+## ⚡ 8. Turnkey Build/Run & UI Optimization Findings
+
+### 8.1 Turnkey Command-Line SDK Resolution (`build.cmd`, `run.cmd`, `build.ps1`, `run.ps1`)
+* **Problem:** In non-admin developer environments, Windows `PATH` frequently resolves `C:\Program Files\dotnet\dotnet.exe` (which contains 0 SDKs) before the user's active SDK at `%USERPROFILE%\.dotnet\dotnet.exe`. Calling standard `dotnet build` or `dotnet run` yields `No .NET SDKs were found`.
+* **Finding:** Providing root-level executable wrappers (`build.cmd`, `build.ps1`, `run.cmd`, `run.ps1`) dynamically detects the active user profile SDK, prepends it to the process `PATH`, and handles building/running with zero manual configuration.
+
+### 8.2 Single-Instance IPC Activation (`RegisterWindowMessage` + `HWND_BROADCAST`)
+* **Problem:** When OpenWindow is already running in the background tray and the user launches the application shortcut again, standard mutex logic displayed a modal `MessageBox` ("OpenWindow is already running in the system tray.") and aborted. This broke expected user workflows where clicking an app shortcut should reveal its dashboard.
+* **Finding:** 
+  1. Register a custom OS broadcast message:
+     ```csharp
+     uint msgShow = User32.RegisterWindowMessage("CodeByatta_OpenWindow_ShowSettings");
+     ```
+  2. When `!isNewInstance`, post the message via `User32.PostMessage(User32.HWND_BROADCAST, msgShow, IntPtr.Zero, IntPtr.Zero)` and terminate quietly.
+  3. The primary running instance intercepts the message in its `HwndHook`, smoothly brings the Settings Dashboard to the foreground, and activates it.
+
+### 8.3 Layout Measurement Caching & 50ms Proximity Optimization
+* **Problem:** Calling `Measure(new Size(double.PositiveInfinity, double.PositiveInfinity))` repeatedly inside `UpdatePosition` (fired on every window bounds change, drag event, and 50ms timer tick) forced WPF layout tree invalidation, causing CPU spikes. Calling `SetWindowPos` 20 times per second also provoked DWM compositor context switches.
+* **Finding:**
+  1. **Measure Caching:** Cache `_cachedExpandedWidth` and `_cachedCollapsedWidth`. Invalidate cache only when button configuration styles or DPI change.
+  2. **Throttled Z-Order Assertion:** Limit `SetWindowPos` topmost maintenance to once per second unless position coordinates change, eliminating compositor churn.
+  3. **Cursor Stationary Guard:** Skip expensive `GetWindowRect` and `WindowFromPoint` traversals if the mouse cursor coordinates have not moved since the previous tick.
+
+### 8.4 Magnetic Titlebar Drag Snapping & Fluidity
+* **Finding:** When dragging the toolbar across the window titlebar, adding a magnetic snap zone within 4% of the exact center (`0.46 <= ratio <= 0.54`) automatically locks the toolbar to `0.50` (exact center). This provides a native, tactile docking feel without requiring microscopic manual mouse adjustments.
+

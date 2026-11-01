@@ -136,18 +136,19 @@ OpenWindow was designed from the ground up as a modern, completely free and open
    - OpenWindow launches immediately in your system tray.
 
 ### Option 2: Build From Source (Developers)
+
 ```powershell
 # Clone repo
 git clone https://github.com/Abido-3tta/openwindow.git
 cd openwindow
 
-# Restore & Build Release
-dotnet build OpenWindow.sln -c Release
+# Turnkey 1-Click Build & Test (detects local .NET 8 SDK automatically)
+.\build.cmd        # or .\build.ps1
 
-# Run Unit & Integration Tests (37 tests)
-dotnet test OpenWindow.sln -c Release --no-build
+# Run Application (direct execution or auto-launch via .NET)
+.\run.cmd          # or .\run.ps1
 
-# Package Native ZIP Releases (x64 & x86)
+# Package Standalone Native ZIP Releases (x64 & x86)
 .\package-release.ps1 -Version "1.1.3"
 ```
 

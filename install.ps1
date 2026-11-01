@@ -192,7 +192,7 @@ $DesktopShortcut.Save()
 
 # 5. Register Startup in Windows Registry
 Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "CodeByattaWindowsTop" -ErrorAction SilentlyContinue
-Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "OpenWindow" -Value "`"$ExePath`""
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "OpenWindow" -Value "`"$ExePath`" --silent"
 
 Write-Host "Installation completed successfully!" -ForegroundColor Green
 Write-Host "Installed Path: $ExePath"
